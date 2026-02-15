@@ -1,0 +1,36 @@
+{
+  "name": "YieldTest",
+  "params": [],
+  "constants": {},
+  "functions": [
+    {
+      "name": "main",
+      "entrypoint": true,
+      "params": [],
+      "body": [
+        {
+          "kind": "variable_definition",
+          "data": {
+            "type_name": "int",
+            "modifiers": [],
+            "name": "x",
+            "expr": { "kind": "int", "data": 5 }
+          }
+        },
+        {
+          "kind": "yield",
+          "data": {
+            "expr": {
+              "kind": "binary",
+              "data": {
+                "op": "add",
+                "left": { "kind": "identifier", "data": "x" },
+                "right": { "kind": "int", "data": 2 }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

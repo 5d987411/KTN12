@@ -1,0 +1,439 @@
+{
+  "contract_name": "Escrow",
+  "script": [
+    81,
+    121,
+    170,
+    32,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    135,
+    105,
+    0,
+    121,
+    82,
+    121,
+    172,
+    105,
+    0,
+    194,
+    185,
+    190,
+    2,
+    232,
+    3,
+    148,
+    156,
+    105,
+    0,
+    195,
+    32,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    3,
+    0,
+    0,
+    32,
+    124,
+    126,
+    1,
+    172,
+    126,
+    135,
+    0,
+    195,
+    32,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    3,
+    0,
+    0,
+    32,
+    124,
+    126,
+    1,
+    172,
+    126,
+    135,
+    155,
+    105,
+    117,
+    117,
+    81
+  ],
+  "ast": {
+    "name": "Escrow",
+    "params": [
+      {
+        "type_name": "bytes32",
+        "name": "arbiter"
+      },
+      {
+        "type_name": "pubkey",
+        "name": "buyer"
+      },
+      {
+        "type_name": "pubkey",
+        "name": "seller"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "spend",
+        "params": [
+          {
+            "type_name": "pubkey",
+            "name": "pk"
+          },
+          {
+            "type_name": "sig",
+            "name": "s"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "call",
+                    "data": {
+                      "name": "blake2b",
+                      "args": [
+                        {
+                          "kind": "identifier",
+                          "data": "pk"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "arbiter"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "s"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "pk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "minerFee",
+              "expr": {
+                "kind": "int",
+                "data": 1000
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "amount",
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "sub",
+                  "left": {
+                    "kind": "introspection",
+                    "data": {
+                      "kind": "input_value",
+                      "index": {
+                        "kind": "nullary",
+                        "data": "active_input_index"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "minerFee"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "introspection",
+                    "data": {
+                      "kind": "output_value",
+                      "index": {
+                        "kind": "int",
+                        "data": 0
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "amount"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "bytes34",
+              "modifiers": [],
+              "name": "buyerLock",
+              "expr": {
+                "kind": "new",
+                "data": {
+                  "name": "LockingBytecodeP2PK",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "buyer"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "bytes34",
+              "modifiers": [],
+              "name": "sellerLock",
+              "expr": {
+                "kind": "new",
+                "data": {
+                  "name": "LockingBytecodeP2PK",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "seller"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "bool",
+              "modifiers": [],
+              "name": "sendsToBuyer",
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "introspection",
+                    "data": {
+                      "kind": "output_locking_bytecode",
+                      "index": {
+                        "kind": "int",
+                        "data": 0
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "buyerLock"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "bool",
+              "modifiers": [],
+              "name": "sendsToSeller",
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "introspection",
+                    "data": {
+                      "kind": "output_locking_bytecode",
+                      "index": {
+                        "kind": "int",
+                        "data": 0
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "sellerLock"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "or",
+                  "left": {
+                    "kind": "identifier",
+                    "data": "sendsToBuyer"
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "sendsToSeller"
+                  }
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "spend",
+      "inputs": [
+        {
+          "name": "pk",
+          "type_name": "pubkey"
+        },
+        {
+          "name": "s",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": true
+}

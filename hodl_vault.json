@@ -1,0 +1,346 @@
+{
+  "contract_name": "HodlVault",
+  "script": [
+    0,
+    121,
+    84,
+    0,
+    124,
+    127,
+    3,
+    160,
+    134,
+    1,
+    162,
+    105,
+    0,
+    121,
+    84,
+    0,
+    124,
+    127,
+    176,
+    0,
+    121,
+    130,
+    84,
+    124,
+    127,
+    3,
+    80,
+    195,
+    0,
+    162,
+    105,
+    81,
+    121,
+    81,
+    121,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    117,
+    117,
+    117,
+    81,
+    105,
+    82,
+    121,
+    32,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    172,
+    105,
+    117,
+    117,
+    117,
+    81
+  ],
+  "ast": {
+    "name": "HodlVault",
+    "params": [
+      {
+        "type_name": "pubkey",
+        "name": "ownerPk"
+      },
+      {
+        "type_name": "pubkey",
+        "name": "oraclePk"
+      },
+      {
+        "type_name": "int",
+        "name": "minBlock"
+      },
+      {
+        "type_name": "int",
+        "name": "priceTarget"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "spend",
+        "params": [
+          {
+            "type_name": "sig",
+            "name": "ownerSig"
+          },
+          {
+            "type_name": "datasig",
+            "name": "oracleSig"
+          },
+          {
+            "type_name": "bytes",
+            "name": "oracleMessage"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "tuple_assignment",
+            "data": {
+              "left_type": "bytes4 ",
+              "left_name": "blockHeightBin",
+              "right_type": "bytes4 ",
+              "right_name": "priceBin",
+              "expr": {
+                "kind": "split",
+                "data": {
+                  "source": {
+                    "kind": "identifier",
+                    "data": "oracleMessage"
+                  },
+                  "index": {
+                    "kind": "int",
+                    "data": 4
+                  },
+                  "part": "left"
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "blockHeight",
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "int",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "blockHeightBin"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "price",
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "int",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "priceBin"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "ge",
+                  "left": {
+                    "kind": "identifier",
+                    "data": "blockHeight"
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "minBlock"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "time_op",
+            "data": {
+              "tx_var": "tx_time",
+              "expr": {
+                "kind": "identifier",
+                "data": "blockHeight"
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "ge",
+                  "left": {
+                    "kind": "identifier",
+                    "data": "price"
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "priceTarget"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkDataSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "oracleSig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "oracleMessage"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "oraclePk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "ownerSig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "ownerPk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "spend",
+      "inputs": [
+        {
+          "name": "ownerSig",
+          "type_name": "sig"
+        },
+        {
+          "name": "oracleSig",
+          "type_name": "datasig"
+        },
+        {
+          "name": "oracleMessage",
+          "type_name": "bytes"
+        }
+      ]
+    }
+  ],
+  "without_selector": true
+}

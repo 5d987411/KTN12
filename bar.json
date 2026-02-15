@@ -1,0 +1,203 @@
+{
+  "contract_name": "Bar",
+  "script": [
+    81,
+    121,
+    170,
+    32,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    135,
+    105,
+    0,
+    121,
+    82,
+    121,
+    172,
+    105,
+    117,
+    117,
+    81
+  ],
+  "ast": {
+    "name": "Bar",
+    "params": [
+      {
+        "type_name": "bytes32",
+        "name": "pkh_bar"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "funcA",
+        "params": [],
+        "entrypoint": false,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "int",
+                    "data": 2
+                  },
+                  "right": {
+                    "kind": "int",
+                    "data": 2
+                  }
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "funcB",
+        "params": [],
+        "entrypoint": false,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "int",
+                    "data": 2
+                  },
+                  "right": {
+                    "kind": "int",
+                    "data": 2
+                  }
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "execute",
+        "params": [
+          {
+            "type_name": "pubkey",
+            "name": "pk"
+          },
+          {
+            "type_name": "sig",
+            "name": "s"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "call",
+                    "data": {
+                      "name": "blake2b",
+                      "args": [
+                        {
+                          "kind": "identifier",
+                          "data": "pk"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "pkh_bar"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "s"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "pk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "execute",
+      "inputs": [
+        {
+          "name": "pk",
+          "type_name": "pubkey"
+        },
+        {
+          "name": "s",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": true
+}

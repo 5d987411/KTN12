@@ -1,0 +1,52 @@
+Silverscript Contract Deployment Info
+=====================================
+Contract: p2pkh
+Date: Fri Feb 13 08:58:13 PM CST 2026
+
+Contract File: /home/cliff/silverscript/p2pkh.json
+
+Instructions:
+1. Ensure kaspad is running on Testnet 12
+2. Ensure you have testnet KAS coins
+3. Use rothschild or RPC to deploy:
+   - Locking Script: Use bytecode from /home/cliff/silverscript/p2pkh.json
+   - Entrypoint: See ABI in contract JSON
+
+Manual Deployment Steps:
+------------------------
+1. Create transaction with P2SH output
+2. Use compiled script as redeem script
+3. Set appropriate value (minimum dust limit)
+4. Sign and broadcast transaction
+
+Example RPC call structure:
+{
+  "version": 0,
+  "inputs": [...],
+  "outputs": [
+    {
+      "amount": 100000,  // minimum amount
+      "scriptPublicKey": {
+        "version": 0,
+        "script": <P2SH script with hash of compiled bytecode>
+      }
+    }
+  ]
+}
+
+Contract ABI:
+[
+  {
+    "name": "spend",
+    "inputs": [
+      {
+        "name": "pk",
+        "type_name": "pubkey"
+      },
+      {
+        "name": "s",
+        "type_name": "sig"
+      }
+    ]
+  }
+]

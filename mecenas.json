@@ -1,0 +1,590 @@
+{
+  "contract_name": "Mecenas",
+  "script": [
+    118,
+    0,
+    156,
+    99,
+    117,
+    3,
+    128,
+    81,
+    1,
+    177,
+    0,
+    195,
+    32,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    3,
+    0,
+    0,
+    32,
+    124,
+    126,
+    1,
+    172,
+    126,
+    135,
+    105,
+    185,
+    190,
+    4,
+    128,
+    150,
+    152,
+    0,
+    148,
+    2,
+    232,
+    3,
+    148,
+    4,
+    128,
+    150,
+    152,
+    0,
+    2,
+    232,
+    3,
+    147,
+    161,
+    99,
+    0,
+    194,
+    185,
+    190,
+    2,
+    232,
+    3,
+    148,
+    156,
+    105,
+    103,
+    0,
+    194,
+    4,
+    128,
+    150,
+    152,
+    0,
+    156,
+    105,
+    81,
+    195,
+    185,
+    191,
+    135,
+    105,
+    81,
+    194,
+    185,
+    190,
+    4,
+    128,
+    150,
+    152,
+    0,
+    148,
+    2,
+    232,
+    3,
+    148,
+    156,
+    105,
+    104,
+    81,
+    103,
+    118,
+    81,
+    156,
+    99,
+    117,
+    81,
+    121,
+    170,
+    32,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    65,
+    135,
+    105,
+    0,
+    121,
+    82,
+    121,
+    172,
+    105,
+    117,
+    117,
+    81,
+    103,
+    117,
+    0,
+    105,
+    104,
+    104
+  ],
+  "ast": {
+    "name": "Mecenas",
+    "params": [
+      {
+        "type_name": "pubkey",
+        "name": "recipient"
+      },
+      {
+        "type_name": "bytes32",
+        "name": "funder"
+      },
+      {
+        "type_name": "int",
+        "name": "pledge"
+      },
+      {
+        "type_name": "int",
+        "name": "period"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "receive",
+        "params": [],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "time_op",
+            "data": {
+              "tx_var": "this_age",
+              "expr": {
+                "kind": "identifier",
+                "data": "period"
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "bytes34",
+              "modifiers": [],
+              "name": "recipientLockingBytecode",
+              "expr": {
+                "kind": "new",
+                "data": {
+                  "name": "LockingBytecodeP2PK",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "recipient"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "introspection",
+                    "data": {
+                      "kind": "output_locking_bytecode",
+                      "index": {
+                        "kind": "int",
+                        "data": 0
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "recipientLockingBytecode"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "minerFee",
+              "expr": {
+                "kind": "int",
+                "data": 1000
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "currentValue",
+              "expr": {
+                "kind": "introspection",
+                "data": {
+                  "kind": "input_value",
+                  "index": {
+                    "kind": "nullary",
+                    "data": "active_input_index"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "variable_definition",
+            "data": {
+              "type_name": "int",
+              "modifiers": [],
+              "name": "changeValue",
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "sub",
+                  "left": {
+                    "kind": "binary",
+                    "data": {
+                      "op": "sub",
+                      "left": {
+                        "kind": "identifier",
+                        "data": "currentValue"
+                      },
+                      "right": {
+                        "kind": "identifier",
+                        "data": "pledge"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "minerFee"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "if",
+            "data": {
+              "condition": {
+                "kind": "binary",
+                "data": {
+                  "op": "le",
+                  "left": {
+                    "kind": "identifier",
+                    "data": "changeValue"
+                  },
+                  "right": {
+                    "kind": "binary",
+                    "data": {
+                      "op": "add",
+                      "left": {
+                        "kind": "identifier",
+                        "data": "pledge"
+                      },
+                      "right": {
+                        "kind": "identifier",
+                        "data": "minerFee"
+                      }
+                    }
+                  }
+                }
+              },
+              "then_branch": [
+                {
+                  "kind": "require",
+                  "data": {
+                    "expr": {
+                      "kind": "binary",
+                      "data": {
+                        "op": "eq",
+                        "left": {
+                          "kind": "introspection",
+                          "data": {
+                            "kind": "output_value",
+                            "index": {
+                              "kind": "int",
+                              "data": 0
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "binary",
+                          "data": {
+                            "op": "sub",
+                            "left": {
+                              "kind": "identifier",
+                              "data": "currentValue"
+                            },
+                            "right": {
+                              "kind": "identifier",
+                              "data": "minerFee"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "message": null
+                  }
+                }
+              ],
+              "else_branch": [
+                {
+                  "kind": "require",
+                  "data": {
+                    "expr": {
+                      "kind": "binary",
+                      "data": {
+                        "op": "eq",
+                        "left": {
+                          "kind": "introspection",
+                          "data": {
+                            "kind": "output_value",
+                            "index": {
+                              "kind": "int",
+                              "data": 0
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "identifier",
+                          "data": "pledge"
+                        }
+                      }
+                    },
+                    "message": null
+                  }
+                },
+                {
+                  "kind": "variable_definition",
+                  "data": {
+                    "type_name": "bytes",
+                    "modifiers": [],
+                    "name": "changeBytecode",
+                    "expr": {
+                      "kind": "introspection",
+                      "data": {
+                        "kind": "input_locking_bytecode",
+                        "index": {
+                          "kind": "nullary",
+                          "data": "active_input_index"
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "require",
+                  "data": {
+                    "expr": {
+                      "kind": "binary",
+                      "data": {
+                        "op": "eq",
+                        "left": {
+                          "kind": "introspection",
+                          "data": {
+                            "kind": "output_locking_bytecode",
+                            "index": {
+                              "kind": "int",
+                              "data": 1
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "identifier",
+                          "data": "changeBytecode"
+                        }
+                      }
+                    },
+                    "message": null
+                  }
+                },
+                {
+                  "kind": "require",
+                  "data": {
+                    "expr": {
+                      "kind": "binary",
+                      "data": {
+                        "op": "eq",
+                        "left": {
+                          "kind": "introspection",
+                          "data": {
+                            "kind": "output_value",
+                            "index": {
+                              "kind": "int",
+                              "data": 1
+                            }
+                          }
+                        },
+                        "right": {
+                          "kind": "identifier",
+                          "data": "changeValue"
+                        }
+                      }
+                    },
+                    "message": null
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "reclaim",
+        "params": [
+          {
+            "type_name": "pubkey",
+            "name": "pk"
+          },
+          {
+            "type_name": "sig",
+            "name": "s"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "call",
+                    "data": {
+                      "name": "blake2b",
+                      "args": [
+                        {
+                          "kind": "identifier",
+                          "data": "pk"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "funder"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "s"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "pk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "receive",
+      "inputs": []
+    },
+    {
+      "name": "reclaim",
+      "inputs": [
+        {
+          "name": "pk",
+          "type_name": "pubkey"
+        },
+        {
+          "name": "s",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": false
+}

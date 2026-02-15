@@ -1,0 +1,228 @@
+{
+  "contract_name": "TransferWithTimeout",
+  "script": [
+    118,
+    0,
+    156,
+    99,
+    117,
+    0,
+    121,
+    32,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    94,
+    95,
+    96,
+    172,
+    105,
+    117,
+    81,
+    103,
+    118,
+    81,
+    156,
+    99,
+    117,
+    0,
+    121,
+    32,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    172,
+    105,
+    4,
+    0,
+    241,
+    83,
+    101,
+    176,
+    117,
+    81,
+    103,
+    117,
+    0,
+    105,
+    104,
+    104
+  ],
+  "ast": {
+    "name": "TransferWithTimeout",
+    "params": [
+      {
+        "type_name": "pubkey",
+        "name": "sender"
+      },
+      {
+        "type_name": "pubkey",
+        "name": "recipient"
+      },
+      {
+        "type_name": "int",
+        "name": "timeout"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "transfer",
+        "params": [
+          {
+            "type_name": "sig",
+            "name": "recipientSig"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "recipientSig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "recipient"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "timeout",
+        "params": [
+          {
+            "type_name": "sig",
+            "name": "senderSig"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "senderSig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "sender"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "time_op",
+            "data": {
+              "tx_var": "tx_time",
+              "expr": {
+                "kind": "identifier",
+                "data": "timeout"
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "transfer",
+      "inputs": [
+        {
+          "name": "recipientSig",
+          "type_name": "sig"
+        }
+      ]
+    },
+    {
+      "name": "timeout",
+      "inputs": [
+        {
+          "name": "senderSig",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": false
+}
