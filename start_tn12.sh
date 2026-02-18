@@ -1,32 +1,33 @@
 #!/bin/bash
 # Start Kaspa Testnet 12 Node
 
-cd "/Users/4dsto/rusty-kaspa-tn12"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/config.env"
 
 echo "Starting Kaspa Testnet 12 node..."
 echo ""
 
-mkdir -p ~/.kaspa-testnet12
+mkdir -p "$KASPAD_DATA_DIR"
 
-nohup ./target/release/kaspad \
+nohup "$RUSTY_KASPA_DIR/target/release/kaspad" \
     --testnet \
     --netsuffix=12 \
     --utxoindex \
-    --appdir ~/.kaspa-testnet12 \
-    > /tmp/kaspad_tn12.log 2>&1 &
+    --appdir "$KASPAD_DATA_DIR" \
+    > "$KASPAD_LOG" 2>&1 &
 
 PID=$!
-echo $PID > /tmp/kaspad.pid
+echo $PID > "$SCRIPT_DIR/kaspad.pid"
 
 echo "✅ Kaspad started with PID: $PID"
 echo ""
-echo "Log file: /tmp/kaspad_tn12.log"
-echo "RPC: localhost:16210"
-echo "P2P: 0.0.0.0:16311"
+echo "Log file: $KASPAD_LOG"
+echo "RPC: localhost:$RPC_PORT"
+echo "P2P: 0.0.0.0:$P2P_PORT"
 echo ""
-echo "Monitor with: tail -f /tmp/kaspad_tn12.log"
+echo "Monitor with: tail -f $KASPAD_LOG"
 echo "Stop with:    kill $PID"
 echo ""
 echo "Waiting 5 seconds for startup..."
 sleep 5
-tail -20 /tmp/kaspad_tn12.log
+tail -20 "$KASPAD_LOG"

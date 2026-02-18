@@ -307,8 +307,8 @@
                 const node = await nodeRes.json();
                 const tx = await txRes.json();
                 
-                document.getElementById('minerHashrate').textContent = miner.hashrate || 'N/A';
-                document.getElementById('nodeTps').textContent = node.tps || 'N/A';
+                document.getElementById('minerHashrate').textContent = miner.utxoSync || (miner.running ? (miner.hashrate || 'Syncing...') : 'OFF');
+                document.getElementById('nodeTps').textContent = node.syncPercent ? ('Syncing ' + node.syncPercent) : (node.syncing ? 'Syncing...' : (node.tps || 'N/A'));
                 document.getElementById('txTps').textContent = tx.running ? (tx.tps || '0') : 'OFF';
             } catch(e) {
                 console.log('Stats update error:', e);

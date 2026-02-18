@@ -4,19 +4,37 @@
 
 Kaspa Testnet 12 (Covenant) with integrated dashboard, wallet, miner, and transaction generator.
 
-## Quick Start
+## First-Time Setup
 
 ```bash
-cd /Users/4dsto/ktn12
+# 1. Clone and enter the project
+git clone https://github.com/5d987411/KTN12.git
+cd KTN12
 
-# Start node (NEW tn12 build)
+# 2. Check configuration (it will guide you)
+./check_config.sh
+
+# 3. Edit config.env to set your paths
+nano config.env
+# Key settings:
+#   - RUSTY_KASPA_DIR: where you cloned rusty-kaspa-tn12
+#   - MINING_ADDRESS: your Kaspa testnet address (REQUIRED)
+
+# 4. Start the node
+./start_tn12_kaspad.sh
+```
+
+## Quick Start (After Setup)
+
+```bash
+cd KTN12
+
+# Start node
 ./start_tn12_kaspad.sh
 
-# OR start with old binary
-./start_rk_node.sh
-
-# Stop node
-./stop_node.sh
+# Start miner (optional)
+source config.env
+./kaspa-miner --testnet --mining-address $MINING_ADDRESS -p $RPC_PORT -t $MINER_THREADS
 
 # Start dashboard
 cd dashboard-tn12 && node server.js
@@ -31,6 +49,23 @@ cd dashboard-tn12 && node server.js
 | `start_rk_node.sh` | Start kaspad (old binary) |
 | `start_tn12.sh` | Start from rusty-kaspa-tn12 directory |
 | `stop_node.sh` | Stop running kaspad |
+
+## Configuration
+
+Before running, edit `config.env` to set your paths:
+
+```bash
+# Edit configuration
+nano config.env
+```
+
+Key settings in `config.env`:
+- `RUSTY_KASPA_DIR` - Path to rusty-kaspa-tn12 (default: $HOME/rusty-kaspa-tn12)
+- `MINING_ADDRESS` - **REQUIRED** - Your mining address
+- `RPC_PORT` - RPC port (default: 16210)
+- `MINER_THREADS` - Number of mining threads (default: 2)
+
+For the dashboard, edit `dashboard-tn12/config.js` or set environment variables.
 
 ## Components
 

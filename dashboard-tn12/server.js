@@ -1,11 +1,21 @@
 const https = require('https');
 const http = require('http');
 const { exec } = require('child_process');
+const path = require('path');
 
-const WALLET_CLI = '/Users/4dsto/ktn12/target/release/kaspa-wallet-cli';
+const config = require('./config.js');
+
+const WALLET_CLI = path.join(config.ktn12Dir, 'target/release/kaspa-wallet-cli');
+const ROTHschild = path.join(config.ktn12Dir, 'rothschild');
+const KASPAD_LOG = config.kaspadLog;
+const MINER_LOG = config.minerLog;
+const ROTHschild_LOG = config.rothschildLog;
+const RPC_HOST = 'localhost';
+const RPC_PORT = config.rpcPort;
+
 const RPC_URL = 'https://api-tn12.kaspa.org';
 const API_BASE = 'https://api-tn12.kaspa.org';
-const PORT = 3001;
+const PORT = config.dashboardPort;
 
 function fetchUrl(url) {
     return new Promise((resolve, reject) => {
@@ -63,7 +73,7 @@ const server = http.createServer(async (req, res) => {
                     res.end(JSON.stringify({ error: 'No command provided' }));
                     return;
                 }
-                const fullCmd = '/Users/4dsto/ktn12/target/release/kaspa-wallet-cli ' + cmd;
+                const fullCmd = WALLET_CLI + ' ' + cmd;
                 exec(fullCmd, { timeout: 30000 }, (error, stdout, stderr) => {
                     if (error) {
                         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -132,7 +142,7 @@ const server = http.createServer(async (req, res) => {
             req.on('end', () => {
                 const { privateKey, recipient, amount } = JSON.parse(body);
                 
-                const cmd = `/Users/4dsto/ktn12/target/release/kaspa-wallet-cli --rpc 127.0.0.1:16210 send ${privateKey} ${recipient} ${amount}`;
+                const cmd = WALLET_CLI + ' --rpc ' + RPC_HOST + ':' + RPC_PORT + ' send ' + privateKey + ' ' + recipient + ' ' + amount;
                 exec(cmd, (error, stdout, stderr) => {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     if (error) {
@@ -155,7 +165,7 @@ const server = http.createServer(async (req, res) => {
                 // Kill existing rothschild
                 exec('pkill -f rothschild', () => {
                     // Build rothschild command with optional send amount
-                    let cmd = `/Users/4dsto/ktn12/rothschild -k ${privateKey} -a ${recipient} -t ${tps || 1} -s localhost:16210`;
+                    let cmd = ROTHschild + ' -k ' + privateKey + ' -a ' + recipient + ' -t ' + (tps || 1) + ' -s ' + RPC_HOST + ':' + RPC_PORT;
                     
                     // Add send-amount if specified (amount is in KAS)
                     if (amount && amount > 0) {
@@ -173,7 +183,7 @@ const server = http.createServer(async (req, res) => {
 
         // Stop rothschild
         if (urlPath === '/api/rothschild-stop' && req.method === 'POST') {
-            exec('pkill -f "/Users/4dsto/ktn12/rothschild"', (error, stdout, stderr) => {
+            exec('pkill -f "rothschild"', (error, stdout, stderr) => {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ stopped: true, stdout: stdout, stderr: stderr }));
             });
@@ -182,15 +192,29 @@ const server = http.createServer(async (req, res) => {
 
         // Get miner status (hashrate)
         if (urlPath === '/api/miner-status' && req.method === 'GET') {
-            exec('tail -50 /tmp/miner.log 2>/dev/null | grep "hashrate" | tail -1', (error, stdout, stderr) => {
-                let hashrate = 'N/A';
-                const match = stdout.match(/([\d.]+)\s*Mhash\/s/);
-                if (match) hashrate = match[1] + ' M/s';
+            // Check if node is syncing UTXO
+            exec('tail -50 ' + KASPAD_LOG + ' 2>/dev/null | grep "UTXO set chunks" | tail -1', (utxoErr, utxoOut) => {
+                let utxoPercent = '';
+                if (utxoOut.includes('UTXO set chunks')) {
+                    const utxoMatch = utxoOut.match(/(\d+)\s+UTXOs/);
+                    if (utxoMatch) {
+                        const utxoCount = parseInt(utxoMatch[1]);
+                        // Estimate ~10M UTXOs total for testnet
+                        const percent = Math.min(100, Math.round(utxoCount / 100000));
+                        utxoPercent = 'UTXO ' + percent + '%';
+                    }
+                }
                 
-                exec('pgrep -f "kaspa-miner"', (err, out) => {
-                    const running = out.trim().length > 0;
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ hashrate: hashrate, running: running }));
+                exec('tail -50 ' + MINER_LOG + ' 2>/dev/null | grep "hashrate" | tail -1', (error, stdout, stderr) => {
+                    let hashrate = 'N/A';
+                    const match = stdout.match(/([\d.]+)\s*Mhash\/s/);
+                    if (match) hashrate = match[1] + ' M/s';
+                    
+                    exec('pgrep -f "kaspa-miner"', (err, out) => {
+                        const running = out.trim().length > 0;
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ hashrate: hashrate, running: running, utxoSync: utxoPercent }));
+                    });
                 });
             });
             return;
@@ -198,18 +222,26 @@ const server = http.createServer(async (req, res) => {
 
         // Get node status (TPS)
         if (urlPath === '/api/node-status' && req.method === 'GET') {
-            exec('tail -50 /tmp/kaspad_tn12.log 2>/dev/null | grep "Tx throughput" | tail -1', (error, stdout, stderr) => {
-                let tps = 'N/A';
-                const match = stdout.match(/([\d.]+)\s*u-tps/);
-                if (match) tps = match[1];
+            exec('tail -50 ' + KASPAD_LOG + ' 2>/dev/null | grep "IBD.*%" | tail -1', (syncErr, syncOut) => {
+                let syncPercent = '';
+                const percentMatch = syncOut.match(/(\d+)%/);
+                if (percentMatch) syncPercent = percentMatch[1] + '%';
                 
-                exec('tail -10 /tmp/kaspad_tn12.log 2>/dev/null | grep "Processed" | tail -1', (err, blocks) => {
-                    let blockCount = 'N/A';
-                    const blockMatch = blocks.match(/Processed\s+(\d+)\s+blocks/);
-                    if (blockMatch) blockCount = blockMatch[1];
+                const isSyncing = syncOut.includes('IBD') || syncOut.includes('Processed') && syncOut.includes('headers');
+                
+                exec('tail -50 ' + KASPAD_LOG + ' 2>/dev/null | grep "Tx throughput" | tail -1', (error, stdout, stderr) => {
+                    let tps = 'N/A';
+                    const match = stdout.match(/([\d.]+)\s*u-tps/);
+                    if (match) tps = match[1];
                     
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ tps: tps, blocks: blockCount }));
+                    exec('tail -10 ' + KASPAD_LOG + ' 2>/dev/null | grep "Processed" | tail -1', (err, blocks) => {
+                        let blockCount = 'N/A';
+                        const blockMatch = blocks.match(/Processed\s+(\d+)\s+blocks/);
+                        if (blockMatch) blockCount = blockMatch[1];
+                        
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ tps: tps, blocks: blockCount, syncing: isSyncing, syncPercent: syncPercent }));
+                    });
                 });
             });
             return;
@@ -217,7 +249,7 @@ const server = http.createServer(async (req, res) => {
 
         // Get TX status (Rothschild TPS)
         if (urlPath === '/api/tx-status' && req.method === 'GET') {
-            exec('tail -50 /tmp/rothschild.log 2>/dev/null | grep "Tx rate" | tail -1', (error, stdout, stderr) => {
+            exec('tail -50 ' + ROTHschild_LOG + ' 2>/dev/null | grep "Tx rate" | tail -1', (error, stdout, stderr) => {
                 let txTps = 'N/A';
                 const match = stdout.match(/Tx rate:\s*([\d.]+)\/sec/);
                 if (match) txTps = match[1];

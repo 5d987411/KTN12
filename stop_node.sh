@@ -1,7 +1,10 @@
 #!/bin/bash
 # Stop Kaspa Testnet 12 Node
 
-PID_FILE="/tmp/kaspad.pid"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "$SCRIPT_DIR/config.env"
+
+PID_FILE="$SCRIPT_DIR/kaspad.pid"
 
 if [ -f "$PID_FILE" ]; then
     PID=$(cat "$PID_FILE")

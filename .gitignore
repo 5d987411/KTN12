@@ -1,1 +1,38 @@
-target
+# Build artifacts
+target/
+*.o
+*.a
+*.so
+*.dylib
+
+# Rust binaries (keep these if pre-built)
+# kaspad
+# rothschild
+# kaspa-miner
+
+# Logs
+*.log
+logs/
+
+# Dashboard node_modules (don't commit)
+dashboard-tn12/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PID files
+*.pid
+kaspad.pid
+
+# Environment files with secrets
+.env
+*.env.local
+config.env
+!config.env.example
