@@ -190,6 +190,29 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // Get service status (kaspad, miner, rothschild)
+        if (urlPath === '/api/service-status' && req.method === 'GET') {
+            exec('pgrep -f "kaspad.*testnet.*netsuffix=12"', (err1, kaspadOut) => {
+                const kaspadRunning = kaspadOut.trim().length > 0;
+                
+                exec('pgrep -f "kaspa-miner"', (err2, minerOut) => {
+                    const minerRunning = minerOut.trim().length > 0;
+                    
+                    exec('pgrep -f "rothschild"', (err3, rothschildOut) => {
+                        const rothschildRunning = rothschildOut.trim().length > 0;
+                        
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ 
+                            kaspad: kaspadRunning ? 'running' : 'stopped',
+                            miner: minerRunning ? 'running' : 'stopped',
+                            rothschild: rothschildRunning ? 'running' : 'stopped'
+                        }));
+                    });
+                });
+            });
+            return;
+        }
+
         // Get miner status (hashrate)
         if (urlPath === '/api/miner-status' && req.method === 'GET') {
             // Check if node is syncing UTXO

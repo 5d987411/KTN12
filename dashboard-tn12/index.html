@@ -100,6 +100,10 @@
         <header>
             <div class="logo"><div class="logo-dot"></div><h1>KASPA TN12 Dashboard</h1></div>
             <div class="network-badge" id="headerStats">
+                SERVICES: 
+                <span id="serviceKaspad" style="color:#888">Kaspad...</span> | 
+                <span id="serviceMiner" style="color:#888">Miner...</span> | 
+                <span id="serviceRothschild" style="color:#888">Rothschild...</span> |
                 NETWORK: <span>TESTNET 12</span> | 
                 IP: <span>58.153.227.123</span> | 
                 HD: <span>608GB</span> | 
@@ -298,14 +302,30 @@
         
         async function updateStats() {
             try {
-                const [minerRes, nodeRes, txRes] = await Promise.all([
+                const [serviceRes, minerRes, nodeRes, txRes] = await Promise.all([
+                    fetch('/api/service-status'),
                     fetch('/api/miner-status'),
                     fetch('/api/node-status'),
                     fetch('/api/tx-status')
                 ]);
+                const services = await serviceRes.json();
                 const miner = await minerRes.json();
                 const node = await nodeRes.json();
                 const tx = await txRes.json();
+                
+                // Update service status indicators
+                const kaspadEl = document.getElementById('serviceKaspad');
+                const minerEl = document.getElementById('serviceMiner');
+                const rothschildEl = document.getElementById('serviceRothschild');
+                
+                kaspadEl.textContent = 'Kaspad: ' + (services.kaspad === 'running' ? '✓' : '✗');
+                kaspadEl.style.color = services.kaspad === 'running' ? '#4ade80' : '#f87171';
+                
+                minerEl.textContent = 'Miner: ' + (services.miner === 'running' ? '✓' : '✗');
+                minerEl.style.color = services.miner === 'running' ? '#4ade80' : '#f87171';
+                
+                rothschildEl.textContent = 'Rothschild: ' + (services.rothschild === 'running' ? '✓' : '✗');
+                rothschildEl.style.color = services.rothschild === 'running' ? '#4ade80' : '#f87171';
                 
                 document.getElementById('minerHashrate').textContent = miner.utxoSync || (miner.running ? (miner.hashrate || 'Syncing...') : 'OFF');
                 document.getElementById('nodeTps').textContent = node.syncPercent ? ('Syncing ' + node.syncPercent) : (node.syncing ? 'Syncing...' : (node.tps || 'N/A'));
