@@ -190,6 +190,41 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // Get system info (IP, disk, ktn12 size, chain size)
+        if (urlPath === '/api/system-info' && req.method === 'GET') {
+            const ktn12Dir = path.join(config.ktn12Dir);
+            
+            // Get external IP
+            exec('curl -s ifconfig.me 2>/dev/null || echo "unknown"', (err1, ip) => {
+                ip = ip.trim() || 'unknown';
+                
+                // Get disk space
+                exec('df -h / | tail -1 | awk \'{print $2}\'', (err2, hd) => {
+                    hd = hd.trim() || 'unknown';
+                    
+                    // Get ktn12 directory size
+                    exec('du -sh ' + ktn12Dir + ' 2>/dev/null | cut -f1', (err3, ktn12Size) => {
+                        ktn12Size = ktn12Size.trim() || 'unknown';
+                        
+                        // Get chain data size
+                        const chainDir = path.join(process.env.HOME || '', '.kaspa-testnet12');
+                        exec('du -sh ' + chainDir + ' 2>/dev/null | cut -f1', (err4, chainSize) => {
+                            chainSize = chainSize.trim() || 'unknown';
+                            
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ 
+                                ip: ip,
+                                hd: hd,
+                                ktn12Size: ktn12Size,
+                                chainSize: chainSize
+                            }));
+                        });
+                    });
+                });
+            });
+            return;
+        }
+
         // Get service status (kaspad, miner, rothschild)
         if (urlPath === '/api/service-status' && req.method === 'GET') {
             exec('pgrep -f "kaspad.*testnet.*netsuffix=12"', (err1, kaspadOut) => {
