@@ -199,16 +199,16 @@ const server = http.createServer(async (req, res) => {
                 ip = ip.trim() || 'unknown';
                 
                 // Get disk space
-                exec('df -h / | tail -1 | awk \'{print $2}\'', (err2, hd) => {
+                exec('df -h / | tail -1 | awk \'{print $2}\' | tr -d "i"', (err2, hd) => {
                     hd = hd.trim() || 'unknown';
                     
                     // Get ktn12 directory size
-                    exec('du -sh ' + ktn12Dir + ' 2>/dev/null | cut -f1', (err3, ktn12Size) => {
+                    exec('du -sh ' + ktn12Dir + ' 2>/dev/null | cut -f1 | sed "s/Gi/G/" | sed "s/Mi/M/" | sed "s/Ki/K/"', (err3, ktn12Size) => {
                         ktn12Size = ktn12Size.trim() || 'unknown';
                         
                         // Get chain data size
                         const chainDir = path.join(process.env.HOME || '', '.kaspa-testnet12');
-                        exec('du -sh ' + chainDir + ' 2>/dev/null | cut -f1', (err4, chainSize) => {
+                        exec('du -sh ' + chainDir + ' 2>/dev/null | cut -f1 | sed "s/Gi/G/" | sed "s/Mi/M/" | sed "s/Ki/K/"', (err4, chainSize) => {
                             chainSize = chainSize.trim() || 'unknown';
                             
                             res.writeHead(200, { 'Content-Type': 'application/json' });
