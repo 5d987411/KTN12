@@ -1,4 +1,4 @@
-# TN12 Project - Kaspa Testnet 12 Development Environment
+# KTN12 - Kaspa Testnet 12 Development Environment
 
 ## Overview
 
@@ -7,23 +7,39 @@ Kaspa Testnet 12 (Covenant) with integrated dashboard, wallet, miner, and transa
 ## Quick Start
 
 ```bash
-# Start node
-./kaspad --testnet --netsuffix=12 --utxoindex --rpclisten-json=127.0.0.1:16210
+cd /Users/4dsto/ktn12
+
+# Start node (NEW tn12 build)
+./start_tn12_kaspad.sh
+
+# OR start with old binary
+./start_rk_node.sh
+
+# Stop node
+./stop_node.sh
 
 # Start dashboard
 cd dashboard-tn12 && node server.js
 # Open http://localhost:3001
 ```
 
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `start_tn12_kaspad.sh` | Start kaspad (NEW tn12 build) |
+| `start_rk_node.sh` | Start kaspad (old binary) |
+| `start_tn12.sh` | Start from rusty-kaspa-tn12 directory |
+| `stop_node.sh` | Stop running kaspad |
+
 ## Components
 
-| Component | Binary | Purpose |
-|-----------|--------|---------|
-| Node | `kaspad` | Kaspa TN12 full node |
-| Wallet CLI | `target/release/kaspa-wallet-cli` | Simple CLI for balance/send |
-| Full Wallet | `target/release/kaspa-wallet` | Full wallet (wRPC) |
-| Miner | `kaspa-miner` | CPU miner |
-| Tx Generator | `rothschild` | High-TPS transaction generator |
+| Component | Binary | Path |
+|-----------|--------|------|
+| Node (NEW) | `kaspad` | `/Users/4dsto/rusty-kaspa-tn12/target/release/kaspad` |
+| Node (OLD) | `kaspad` | `/Users/4dsto/ktn12/kaspad` |
+| Tx Generator | `rothschild` | `/Users/4dsto/ktn12/rothschild` |
+| Miner | `kaspa-miner` | `/Users/4dsto/ktn12/kaspa-miner` |
 | Dashboard | `dashboard-tn12/` | Web UI (port 3001) |
 
 ## Pre-funded Wallets
@@ -70,29 +86,36 @@ Features:
 
 Requires rusty-kaspa tn12 branch:
 ```bash
-git clone --branch tn12 https://github.com/kaspanet/rusty-kaspa.git
-cd rusty-kaspa
+git clone --branch tn12 https://github.com/kaspanet/rusty-kaspa.git rusty-kaspa-tn12
+cd rusty-kaspa-tn12
 
-# Build wallet
-cargo build --release -p kaspa-wallet
+# Build node
+cargo build --release --bin kaspad
 
 # Build rothschild  
-cargo build --release -p rothschild
+cargo build --release --bin rothschild
 
 # Build miner (from cpuminer repo)
 cargo build --release
 ```
 
-## Documentation
+## Rusty-Kaspa Location
 
-- [TN12_SPEC.md](TN12_SPEC.md) - TN12 specifications
-- [SESSION_BACKUP.md](SESSION_BACKUP.md) - Current session backup
-- [COMMANDS.md](COMMANDS.md) - CLI commands reference
+- **Path:** `/Users/4dsto/rusty-kaspa-tn12`
+- **GitHub:** https://github.com/kaspanet/rusty-kaspa/tree/tn12
 
 ## Dependencies
 
 - **rusty-kaspa**: https://github.com/kaspanet/rusty-kaspa (tn12 branch)
 - **cpuminer**: https://github.com/kaspanet/cpuminer (v0.2.6)
+
+## Network Info
+
+- **Network:** Testnet 12
+- **P2P Port:** 16311
+- **RPC Port:** 16210
+- **Dashboard Port:** 3001
+- **Data Dir:** `~/.kaspa-testnet12`
 
 ## Known Issues
 
