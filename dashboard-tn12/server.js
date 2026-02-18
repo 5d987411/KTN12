@@ -6,7 +6,7 @@ const path = require('path');
 const config = require('./config.js');
 
 const WALLET_CLI = path.join(config.ktn12Dir, 'target/release/kaspa-wallet-cli');
-const ROTHschild = path.join(config.ktn12Dir, 'rothschild');
+const ROTHschild = config.rothschild;
 const KASPAD_LOG = config.kaspadLog;
 const MINER_LOG = config.minerLog;
 const ROTHschild_LOG = config.rothschildLog;
