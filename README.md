@@ -45,7 +45,7 @@ cd dashboard-tn12 && node server.js
 ## Pre-funded Wallets
 
 ### Main Wallet (Sender)
-- **Private Key:** `2d4e8a0a47218b076b4ce72b6df900dba0cfd774240bf1942e3830578615ac09`
+- **Private Key:** (this wwill be different on your miner)
 - **Address:** (Use dashboard to load)
 
 ### Recipient Wallet
