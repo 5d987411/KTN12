@@ -10,7 +10,7 @@ set -e
 CLI_NAME="kaspa-graffiti-cli"
 DEFAULT_RPC="https://api-tn12.kaspa.org"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLI_PATH="${SCRIPT_DIR}/../kgraf3/target/release/${CLI_NAME}"
+CLI_PATH="${SCRIPT_DIR}/target/release/${CLI_NAME}"
 
 # Colors
 RED='\033[0;31m'

@@ -15,8 +15,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-RUSTY_KASPA_DIR="/home/cliff/rusty-kaspa"
-SILVERSCRIPT_DIR="/home/cliff/silverscript"
+RUSTY_KASPA_DIR="/Users/4dsto/rusty-kaspa-tn12"
+SILVERSCRIPT_DIR="/Users/4dsto/silverscript"
 DEPLOY_DIR="$SILVERSCRIPT_DIR/deployments"
 
 # Create deployment directory

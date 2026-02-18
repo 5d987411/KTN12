@@ -7,8 +7,8 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-RUSTY_KASPA_DIR="/home/cliff/rusty-kaspa"
-SILVERSCRIPT_DIR="/home/cliff/silverscript"
+RUSTY_KASPA_DIR="/Users/4dsto/rusty-kaspa-tn12"
+SILVERSCRIPT_DIR="/Users/4dsto/ktn12"
 
 echo "=========================================="
 echo -e "${BLUE}Kaspa Testnet 12 Setup Status${NC}"

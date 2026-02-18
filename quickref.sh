@@ -9,25 +9,25 @@ cat << 'EOF'
 
 📁 DIRECTORIES
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Silverscript:  /home/cliff/silverscript
-  Kaspa Node:    /home/cliff/rusty-kaspa
-  Deployments:   /home/cliff/silverscript/deployments
+  Silverscript:  /Users/4dsto/ktn12/silverscript-lang
+  Kaspa Node:    /Users/4dsto/rusty-kaspa-tn12
+  Deployments:   /Users/4dsto/ktn12
 
 🔧 ESSENTIAL COMMANDS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Check Status:
-  cd /home/cliff/silverscript && ./check_status.sh
+  cd /Users/4dsto/ktn12 && ./check_status.sh
 
 Setup Wallet:
-  cd /home/cliff/silverscript && ./setup_deployment.sh
+  cd /Users/4dsto/ktn12 && ./setup_deployment.sh
 
 Start Node:
-  cd /home/cliff/rusty-kaspa
+  cd /Users/4dsto/rusty-kaspa-tn12
   ./target/release/kaspad --testnet --netsuffix=12 --utxoindex
 
 Deploy Contract:
-  cd /home/cliff/silverscript
+  cd /Users/4dsto/ktn12
   ./deploy_contract.sh p2pkh <private-key>
 
 📋 COMPILED CONTRACTS

@@ -1,0 +1,49 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+spawn /Users/4dsto/ktn12/target/release/kaspa-wallet
+sleep 2
+
+expect "$ "
+send "network testnet-12\r"
+sleep 1
+
+expect "$ "
+send "server localhost:16210\r"
+sleep 1
+
+expect "$ "
+send "connect\r"
+sleep 5
+
+expect "$ "
+send "wallet create mytest\r"
+sleep 2
+
+expect "password:"
+send "\r"
+sleep 1
+
+expect "password:"
+send "\r"
+sleep 1
+
+expect "hint"
+send "\r"
+sleep 1
+
+expect "password:"
+send "test123\r"
+sleep 1
+
+expect "password:"
+send "test123\r"
+sleep 3
+
+expect "$ "
+send "list\r"
+sleep 3
+
+expect "$ "
+send "exit\r"
+expect eof

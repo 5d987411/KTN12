@@ -16,18 +16,18 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-cd /home/cliff/silverscript
+cd /Users/4dsto/silverscript
 
 echo "Step 1: Checking prerequisites..."
 echo "----------------------------------------"
 
 # Check if we have the tools
-if [ -f "/home/cliff/rusty-kaspa/target/kaspad" ]; then
+if [ -f "/Users/4dsto/rusty-kaspa-tn12/target/kaspad" ]; then
     echo -e "${GREEN}✓${NC} kaspad binary available"
 else
     echo -e "${YELLOW}!${NC} kaspad needs to be built for tn12 branch"
     echo "  Building... (this may take 10-20 minutes)"
-    cd /home/cliff/rusty-kaspa
+    cd /Users/4dsto/rusty-kaspa-tn12
     cargo build --release --bin kaspad &
     KASPAD_BUILD_PID=$!
     echo "  Build started with PID: $KASPAD_BUILD_PID"
@@ -106,7 +106,7 @@ echo ""
 echo "Issue: Pre-built binary doesn't support Testnet 12 suffix"
 echo ""
 echo "Solution: Need to build kaspad from tn12 branch"
-echo "  cd /home/cliff/rusty-kaspa"
+echo "  cd /Users/4dsto/rusty-kaspa-tn12"
 echo "  cargo build --release --bin kaspad"
 echo ""
 echo "OR: Use the development workflow"
@@ -120,7 +120,7 @@ cat << 'EOF'
 To complete deployment manually:
 
 1. Build kaspad (takes ~20 minutes):
-   cd /home/cliff/rusty-kaspa
+   cd /Users/4dsto/rusty-kaspa-tn12
    cargo build --release --bin kaspad --bin rothschild
 
 2. Start node:
@@ -133,7 +133,7 @@ To complete deployment manually:
    https://faucet-tn12.kaspanet.io
    
 5. Deploy contract:
-   cd /home/cliff/silverscript
+   cd /Users/4dsto/silverscript
    ./deploy_contract.sh p2pkh <private-key>
 
 EOF

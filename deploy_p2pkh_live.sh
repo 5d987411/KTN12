@@ -20,8 +20,8 @@ if [ $# -lt 1 ]; then
 fi
 
 PRIVATE_KEY=$1
-RUSTY_KASPA_DIR="/home/cliff/rusty-kaspa"
-SILVERSCRIPT_DIR="/home/cliff/silverscript"
+RUSTY_KASPA_DIR="/Users/4dsto/rusty-kaspa-tn12"
+SILVERSCRIPT_DIR="/Users/4dsto/silverscript"
 
 cd $RUSTY_KASPA_DIR
 

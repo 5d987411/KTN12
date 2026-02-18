@@ -1,0 +1,39 @@
+[package]
+name = "wallet-cli"
+version.workspace = true
+edition.workspace = true
+description = "Kaspa TN12 Wallet CLI"
+authors.workspace = true
+
+[dependencies]
+kaspa-wallet-core = "0.15"
+kaspa-wallet-keys = "0.15"
+kaspa-wallet-pskt = "0.15"
+kaspa-addresses = "0.15"
+kaspa-hashes = "0.15"
+kaspa-consensus-core = "0.15"
+kaspa-rpc-core = "0.15"
+kaspa-txscript = "0.15"
+kaspa-wrpc-client = "0.15"
+secp256k1 = { version = "0.29", features = ["std", "rand-std"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1"
+thiserror = "1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+clap = { version = "4", features = ["derive"] }
+base64 = "0.22"
+hex = "0.4"
+rand = "0.8"
+ureq = "2"
+reqwest = { version = "0.12", features = ["blocking"] }
+
+[[bin]]
+name = "kaspa-wallet-cli"
+path = "src/main.rs"
+
+[lib]
+name = "wallet_lib"
+path = "src/lib.rs"

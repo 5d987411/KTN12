@@ -10,11 +10,11 @@ cat << 'EOF'
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✓ kaspad v1.1.0-rc.3 built successfully (covpp-reset1 branch)
-  Location: /home/cliff/rusty-kaspa/target/release/kaspad
+  Location: /Users/4dsto/rusty-kaspa-tn12/target/release/kaspad
   Size: 39MB
 
 ✓ rothschild built successfully
-  Location: /home/cliff/rusty-kaspa/target/release/rothschild
+  Location: /Users/4dsto/rusty-kaspa-tn12/target/release/rothschild
   Size: 8.3MB
 
 Build Time: ~6 minutes
@@ -42,7 +42,7 @@ Build Time: ~6 minutes
 Private Key: b7db536bb816b95bf225bd79ea0cb32a8fba9dd7d2b59853e4edf2168f8e4aac
 Address:     kaspatest:qzsuy54k9rep6vextgt07zztlk3vg7gecsp5u75j6gzyx88m5yflkylg4j7mf
 
-✓ Saved to: /home/cliff/silverscript/deployments/wallet.txt
+✓ Saved to: /Users/4dsto/silverscript/deployments/wallet.txt
 
 ⚠️  NEXT STEP: GET TESTNET COINS
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -78,12 +78,12 @@ All contracts compiled and ready:
 
 After getting coins from faucet:
 
-  cd /home/cliff/silverscript
+  cd /Users/4dsto/silverscript
   ./deploy_p2pkh_live.sh b7db536bb816b95bf225bd79ea0cb32a8fba9dd7d2b59853e4edf2168f8e4aac
 
 Or manually with rothschild:
 
-  cd /home/cliff/rusty-kaspa
+  cd /Users/4dsto/rusty-kaspa-tn12
   ./target/release/rothschild --private-key b7db536bb816b95bf225bd79ea0cb32a8fba9dd7d2b59853e4edf2168f8e4aac -t=1
 
 ✅ WHAT'S RUNNING

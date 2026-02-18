@@ -25,8 +25,8 @@ CONTRACT_NAME=$1
 PRIVATE_KEY=$2
 ARGS_FILE=${3:-"${CONTRACT_NAME}_args.json"}
 
-SILVERSCRIPT_DIR="/home/cliff/silverscript"
-RUSTY_KASPA_DIR="/home/cliff/rusty-kaspa"
+SILVERSCRIPT_DIR="/Users/4dsto/ktn12"
+RUSTY_KASPA_DIR="/Users/4dsto/rusty-kaspa-tn12"
 CONTRACT_FILE="$SILVERSCRIPT_DIR/${CONTRACT_NAME}.json"
 
 echo "=========================================="

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Start Kaspa Testnet 12 Node
 
-cd "$(dirname "$0")/../rusty-kaspa"
+cd "/Users/4dsto/rusty-kaspa-tn12"
 
 echo "Starting Kaspa Testnet 12 node..."
 echo ""

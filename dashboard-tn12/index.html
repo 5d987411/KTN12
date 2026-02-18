@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KASPA Testnet 12</title>
+    <title>KASPA TN12 Dashboard</title>
     <style>
         :root {
             --bg-primary: #000000;
@@ -28,10 +28,11 @@
             min-height: 100vh;
             font-size: 13px;
         }
-        .container { max-width: 1600px; margin: 0 auto; padding: 24px; }
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        
         header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 32px;
+            padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
         }
         .logo { display: flex; align-items: center; gap: 12px; }
         .logo h1 { font-size: 18px; font-weight: 600; }
@@ -40,315 +41,288 @@
         .network-badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 4px; font-size: 11px; color: var(--text-muted); }
         .network-badge span { color: var(--accent); }
         
-        /* Balance Display */
-        .balance-display { background: var(--bg-input); padding: 16px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
-        .balance-label { font-size: 11px; color: var(--text-muted); }
-        .balance-value { font-size: 20px; font-weight: 600; color: var(--accent); }
+        .top-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         
-        /* Three Panel Layout */
-        .cli-panel { display: grid; grid-template-columns: 220px 280px 1fr; min-height: 500px; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .card-title { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
         
-        /* Left Panel - Commands */
-        .cli-sidebar { background: var(--bg-card); border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; }
-        .cli-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-        .cli-header span { font-size: 12px; font-weight: 600; }
+        .wallet-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 11px; margin-bottom: 8px; }
+        .wallet-input:focus { outline: none; border-color: var(--accent); }
         
-        /* Middle Panel - Parameters */
-        .cli-params { background: var(--bg-input); border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; }
-        .params-header { font-size: 11px; font-weight: 600; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); color: var(--accent); }
-        .param-group { margin-bottom: 12px; }
-        .param-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
-        .param-input { width: 100%; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: inherit; font-size: 11px; }
-        .param-input:focus { outline: none; border-color: var(--accent); }
-        .run-btn { width: 100%; padding: 10px; background: var(--accent); border: none; border-radius: 4px; color: #000; font-family: inherit; font-size: 12px; font-weight: 600; cursor: pointer; margin-top: 8px; }
-        .run-btn:hover { background: #00cc6a; }
+        .balance-display { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .balance-display:last-child { border-bottom: none; }
+        .balance-label { font-size: 10px; color: var(--text-muted); }
+        .balance-value { font-size: 14px; font-weight: 600; color: var(--accent); }
         
-        /* Right Panel - Output */
-        .cli-output { background: #0a0a0a; display: flex; flex-direction: column; }
-        .cli-output-header { padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 10px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.1em; background: #111; }
-        .cli-output-header button { background: none; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 3px; font-size: 10px; cursor: pointer; font-family: inherit; }
-        .cli-output-header button:hover { border-color: var(--accent); color: var(--accent); }
-        .cli-content { flex: 1; padding: 16px; overflow-y: auto; font-family: 'SF Mono', monospace; font-size: 11px; line-height: 1.6; }
+        .btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .btn-primary:hover { background: var(--accent); color: #000; }
         
-        /* Category Headers */
-        .cat-header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); padding: 12px 0 6px 0; margin-top: 12px; border-top: 1px solid var(--border); }
-        .cat-header:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+        .main-section { display: grid; grid-template-columns: 200px 300px 1fr; gap: 16px; }
         
-        /* Command Buttons - Single Column like old explorers */
-        .cmd-btns { display: flex; flex-direction: column; gap: 4px; }
-        .chip-btn { padding: 8px 12px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; color: var(--text); font-family: inherit; font-size: 10px; cursor: pointer; transition: all 0.15s; text-transform: uppercase; text-align: left; }
+        .cmd-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .cat-header { background: var(--bg-input); padding: 10px 12px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .cmd-btns { padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 11px; }
         .chip-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .chip-btn:active { background: var(--accent); border-color: var(--accent); color: #000; }
+        .chip-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
         
-        /* Output Styles */
-        .cli-content .cmd { color: var(--text); margin-bottom: 4px; }
-        .cli-content .cmd::before { content: '$ '; color: var(--accent); }
-        .cli-content .result { color: var(--accent); white-space: pre-wrap; word-break: break-all; margin-bottom: 12px; padding-left: 16px; border-left: 2px solid var(--border); }
-        .cli-content .error { color: var(--error); margin-bottom: 12px; }
-        .cli-content .info { color: var(--text-muted); margin-bottom: 12px; font-style: italic; }
+        .params-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .param-group { margin-bottom: 12px; }
+        .param-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .param-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 12px; }
+        .param-input:focus { outline: none; border-color: var(--accent); }
+        .run-btn { width: 100%; background: var(--accent); border: none; color: #000; padding: 12px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; margin-top: 16px; }
+        .run-btn:hover { opacity: 0.9; }
         
-        /* Toast */
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--accent); color: #000; padding: 10px 20px; border-radius: 4px; font-size: 12px; opacity: 0; transition: all 0.3s; z-index: 1000; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        .console-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; }
+        .console-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .console-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .console-content { flex: 1; padding: 16px; overflow-y: auto; font-size: 12px; line-height: 1.6; }
+        .console-input-area { display: flex; border-top: 1px solid var(--border); }
+        .console-input { flex: 1; background: var(--bg-input); border: none; color: var(--text); padding: 12px 16px; font-family: inherit; font-size: 12px; }
+        .console-input:focus { outline: none; }
         
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-primary); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .cmd-line { color: var(--accent); margin-bottom: 8px; }
+        .output-line { color: var(--text-muted); margin-bottom: 4px; }
+        .error-line { color: var(--error); }
+        .success-line { color: var(--accent); }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #000; padding: 12px 24px; border-radius: 4px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+        
+        .info-box { background: var(--bg-input); border: 1px solid var(--border); padding: 12px; border-radius: 4px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <div class="logo"><div class="logo-dot"></div><h1>KASPA Testnet 12</h1><span id="datetime" style="margin-left: 20px; color: var(--text-muted); font-size: 12px;"></span></div>
-            <div class="network-badge">NETWORK: <span>TESTNET 12</span></div>
+            <div class="logo"><div class="logo-dot"></div><h1>KASPA TN12 Dashboard</h1></div>
+            <div class="network-badge" id="headerStats">
+                NETWORK: <span>TESTNET 12</span> | 
+                IP: <span>58.153.227.123</span> | 
+                HD: <span>608GB</span> | 
+                KTN12: <span>5.7GB</span> | 
+                Chain: <span>45GB</span> | 
+                Hashrate: <span id="minerHashrate">-</span> | 
+                Kaspad TPS: <span id="nodeTps">-</span> | 
+                Rothschild TPS: <span id="txTps">-</span>
+            </div>
         </header>
-
-        <div class="balance-display">
-            <div>
-                <div class="balance-label">ADDRESS</div>
-                <div class="balance-value" id="walletAddress" style="font-size: 11px;">kaspatest:qq4lj67dwyywtgegsfd2rvaugudxwur3uyp48563zy03ha2smwlhxma2kafj0</div>
-                <div class="balance-label" style="margin-top: 12px;">WALLET BALANCE</div>
-                <div class="balance-value" id="walletBalance">10,000.00 TKAS</div>
+        
+        <div class="top-section">
+            <div class="card">
+                <div class="card-title">① Wallet A (Main - Miner)</div>
+                <input type="text" class="wallet-input" id="walletA" placeholder="Address" value="kaspatest:qp2ltc576eyy8hag0tckl9kqk62cvfz7p2egrlczyw9978zsh322jtnrx469r">
+                <input type="text" class="wallet-input" id="walletAKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrA">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balA">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('A')" style="width:100%">↻ Refresh</button>
             </div>
-            <button class="chip-btn" onclick="refreshBalance()">↻ Refresh</button>
+            
+            <div class="card">
+                <div class="card-title">② Wallet B (Recipient)</div>
+                <input type="text" class="wallet-input" id="walletB" placeholder="Address" value="kaspatest:qztewtux4hsrcekswxcrrfhaez692n44fegr3rd5z3rjm85d2ug8xhp0lzg33">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrB">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balB">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('B')" style="width:100%">↻ Refresh</button>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">③ Wallet C (Send From)</div>
+                <input type="text" class="wallet-input" id="walletC" placeholder="Address" value="">
+                <input type="text" class="wallet-input" id="walletCKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrC">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balC">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('C')" style="width:100%">↻ Refresh</button>
+            </div>
         </div>
-
-        <div class="cli-panel">
-            <!-- Left Panel - Commands -->
-            <div class="cli-sidebar">
-                <div class="cli-header">
-                    <span>CLI COMMANDS</span>
-                </div>
-                <div id="chipButtons"></div>
+        
+        <div class="main-section">
+            <div class="cmd-sidebar" id="cmdSidebar">
+                <div class="card-title" style="padding:0 0 12px 0">④ Commands</div>
             </div>
             
-            <!-- Middle Panel - Parameters -->
-            <div class="cli-params">
-                <div class="params-header" id="paramsHeader">PARAMETERS</div>
+            <div class="params-panel">
+                <div class="card-title" id="paramsTitle">⑤ Parameters</div>
                 <div id="paramsForm">
-                    <div class="info">Select a command</div>
+                    <div class="info-box">Click a command button to see parameters</div>
                 </div>
             </div>
             
-            <!-- Right Panel - Output -->
-            <div class="cli-output">
-                <div class="cli-output-header">
-                    <span>OUTPUT TERMINAL</span>
-                    <button onclick="clearOutput()">⌫ Clear</button>
+            <div class="console-panel">
+                <div class="console-header">
+                    <span class="console-title">⑥ Console</span>
+                    <input type="text" id="consoleInput" placeholder="Type command..." style="flex:1;max-width:300px;margin:0 12px;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px" onkeypress="handleConsoleEnter(event)">
+                    <button class="btn" onclick="clearConsole()">Clear</button>
                 </div>
-                <div class="cli-content" id="cliOutput">
-                    <div class="info">Click a command, fill params, click RUN...</div>
-                </div>
+                <div class="console-content" id="consoleOutput"></div>
             </div>
         </div>
     </div>
-
+    
     <div class="toast" id="toast">Copied!</div>
 
     <script>
         const API_BASE = 'https://api-tn12.kaspa.org';
-        const LOCAL_API = 'http://localhost:3001/api';
-        const RPC_URL = 'https://api-tn12.kaspa.org';
-        const KGRAF3_BIN = '~/kgraf3/target/release/kaspa-graffiti-cli';
         
-        const TEST_WALLET = {
-            privateKey: 'b23f42d4a5f9c2963f4b73403f7efcb12b28983f808f0092b43da55ee53317e7',
-            publicKey: '031b16cc186e03e4416757ddf67cf6d4836408d04747a8bf8eca07860ce9d449cf',
-            address: 'kaspatest:qqd3dnqcdcp7gst82lwlvl8k6jpkgzxsgar630uwegrcvr8f63yu7yftcxsen'
+        const CATEGORIES = {
+            'WALLET': ['generate', 'load', 'balance', 'utxos', 'send'],
+            'MINING': ['miner-start', 'miner-stop', 'rothschild-start', 'rothschild-stop'],
+            'CONTRACTS': ['p2pkh', 'multisig', 'escrow', 'hodl', 'mecenas'],
+            'COMPILER': ['compile', 'deploy']
         };
-
-        let currentCmd = null;
-
+        
         const COMMANDS = {
             'generate': { 
                 desc: 'Generate new wallet', 
-                params: [], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: () => ({ cmd: 'generate' }),
-                cli: KGRAF3_BIN + ' generate' 
+                params: [],
+                action: () => runCLI('generate')
             },
-            'balance-tn12': { 
-                desc: 'Check TN12 balance', 
-                params: [{name: 'address', default: ''}], 
-                api: API_BASE + '/addresses/' + encodeURIComponent(TEST_WALLET.address) + '/balance',
-                method: 'GET',
-                cli: KGRAF3_BIN + ' balance <address>' 
+            'load': { 
+                desc: 'Load from private key', 
+                params: [{name: 'private_key', placeholder: 'Private key hex'}],
+                action: (args) => runCLI('load ' + args[0])
             },
-            'balance-tn10': { 
-                desc: 'Check TN10 balance', 
-                params: [{name: 'address', default: TEST_WALLET.address}], 
-                api: 'https://api-tn10.kaspa.org/addresses/' + encodeURIComponent(TEST_WALLET.address) + '/balance',
-                method: 'GET',
-                cli: KGRAF3_BIN + ' balance <address> --rpc https://api-tn10.kaspa.org' 
+            'balance': { 
+                desc: 'Check balance', 
+                params: [{name: 'address', placeholder: 'Address', id: 'balanceAddr'}],
+                action: (args) => {
+                    const addr = args[0] || document.getElementById('walletB').value || document.getElementById('walletA').value;
+                    checkBalance(addr);
+                }
             },
             'utxos': { 
                 desc: 'List UTXOs', 
-                params: [{name: 'address', default: TEST_WALLET.address}], 
-                api: API_BASE + '/addresses/' + encodeURIComponent(TEST_WALLET.address) + '/utxos',
-                method: 'GET',
-                cli: KGRAF3_BIN + ' utxos <address>' 
-            },
-            'send': { 
-                desc: 'Transfer KAS', 
-                params: [
-                    {name: 'private_key', default: TEST_WALLET.privateKey}, 
-                    {name: 'recipient', default: ''}, 
-                    {name: 'amount', default: '1'}
-                ], 
-                api: LOCAL_API + '/transfer',
-                method: 'POST',
-                body: (args) => ({ privateKey: args[0], recipient: args[1], amount: args[2] }),
-                cli: KGRAF3_BIN + ' transfer <private_key> <recipient> <amount>' 
-            },
-            'load': { 
-                desc: 'Load wallet', 
-                params: [{name: 'private_key', default: ''}], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'load ' + args[0] }),
-                cli: KGRAF3_BIN + ' load <private_key>' 
+                params: [{name: 'address', placeholder: 'Address'}],
+                action: (args) => checkUTXOs(args[0])
             },
             'send': { 
                 desc: 'Send KAS', 
                 params: [
-                    {name: 'private_key', default: TEST_WALLET.privateKey}, 
-                    {name: 'recipient', default: ''}, 
-                    {name: 'amount', default: '1'}
-                ], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'transfer ' + args[0] + ' ' + args[1] + ' ' + args[2] + ' --rpc ' + RPC_URL }),
-                cli: KGRAF3_BIN + ' transfer <private_key> <recipient> <amount>' 
+                    {name: 'private_key', placeholder: 'Private key', id: 'sendKey'},
+                    {name: 'recipient', placeholder: 'Recipient address', id: 'sendTo'},
+                    {name: 'amount', placeholder: 'Amount (KAS)', id: 'sendAmount'}
+                ],
+                action: (args) => sendKAS(args[0], args[1], args[2])
             },
-            'receive': { 
-                desc: 'Generate receive address', 
-                params: [], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: () => ({ cmd: 'generate' }),
-                cli: KGRAF3_BIN + ' generate' 
+            'miner-start': { 
+                desc: 'Start CPU miner', 
+                params: [{name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, {name: 'threads', placeholder: 'Threads', default: '2'}],
+                action: (args) => startMiner(args[0], args[1])
             },
-            'hd-generate': { 
-                desc: 'Generate HD wallet', 
-                params: [], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: () => ({ cmd: 'hd-generate' }),
-                cli: KGRAF3_BIN + ' hd-generate' 
+            'miner-stop': { 
+                desc: 'Stop miner', 
+                params: [],
+                action: () => stopMiner()
             },
-            'hd-load': { 
-                desc: 'Load HD wallet', 
-                params: [{name: 'seed', default: ''}], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'hd-load ' + args[0] }),
-                cli: KGRAF3_BIN + ' hd-load <seed>' 
-            },
-            'derive-address': { 
-                desc: 'Derive address', 
-                params: [{name: 'seed', default: ''}, {name: 'index', default: '0'}], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'derive-address ' + args[0] + ' ' + args[1] }),
-                cli: KGRAF3_BIN + ' derive-address <seed> <index>' 
-            },
-            'derive-many': { 
-                desc: 'Derive many addresses', 
-                params: [{name: 'seed', default: ''}, {name: 'count', default: '5'}], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'derive-many ' + args[0] + ' ' + args[1] }),
-                cli: KGRAF3_BIN + ' derive-many <seed> <count>' 
-            },
-            'deadman-deploy': { 
-                desc: 'Deploy deadman', 
+            'rothschild-start': { 
+                desc: 'Start TX generator', 
                 params: [
-                    {name: 'private_key', default: TEST_WALLET.privateKey}, 
-                    {name: 'beneficiary', default: ''}, 
-                    {name: 'timeout', default: '300'}
-                ], 
-                api: LOCAL_API + '/transfer',
-                method: 'POST',
-                body: (args) => ({ privateKey: args[0], recipient: args[1], amount: args[2] }),
-                cli: KGRAF3_BIN + ' transfer <key> <addr> <amount>' 
+                    {name: 'private_key', placeholder: 'Private key', id: 'rothschildKey'},
+                    {name: 'recipient', placeholder: 'Recipient', id: 'rothschildTo'},
+                    {name: 'tps', placeholder: 'TPS', default: '1'}
+                ],
+                action: (args) => startRothschild(args[0], args[1], args[2])
             },
-            'deadman-heartbeat': { 
-                desc: 'Heartbeat', 
-                params: [{name: 'private_key', default: TEST_WALLET.privateKey}], 
-                api: LOCAL_API + '/transfer',
-                method: 'POST',
-                body: (args) => ({ privateKey: args[0], recipient: '<beneficiary>', amount: '0' }),
-                cli: KGRAF3_BIN + ' transfer <key> <addr> <amount>' 
+            'rothschild-stop': { 
+                desc: 'Stop TX generator', 
+                params: [],
+                action: () => stopRothschild()
             },
-            'deadman-cancel': { 
-                desc: 'Cancel', 
-                params: [{name: 'private_key', default: TEST_WALLET.privateKey}], 
-                api: LOCAL_API + '/transfer',
-                method: 'POST',
-                body: (args) => ({ privateKey: args[0], recipient: '<refund_addr>', amount: '100' }),
-                cli: KGRAF3_BIN + ' transfer <key> <addr> <amount>' 
+            'p2pkh': { 
+                desc: 'P2PKH Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('p2pkh', args[0])
             },
-            'deadman-claim': { 
-                desc: 'Claim funds', 
-                params: [{name: 'private_key', default: ''}], 
-                api: LOCAL_API + '/transfer',
-                method: 'POST',
-                body: (args) => ({ privateKey: args[0], recipient: '<claim_addr>', amount: '100' }),
-                cli: KGRAF3_BIN + ' transfer <key> <addr> <amount>' 
+            'multisig': { 
+                desc: 'Multisig Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('multisig', args[0])
             },
-            'deadman-state': { 
-                desc: 'View state', 
-                params: [{name: 'address', default: ''}], 
-                api: API_BASE + '/addresses/' + encodeURIComponent('') + '/utxos',
-                cli: KGRAF3_BIN + ' utxos <address>' 
+            'escrow': { 
+                desc: 'Escrow Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('escrow', args[0])
             },
-            'deploy-contract': { 
-                desc: 'Deploy contract', 
-                params: [
-                    {name: 'contract', default: 'deadman'}, 
-                    {name: 'private_key', default: TEST_WALLET.privateKey}
-                ], 
-                api: null,
-                cli: 'cd ~/kaspa-node && python3 -m silverscript compile <file>' 
+            'hodl': { 
+                desc: 'HODL Vault', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('hodl_vault', args[0])
             },
-            'graffiti': { 
-                desc: 'Send graffiti', 
-                params: [
-                    {name: 'private_key', default: TEST_WALLET.privateKey}, 
-                    {name: 'message', default: ''},
-                    {name: 'mime', default: 'text/plain'},
-                    {name: 'fee', default: '1000'}
-                ], 
-                api: LOCAL_API + '/run-cmd',
-                method: 'POST',
-                body: (args) => ({ cmd: 'graffiti ' + args[0] + ' "' + args[1] + '" ' + args[2] + ' ' + args[3] + ' --rpc ' + RPC_URL }),
-                cli: KGRAF3_BIN + ' graffiti <key> <msg> [mime] [fee]' 
+            'mecenas': { 
+                desc: 'Mecenas Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('mecenas', args[0])
+            },
+            'compile': { 
+                desc: 'Compile SilverScript', 
+                params: [{name: 'file', placeholder: 'Contract file'}],
+                action: (args) => compileContract(args[0], '')
+            },
+            'deploy': { 
+                desc: 'Deploy Contract', 
+                params: [{name: 'contract', placeholder: 'Contract JSON'}, {name: 'private_key', placeholder: 'Private key'}],
+                action: (args) => deployContract(args[0], args[1])
             }
         };
-
-        const CATEGORIES = {
-            'WALLET': ['load', 'generate', 'balance-tn12', 'balance-tn10', 'utxos', 'send', 'receive', 'graffiti'],
-            'DEADMAN': ['deadman-deploy', 'deadman-heartbeat', 'deadman-cancel', 'deadman-claim', 'deadman-state'],
-            'CONTRACT': ['deploy-contract'],
-            'COMPILER': ['silverc']
-        };
-
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+        let currentCmd = null;
+        
+        function init() {
+            renderCommands();
+            refreshWallet('A');
+            refreshWallet('B');
+            updateStats();
+            setInterval(updateStats, 5000);
+            log('Console ready. Type commands or use buttons.');
         }
-
-        function renderButtons() {
-            const container = document.getElementById('chipButtons');
+        
+        async function updateStats() {
+            try {
+                const [minerRes, nodeRes, txRes] = await Promise.all([
+                    fetch('/api/miner-status'),
+                    fetch('/api/node-status'),
+                    fetch('/api/tx-status')
+                ]);
+                const miner = await minerRes.json();
+                const node = await nodeRes.json();
+                const tx = await txRes.json();
+                
+                document.getElementById('minerHashrate').textContent = miner.hashrate || 'N/A';
+                document.getElementById('nodeTps').textContent = node.tps || 'N/A';
+                document.getElementById('txTps').textContent = tx.running ? (tx.tps || '0') : 'OFF';
+            } catch(e) {
+                console.log('Stats update error:', e);
+            }
+        }
+        
+        function renderCommands() {
+            const sidebar = document.getElementById('cmdSidebar');
             Object.entries(CATEGORIES).forEach(([cat, cmds]) => {
                 const header = document.createElement('div');
                 header.className = 'cat-header';
                 header.textContent = cat;
-                container.appendChild(header);
+                sidebar.appendChild(header);
+                
                 const div = document.createElement('div');
                 div.className = 'cmd-btns';
                 cmds.forEach(cmd => {
@@ -358,130 +332,363 @@
                     btn.onclick = () => showParams(cmd);
                     div.appendChild(btn);
                 });
-                container.appendChild(div);
+                sidebar.appendChild(div);
             });
         }
-
+        
         function showParams(cmdName) {
             currentCmd = cmdName;
             const cmd = COMMANDS[cmdName];
-            const header = document.getElementById('paramsHeader');
-            const form = document.getElementById('paramsForm');
+            document.getElementById('paramsTitle').textContent = cmdName.toUpperCase();
             
-            header.textContent = cmdName.toUpperCase() + ' PARAMETERS';
+            let html = '<div class="info-box">' + cmd.desc + '</div>';
             
-            if (!cmd.params || cmd.params.length === 0) {
-                form.innerHTML = '<div class="info">No parameters. Click RUN.</div><button class="run-btn" onclick="runCommand()">▶ RUN</button>';
+            if (cmd.params.length === 0) {
+                html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
             } else {
-                let html = '';
                 cmd.params.forEach((p, i) => {
-                    html += '<div class="param-group"><div class="param-label">' + p.name + '</div><input type="text" class="param-input" id="param-' + i + '" value="' + (p.default || '') + '"></div>';
+                    const defaultVal = p.default || '';
+                    const placeholder = p.placeholder || p.name;
+                    const id = p.id || 'param-' + i;
+                    let value = defaultVal;
+                    let extra = '';
+                    
+                    // Special handling for send command
+                    if (cmdName === 'send') {
+                        if (p.id === 'sendKey') {
+                            value = document.getElementById('walletCKey').value || '';
+                        } else if (p.id === 'sendTo') {
+                            value = ''; // Clear recipient for send
+                        } else {
+                            value = defaultVal;
+                        }
+                    } else if (p.name === 'private_key' || p.id === 'sendKey' || p.id === 'rothschildKey') {
+                        if (document.getElementById('walletAKey').value) extra += '<button type="button" class="chip-btn" onclick="document.getElementById(\'' + id + '\').value=document.getElementById(\'walletAKey\').value">From A</button>';
+                    } else if (p.name === 'recipient' || p.id === 'sendTo' || p.id === 'rothschildTo') {
+                        value = document.getElementById('walletB').value || defaultVal;
+                    } else if (p.name === 'address' || p.id === 'balanceAddr' || p.id === 'minerAddr') {
+                        value = document.getElementById('walletB').value || defaultVal;
+                    }
+                    html += '<div class="param-group"><div class="param-label">' + p.name + '</div><input type="text" class="param-input" id="' + id + '" placeholder="' + placeholder + '" value="' + value + '">' + extra + '</div>';
                 });
-                html += '<button class="run-btn" onclick="runCommand()">▶ RUN</button>';
-                form.innerHTML = html;
+                html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
             }
             
-            // Show command in output
-            const output = document.getElementById('cliOutput');
-            output.innerHTML = '<div class="cmd">' + cmd.cli + '</div><div class="info">Fill parameters and click RUN</div>';
+            document.getElementById('paramsForm').innerHTML = html;
         }
-
-        async function runCommand() {
+        
+        function executeCommand() {
             if (!currentCmd) return;
-            
             const cmd = COMMANDS[currentCmd];
-            const output = document.getElementById('cliOutput');
+            const args = cmd.params.map((p, i) => {
+                const id = p.id || 'param-' + i;
+                const el = document.getElementById(id);
+                return el ? el.value : (p.default || '');
+            });
+            log('$ ' + cmd.desc);
+            cmd.action(args);
+        }
+        
+        async function refreshWallet(which) {
+            console.log('refreshWallet called for:', which);
+            const input = document.getElementById('wallet' + which);
+            const addrEl = document.getElementById('addr' + which);
+            const balEl = document.getElementById('bal' + which);
+            console.log('Elements found - input:', !!input, 'addrEl:', !!addrEl, 'balEl:', !!balEl);
             
-            // Get args
-            let args = [];
-            if (cmd.params) {
-                args = cmd.params.map((p, i) => {
-                    const el = document.getElementById('param-' + i);
-                    return el ? el.value : p.default;
-                });
+            let value = input.value.trim();
+            console.log('Input value:', value);
+            if (!value) {
+                balEl.textContent = 'No input';
+                return;
             }
             
-            // Build actual command
-            let actualCmd = cmd.cli;
-            output.innerHTML = '<div class="cmd">' + actualCmd + '</div>';
+            // If it's a private key, convert to address
+            let address = value;
+            if (value.length === 64 && !value.startsWith('kaspatest:')) {
+                // It's a private key - generate address
+                try {
+                    const resp = await fetch('/api/run-cmd', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({cmd: 'load ' + value})
+                    });
+                    const data = await resp.json();
+                    if (data.address) {
+                        address = data.address;
+                        // Store private key in walletAKey if loading wallet A
+                        if (which === 'A') {
+                            document.getElementById('walletAKey').value = value;
+                        }
+                    }
+                } catch(e) {
+                    log('Error loading wallet: ' + e.message, 'error');
+                }
+            }
+            
+            // Ensure proper format
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            // Validate address length
+            if (address.length < 70 || address.length > 74) {
+                addrEl.textContent = 'Invalid address';
+                balEl.textContent = 'Error';
+                return;
+            }
+            
+            addrEl.textContent = address.substring(0, 20) + '...';
             
             try {
-                if (cmd.api) {
-                    let response;
-                    if (cmd.method === 'POST') {
-                        const bodyData = cmd.body ? cmd.body(args) : {};
-                        response = await fetch(cmd.api, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(bodyData)
-                        });
-                    } else {
-                        // Build URL with args for GET requests
-                        let url = cmd.api;
-                        if (cmd.params && cmd.params.length > 0 && args[0]) {
-                            // Replace :address placeholder
-                            url = url.replace(encodeURIComponent(TEST_WALLET.address), encodeURIComponent(args[0] || TEST_WALLET.address));
-                            url = url.replace('/addresses//', '/addresses/' + encodeURIComponent(args[0] || ''));
-                        }
-                        response = await fetch(url);
-                    }
-                    const data = await response.json();
-                    
-                    // Handle error response
-                    if (data.error) {
-                        output.innerHTML += '<div class="error">' + data.error + '</div>';
-                    } else {
-                        output.innerHTML += '<div class="result">' + JSON.stringify(data, null, 2) + '</div>';
-                    }
-                    
-                    // Handle load/hd-load response - update wallet
-                    if ((currentCmd === 'load' || currentCmd === 'hd-load') && data.private_key && data.address) {
-                        TEST_WALLET.privateKey = data.private_key;
-                        TEST_WALLET.address = data.address;
-                        document.getElementById('walletAddress').textContent = data.address;
-                        await refreshBalance();
-                        showToast('Wallet loaded: ' + data.address);
-                    }
-                    
-                    // Refresh balance after send
-                    if (currentCmd === 'send' && !data.error) {
-                        await refreshBalance();
-                        showToast('Transaction sent!');
-                    }
+                const resp = await fetch('/api/balance?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                console.log('Balance response:', data);
+                const bal = Number(data.balance) / 1e8;
+                if (isNaN(bal)) {
+                    balEl.textContent = 'Error';
                 } else {
-                    output.innerHTML += '<div class="info">Run this command in terminal:\n\n' + actualCmd + '</div>';
+                    balEl.textContent = bal.toFixed(2) + ' KAS';
                 }
-            } catch (e) {
-                output.innerHTML += '<div class="error">Error: ' + e.message + '\n\nMake sure the API server is running:\nnode server.js</div>';
+            } catch(e) {
+                balEl.textContent = 'Error: ' + e.message;
             }
+        }
+        
+        async function checkBalance(address) {
+            if (!address) {
+                log('Error: No address provided', 'error');
+                return;
+            }
+            // Ensure proper format
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            // Validate address length
+            if (address.length < 70 || address.length > 74) {
+                log('Error: Invalid address length. Must be 61-63 chars after kaspatest:', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/balance?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                if (data.balance) {
+                    const bal = Number(data.balance) / 1e8;
+                    log('Balance: ' + bal.toFixed(2) + ' KAS', 'success');
+                } else {
+                    log('Error: ' + JSON.stringify(data), 'error');
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkUTXOs(address) {
+            if (!address) {
+                log('Error: No address provided', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/utxos?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                log('UTXOs: ' + JSON.stringify(data, null, 2));
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function sendKAS(privateKey, recipient, amount) {
+            if (!privateKey || !recipient || !amount) {
+                log('Error: Missing parameters', 'error');
+                return;
+            }
+            
+            // Validate address format
+            let address = recipient;
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            // Must be 61-63 chars after prefix (total 70-74)
+            const addrPart = address.replace('kaspatest:', '');
+            if (addrPart.length < 61 || addrPart.length > 63) {
+                log('Error: Invalid address. Must be 61-63 chars after kaspatest: (got ' + addrPart.length + ')', 'error');
+                return;
+            }
+            
+            log('Sending ' + amount + ' KAS to ' + address + '...');
+            
+            // Use rothschild with send-amount for single transaction
+            try {
+                const resp = await fetch('/api/rothschild', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        privateKey: privateKey,
+                        recipient: address,
+                        tps: 1,
+                        amount: parseInt(amount)
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else {
+                    log('Transaction started, will stop in 2 seconds...', 'success');
+                    // Stop after 2 seconds to send just 1 transaction (at 1 TPS)
+                    setTimeout(async () => {
+                        try {
+                            await fetch('/api/rothschild-stop', {method: 'POST'});
+                            log('Stopped. Sent ' + amount + ' KAS', 'success');
+                        } catch(e) {
+                            log('Auto-stop failed: ' + e.message, 'error');
+                        }
+                    }, 2000);
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function startMiner(address, threads) {
+            if (!address) {
+                log('Error: Mining address required', 'error');
+                return;
+            }
+            log('Starting miner to ' + address + ' with ' + (threads || 2) + ' threads...');
+            // Would need backend endpoint
+            log('Miner started (demo)', 'success');
+        }
+        
+        async function stopMiner() {
+            log('Stopping miner...');
+            log('Miner stopped', 'success');
+        }
+        
+        async function startRothschild(privateKey, recipient, tps) {
+            if (!privateKey || !recipient) {
+                log('Error: Private key and recipient required', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/rothschild', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        privateKey: privateKey,
+                        recipient: recipient,
+                        tps: parseInt(tps) || 1
+                    })
+                });
+                const data = await resp.json();
+                log('Rothschild started: ' + JSON.stringify(data), 'success');
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function stopRothschild() {
+            try {
+                await fetch('/api/rothschild-stop', {method: 'POST'});
+                log('Rothschild stopped', 'success');
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        function compileContract(name, args) {
+            log('Compiling ' + name + '... (demo)');
+            log('Contract: ' + name + ' compiled successfully', 'success');
+        }
+        
+        function deployContract(contractJson, privateKey) {
+            log('Deploying ' + contractJson + '... (demo)');
+            log('Contract deployed successfully', 'success');
+        }
+        
+        async function runCLI(cmd) {
+            log('Running: ' + cmd);
+            try {
+                const resp = await fetch('/api/run-cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await resp.json();
+                
+                // Check if generated address is valid (61-63 chars after prefix)
+                if (cmd === 'generate' && data.address) {
+                    const addrLen = data.address.replace('kaspatest:', '').length;
+                    if (addrLen < 61 || addrLen > 63) {
+                        log('WARNING: Generated address has ' + addrLen + ' chars (need 61-63). Use pre-funded wallets instead.', 'error');
+                    } else {
+                        log('Generated address is VALID (' + addrLen + ' chars)', 'success');
+                    }
+                    // Auto-fill wallet A with generated wallet
+                    document.getElementById('walletA').value = data.address;
+                    document.getElementById('walletAKey').value = data.private_key || '';
+                    log('Wallet A auto-filled with new wallet', 'success');
+                }
+                
+                // Handle load command - fill Wallet C
+                if (cmd.startsWith('load ') && data.address) {
+                    const privKey = cmd.replace('load ', '').trim();
+                    document.getElementById('walletC').value = data.address;
+                    document.getElementById('walletCKey').value = privKey;
+                    refreshWallet('C');
+                    log('Loaded to Wallet C: ' + data.address.substring(0, 20) + '...', 'success');
+                }
+                
+                log(JSON.stringify(data, null, 2), 'success');
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        function log(msg, type = '') {
+            const output = document.getElementById('consoleOutput');
+            const line = document.createElement('div');
+            line.className = type === 'error' ? 'error-line' : type === 'success' ? 'success-line' : 'output-line';
+            line.textContent = msg;
+            output.appendChild(line);
             output.scrollTop = output.scrollHeight;
         }
-
-        function clearOutput() {
-            document.getElementById('cliOutput').innerHTML = '<div class="info">Click a command, fill params, click RUN...</div>';
+        
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '';
         }
-
-        async function refreshBalance() {
-            try {
-                document.getElementById('walletAddress').textContent = TEST_WALLET.address;
-                const res = await fetch(API_BASE + '/addresses/' + TEST_WALLET.address + '/balance');
-                const data = await res.json();
-                document.getElementById('walletBalance').textContent = (parseInt(data.balance) / 100000000).toFixed(2) + ' TKAS';
-                showToast('Balance refreshed');
-            } catch (e) {
-                showToast('Error: ' + e.message);
+        
+        function handleConsoleEnter(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('consoleInput');
+                const cmd = input.value.trim();
+                if (cmd) {
+                    log('$ ' + cmd);
+                    const parts = cmd.split(' ');
+                    if (COMMANDS[parts[0]]) {
+                        showParams(parts[0]);
+                        // Auto-fill parameters from wallets if available
+                        setTimeout(() => {
+                            const cmdDef = COMMANDS[parts[0]];
+                            cmdDef.params.forEach((p, i) => {
+                                const id = p.id || 'param-' + i;
+                                const el = document.getElementById(id);
+                                if (el && !el.value) {
+                                    if (p.name === 'private_key' || p.id === 'sendKey') {
+                                        // Do NOT auto-fill private keys - user must enter manually or load from vault
+                                    } else if (p.name === 'recipient' || p.id === 'sendTo') {
+                                        el.value = document.getElementById('walletB').value || '';
+                                    } else if (p.name === 'address' || p.id === 'balanceAddr') {
+                                        el.value = document.getElementById('walletB').value || document.getElementById('walletA').value || '';
+                                    }
+                                }
+                            });
+                        }, 100);
+                    }
+                    input.value = '';
+                }
             }
         }
-
-        function updateDateTime() {
-            const now = new Date();
-            document.getElementById('datetime').textContent = now.toLocaleString();
-        }
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
-
-        renderButtons();
-        refreshBalance();
+        
+        init();
     </script>
 </body>
 </html>

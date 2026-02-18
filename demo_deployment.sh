@@ -16,18 +16,18 @@ STEP 1: SYSTEM CHECK
 
 EOF
 
-cd /home/cliff/silverscript
+cd /Users/4dsto/silverscript
 
 # Check binaries
 echo "Checking binaries..."
-if [ -f "/home/cliff/rusty-kaspa/target/kaspad" ]; then
+if [ -f "/Users/4dsto/rusty-kaspa-tn12/target/kaspad" ]; then
     echo "  ✓ kaspad binary found"
-    /home/cliff/rusty-kaspa/target/kaspad --version 2>&1 | head -1
+    /Users/4dsto/rusty-kaspa-tn12/target/kaspad --version 2>&1 | head -1
 else
     echo "  ✗ kaspad not found"
 fi
 
-if [ -f "/home/cliff/rusty-kaspa/target/rothschild" ]; then
+if [ -f "/Users/4dsto/rusty-kaspa-tn12/target/rothschild" ]; then
     echo "  ✓ rothschild binary found"
 else
     echo "  ✗ rothschild not found"
@@ -125,13 +125,13 @@ cat << 'EOF'
 To deploy this contract to Kaspa Testnet 12:
 
 1. Start the Kaspa node:
-   cd /home/cliff/rusty-kaspa
+   cd /Users/4dsto/rusty-kaspa-tn12
    ./target/kaspad --testnet --netsuffix=12 --utxoindex
 
 2. Wait for node to sync (check logs for "Processed" messages)
 
 3. Generate wallet (in another terminal):
-   cd /home/cliff/rusty-kaspa
+   cd /Users/4dsto/rusty-kaspa-tn12
    ./target/rothschild
    
    This will output:
@@ -144,7 +144,7 @@ To deploy this contract to Kaspa Testnet 12:
    - Request coins
 
 5. Deploy the contract:
-   cd /home/cliff/silverscript
+   cd /Users/4dsto/silverscript
    ./deploy_contract.sh p2pkh <your-private-key>
 
 6. The deployment script will:
@@ -340,16 +340,16 @@ cat << 'EOF'
 📋 TO COMPLETE DEPLOYMENT:
 
    1. Start node: 
-      cd /home/cliff/rusty-kaspa && ./target/kaspad --testnet --netsuffix=12 --utxoindex
+      cd /Users/4dsto/rusty-kaspa-tn12 && ./target/kaspad --testnet --netsuffix=12 --utxoindex
 
    2. Generate wallet:
-      cd /home/cliff/rusty-kaspa && ./target/rothschild
+      cd /Users/4dsto/rusty-kaspa-tn12 && ./target/rothschild
       
    3. Get coins from faucet:
       https://faucet-tn12.kaspanet.io
 
    4. Deploy contract:
-      cd /home/cliff/silverscript
+      cd /Users/4dsto/silverscript
       ./deploy_contract.sh p2pkh <private-key>
 
 ⚠️  IMPORTANT REMINDERS:
