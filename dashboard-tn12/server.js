@@ -198,8 +198,8 @@ const server = http.createServer(async (req, res) => {
             exec('curl -s ifconfig.me 2>/dev/null || echo "unknown"', (err1, ip) => {
                 ip = ip.trim() || 'unknown';
                 
-                // Get disk space
-                exec('df -h / | tail -1 | awk \'{print $2}\' | tr -d "i"', (err2, hd) => {
+                // Get disk space (available)
+                exec('df -h / | tail -1 | awk \'{print $4}\' | tr -d "i"', (err2, hd) => {
                     hd = hd.trim() || 'unknown';
                     
                     // Get ktn12 directory size
