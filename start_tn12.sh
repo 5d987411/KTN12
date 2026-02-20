@@ -14,6 +14,8 @@ nohup "$RUSTY_KASPA_DIR/target/release/kaspad" \
     --netsuffix=12 \
     --utxoindex \
     --appdir "$KASPAD_DATA_DIR" \
+    --rpclisten-json \
+    --unsaferpc \
     > "$KASPAD_LOG" 2>&1 &
 
 PID=$!

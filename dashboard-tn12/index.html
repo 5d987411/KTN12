@@ -133,7 +133,8 @@
             
             <div class="card">
                 <div class="card-title">② Wallet B (Recipient)</div>
-                <input type="text" class="wallet-input" id="walletB" placeholder="Address" value="kaspatest:qztewtux4hsrcekswxcrrfhaez692n44fegr3rd5z3rjm85d2ug8xhp0lzg33">
+                <input type="text" class="wallet-input" id="walletB" placeholder="Address" value="kaspatest:qpx598t8l8l6g7ntq37fd9ecq7g2s90vk376tu28u4r7cnwf4nvmcruc3nd4d">
+                <input type="text" class="wallet-input" id="walletBKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
                 <div class="balance-display">
                     <span class="balance-label">ADDRESS</span>
                     <span class="balance-value" id="addrB">-</span>
@@ -189,9 +190,13 @@
     <script>
         const API_BASE = 'https://api-tn12.kaspa.org';
         
+        let minerRunning = false;
+        let rothschildRunning = false;
+        
         const CATEGORIES = {
-            'WALLET': ['generate', 'load', 'balance', 'utxos', 'send'],
-            'MINING': ['miner-start', 'miner-stop', 'rothschild-start', 'rothschild-stop'],
+            'WALLET': ['generate', 'load', 'send'],
+            'MINING': ['miner-status', 'miner-start', 'rothschild-start', 'rothschild-stop'],
+            'SILVERSCRIPT': ['silver-compile', 'silver-list'],
             'CONTRACTS': ['p2pkh', 'multisig', 'escrow', 'hodl', 'mecenas'],
             'COMPILER': ['compile', 'deploy']
         };
@@ -225,33 +230,53 @@
                 params: [
                     {name: 'private_key', placeholder: 'Private key', id: 'sendKey'},
                     {name: 'recipient', placeholder: 'Recipient address', id: 'sendTo'},
-                    {name: 'amount', placeholder: 'Amount (KAS)', id: 'sendAmount'}
+                    {name: 'amount', placeholder: 'Amount (TKAS)', id: 'sendAmount'}
                 ],
                 action: (args) => sendKAS(args[0], args[1], args[2])
             },
-            'miner-start': { 
-                desc: 'Start CPU miner', 
-                params: [{name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, {name: 'threads', placeholder: 'Threads', default: '2'}],
-                action: (args) => startMiner(args[0], args[1])
-            },
-            'miner-stop': { 
-                desc: 'Stop miner', 
+            'miner-status': { 
+                desc: 'Get miner status', 
                 params: [],
-                action: () => stopMiner()
+                action: () => checkMinerStatus()
+            },
+            'miner-start': { 
+                desc: 'Toggle CPU miner', 
+                params: [{name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, {name: 'threads', placeholder: 'Threads', default: '2'}],
+                action: (args) => toggleMiner(args[0], args[1])
             },
             'rothschild-start': { 
-                desc: 'Start TX generator', 
+                desc: 'Toggle TX generator', 
                 params: [
-                    {name: 'private_key', placeholder: 'Private key', id: 'rothschildKey'},
-                    {name: 'recipient', placeholder: 'Recipient', id: 'rothschildTo'},
-                    {name: 'tps', placeholder: 'TPS', default: '1'}
+                    {name: 'version', placeholder: 'rusty-kaspa or smartgoo', default: 'rusty-kaspa', id: 'rothschildVersion'},
+                    {name: 'private_key', placeholder: 'Private key hex', id: 'rothschildKey'},
+                    {name: 'recipient', placeholder: 'Recipient address', id: 'rothschildTo'},
+                    {name: 'tps', placeholder: 'TPS (tx/sec)', default: '1', id: 'rothschildTps'},
+                    {name: 'threads', placeholder: 'Threads (0=auto)', default: '2', id: 'rothschildThreads'},
+                    {name: 'priority_fee', placeholder: 'Priority fee', default: '0', id: 'rothschildFee'},
+                    {name: 'send_amount', placeholder: 'Send amount (TKAS)', default: '', id: 'rothschildAmount'},
+                    {name: 'randomize_fee', placeholder: 'yes/no', default: 'no', id: 'rothschildRandFee'},
+                    {name: 'randomize_tx_version', placeholder: 'yes/no', default: 'no', id: 'rothschildRandTx'}
                 ],
-                action: (args) => startRothschild(args[0], args[1], args[2])
+                action: (args) => startRothschild(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
             },
             'rothschild-stop': { 
                 desc: 'Stop TX generator', 
                 params: [],
                 action: () => stopRothschild()
+            },
+            'silver-compile': { 
+                desc: 'Compile SilverScript', 
+                params: [
+                    {name: 'source', placeholder: 'Source .sil file', id: 'silverSource'},
+                    {name: 'args', placeholder: 'Constructor args (optional)', id: 'silverArgs'},
+                    {name: 'output', placeholder: 'Output JSON file', id: 'silverOutput'}
+                ],
+                action: (args) => compileSilverScript(args[0], args[1], args[2])
+            },
+            'silver-list': { 
+                desc: 'List Examples', 
+                params: [],
+                action: () => listSilverExamples()
             },
             'p2pkh': { 
                 desc: 'P2PKH Contract', 
@@ -371,6 +396,30 @@
             
             let html = '<div class="info-box">' + cmd.desc + '</div>';
             
+            // For miner-start, check if running and show/hide params accordingly
+            if (cmdName === 'miner-start') {
+                fetch('/api/miner-status').then(r => r.json()).then(stats => {
+                    minerRunning = stats.running;
+                    renderMinerParams(minerRunning);
+                }).catch(() => {
+                    minerRunning = false;
+                    renderMinerParams(false);
+                });
+                return;
+            }
+            
+            // For rothschild-start, check if running and show/hide params accordingly
+            if (cmdName === 'rothschild-start') {
+                fetch('/api/tx-status').then(r => r.json()).then(stats => {
+                    rothschildRunning = stats.running;
+                    renderRothschildParams(rothschildRunning);
+                }).catch(() => {
+                    rothschildRunning = false;
+                    renderRothschildParams(false);
+                });
+                return;
+            }
+            
             if (cmd.params.length === 0) {
                 html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
             } else {
@@ -395,12 +444,72 @@
                     } else if (p.name === 'recipient' || p.id === 'sendTo' || p.id === 'rothschildTo') {
                         value = document.getElementById('walletB').value || defaultVal;
                     } else if (p.name === 'address' || p.id === 'balanceAddr' || p.id === 'minerAddr') {
-                        value = document.getElementById('walletB').value || defaultVal;
+                        value = document.getElementById('walletA').value || document.getElementById('walletB').value || defaultVal;
                     }
                     html += '<div class="param-group"><div class="param-label">' + p.name + '</div><input type="text" class="param-input" id="' + id + '" placeholder="' + placeholder + '" value="' + value + '">' + extra + '</div>';
                 });
                 html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
             }
+            
+            document.getElementById('paramsForm').innerHTML = html;
+        }
+        
+        function renderMinerParams(isRunning) {
+            minerRunning = isRunning;
+            const addrValue = document.getElementById('walletA').value || document.getElementById('walletB').value || '';
+            let html = '<div class="info-box">' + (isRunning ? 'Miner is running' : 'Start CPU miner') + '</div>';
+            
+            html += '<div class="param-group"><div class="param-label">address</div><input type="text" class="param-input" id="minerAddr" placeholder="Mining address" value="' + addrValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">threads</div><input type="text" class="param-input" id="param-1" placeholder="Threads" value="2"></div>';
+            
+            if (isRunning) {
+                html += '<button class="run-btn" onclick="stopMiner()">■ MINER-STOP</button>';
+            } else {
+                html += '<button class="run-btn" onclick="executeCommand()">▶ MINER-START</button>';
+            }
+            
+            document.getElementById('paramsForm').innerHTML = html;
+        }
+        
+        function renderRothschildParams(isRunning) {
+            rothschildRunning = isRunning;
+            const keyValue = '';
+            const toValue = '';
+            
+            // Fetch and display current status
+            fetch('/api/tx-status').then(r => r.json()).then(status => {
+                // Get current parameter values from inputs
+                const params = {
+                    version: document.getElementById('rothschildVersion') ? document.getElementById('rothschildVersion').value : 'rusty-kaspa',
+                    private_key: document.getElementById('rothschildKey') ? document.getElementById('rothschildKey').value : '',
+                    recipient: document.getElementById('rothschildTo') ? document.getElementById('rothschildTo').value : '',
+                    tps: document.getElementById('rothschildTps') ? document.getElementById('rothschildTps').value : '1',
+                    threads: document.getElementById('rothschildThreads') ? document.getElementById('rothschildThreads').value : '2',
+                    priority_fee: document.getElementById('rothschildFee') ? document.getElementById('rothschildFee').value : '0',
+                    send_amount: document.getElementById('rothschildAmount') ? document.getElementById('rothschildAmount').value : '',
+                    randomize_fee: document.getElementById('rothschildRandFee') ? document.getElementById('rothschildRandFee').value : 'no',
+                    randomize_tx_version: document.getElementById('rothschildRandTx') ? document.getElementById('rothschildRandTx').value : 'no'
+                };
+                
+                // Log current parameters
+                log('Rothschild Status: ' + (isRunning ? 'RUNNING' : 'STOPPED') + ' | TPS: ' + status.tps, isRunning ? 'success' : 'error');
+                log('Params: version=' + params.version + ', private_key=' + params.private_key.substring(0, 8) + '..., recipient=' + params.recipient.substring(0, 16) + '..., tps=' + params.tps + ', threads=' + params.threads + ', priority_fee=' + params.priority_fee + ', send_amount=' + params.send_amount + ', randomize_fee=' + params.randomize_fee + ', randomize_tx_version=' + params.randomize_tx_version, 'success');
+            }).catch(() => {});
+            
+            let html = '<div class="info-box">Start TX Generator</div>';
+            
+            html += '<div class="param-group"><div class="param-label">version</div><input type="text" class="param-input" id="rothschildVersion" placeholder="rusty-kaspa or smartgoo" value="rusty-kaspa"></div>';
+            html += '<div class="param-group"><div class="param-label">private_key</div><input type="text" class="param-input" id="rothschildKey" placeholder="Private key hex" value="' + keyValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">recipient</div><input type="text" class="param-input" id="rothschildTo" placeholder="Recipient address" value="' + toValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">tps (tx/sec)</div><input type="text" class="param-input" id="rothschildTps" placeholder="Transactions per second" value="1"></div>';
+            html += '<div class="param-group"><div class="param-label">threads</div><input type="text" class="param-input" id="rothschildThreads" placeholder="Threads (0=auto)" value="2"></div>';
+            html += '<div class="param-group"><div class="param-label">priority_fee</div><input type="text" class="param-input" id="rothschildFee" placeholder="Priority fee" value="0"></div>';
+            html += '<div class="param-group"><div class="param-label">send_amount</div><input type="text" class="param-input" id="rothschildAmount" placeholder="Send amount (TKAS)" value=""></div>';
+            html += '<div class="param-group"><div class="param-label">randomize_fee</div><input type="text" class="param-input" id="rothschildRandFee" placeholder="yes/no" value="no"></div>';
+            html += '<div class="param-group"><div class="param-label">randomize_tx_version</div><input type="text" class="param-input" id="rothschildRandTx" placeholder="yes/no" value="no"></div>';
+            
+            // Always show SEND button
+            html += '<button class="run-btn" onclick="executeCommand()">▶ SEND</button>';
             
             document.getElementById('paramsForm').innerHTML = html;
         }
@@ -431,33 +540,47 @@
                 return;
             }
             
-            // If it's a private key, convert to address
             let address = value;
+            
+            // Check if it's a private key (64 hex chars)
             if (value.length === 64 && !value.startsWith('kaspatest:')) {
-                // It's a private key - generate address
+                // It's a private key - use wallet-load to get address
                 try {
-                    const resp = await fetch('/api/run-cmd', {
+                    const resp = await fetch('/api/wallet-load', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({cmd: 'load ' + value})
+                        body: JSON.stringify({privateKey: value})
                     });
                     const data = await resp.json();
+                    console.log('Wallet load response:', data);
                     if (data.address) {
                         address = data.address;
-                        // Store private key in walletAKey if loading wallet A
+                        // Store private key for sending later
                         if (which === 'A') {
                             document.getElementById('walletAKey').value = value;
                         }
+                        if (which === 'B') {
+                            document.getElementById('walletBKey').value = value;
+                        }
+                        if (which === 'C') {
+                            document.getElementById('walletCKey').value = value;
+                        }
+                    }
+                    if (data.balance !== undefined) {
+                        balEl.textContent = data.balance.toFixed(4) + ' TKAS';
+                        addrEl.textContent = address.substring(0, 20) + '...';
+                        return;
                     }
                 } catch(e) {
                     log('Error loading wallet: ' + e.message, 'error');
                 }
             }
             
-            // Ensure proper format
+            // It's an address - use public API to get balance
             if (!address.startsWith('kaspatest:')) {
                 address = 'kaspatest:' + address;
             }
+            
             // Validate address length
             if (address.length < 70 || address.length > 74) {
                 addrEl.textContent = 'Invalid address';
@@ -467,18 +590,18 @@
             
             addrEl.textContent = address.substring(0, 20) + '...';
             
+            // Get balance from public API
             try {
-                const resp = await fetch('/api/balance?address=' + encodeURIComponent(address));
+                const resp = await fetch('/api/wallet/balance?address=' + encodeURIComponent(address));
                 const data = await resp.json();
                 console.log('Balance response:', data);
-                const bal = Number(data.balance) / 1e8;
-                if (isNaN(bal)) {
+                if (data.error) {
                     balEl.textContent = 'Error';
                 } else {
-                    balEl.textContent = bal.toFixed(2) + ' KAS';
+                    balEl.textContent = data.balance.toFixed(4) + ' TKAS';
                 }
             } catch(e) {
-                balEl.textContent = 'Error: ' + e.message;
+                balEl.textContent = 'Error';
             }
         }
         
@@ -501,7 +624,7 @@
                 const data = await resp.json();
                 if (data.balance) {
                     const bal = Number(data.balance) / 1e8;
-                    log('Balance: ' + bal.toFixed(2) + ' KAS', 'success');
+                    log('Balance: ' + bal.toFixed(2) + ' TKAS', 'success');
                 } else {
                     log('Error: ' + JSON.stringify(data), 'error');
                 }
@@ -542,35 +665,38 @@
                 return;
             }
             
-            log('Sending ' + amount + ' KAS to ' + address + '...');
+            log('Sending ' + amount + ' TKAS to ' + address + '...');
             
-            // Use rothschild with send-amount for single transaction
+            // Use the new wallet/send endpoint
             try {
-                const resp = await fetch('/api/rothschild', {
+                const resp = await fetch('/api/wallet/send', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         privateKey: privateKey,
                         recipient: address,
-                        tps: 1,
-                        amount: parseInt(amount)
+                        amount: parseFloat(amount)
                     })
                 });
                 const data = await resp.json();
                 if (data.error) {
                     log('Error: ' + data.error, 'error');
+                } else if (data.txId && data.txId !== 'check explorer') {
+                    log('Sent! TX: ' + data.txId, 'success');
+                } else if (data.error) {
+                    log('Error: ' + data.error, 'error');
                 } else {
-                    log('Transaction started, will stop in 2 seconds...', 'success');
-                    // Stop after 2 seconds to send just 1 transaction (at 1 TPS)
-                    setTimeout(async () => {
-                        try {
-                            await fetch('/api/rothschild-stop', {method: 'POST'});
-                            log('Stopped. Sent ' + amount + ' KAS', 'success');
-                        } catch(e) {
-                            log('Auto-stop failed: ' + e.message, 'error');
-                        }
-                    }, 2000);
+                    log('Transaction sent! Check explorer for details.', 'success');
                 }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkMinerStatus() {
+            try {
+                const stats = await fetch('/api/miner-status').then(r => r.json());
+                log('Miner Status: Running=' + stats.running + ', Hashrate=' + stats.hashrate, stats.running ? 'success' : 'error');
             } catch(e) {
                 log('Error: ' + e.message, 'error');
             }
@@ -578,36 +704,159 @@
         
         async function startMiner(address, threads) {
             if (!address) {
+                address = document.getElementById('walletA').value;
+            }
+            if (!address) {
                 log('Error: Mining address required', 'error');
                 return;
             }
-            log('Starting miner to ' + address + ' with ' + (threads || 2) + ' threads...');
-            // Would need backend endpoint
-            log('Miner started (demo)', 'success');
+            try {
+                const resp = await fetch('/api/miner-start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ address: address, threads: threads || 8 })
+                });
+                const data = await resp.json();
+                log('Miner started: ' + (data.pid ? 'PID ' + data.pid : 'OK'), 'success');
+                minerRunning = true;
+                // Show miner stats
+                setTimeout(async () => {
+                    try {
+                        const stats = await fetch('/api/miner-status').then(r => r.json());
+                        const hr = stats.running ? stats.hashrate : '0.00 M/s';
+                        log('Hashrate: ' + hr + ', Running: ' + stats.running, 'success');
+                        // Show miner log
+                        fetch('/api/shell', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ cmd: 'tail -5 miner.log' })
+                        }).then(r => r.json()).then(logData => {
+                            if (logData.stdout) {
+                                log('--- Miner Log ---', 'success');
+                                logData.stdout.split('\n').forEach(line => log(line));
+                            }
+                        });
+                    } catch(e) {}
+                }, 3000);
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
         }
         
         async function stopMiner() {
-            log('Stopping miner...');
-            log('Miner stopped', 'success');
+            try {
+                await fetch('/api/miner-stop', { method: 'POST' });
+                log('Miner stopped', 'success');
+                minerRunning = false;
+                // Show miner stats
+                setTimeout(async () => {
+                    try {
+                        const stats = await fetch('/api/miner-status').then(r => r.json());
+                        const hr = stats.running ? stats.hashrate : '0.00 M/s';
+                        log('Hashrate: ' + hr + ', Running: ' + stats.running, 'success');
+                    } catch(e) {}
+                }, 1000);
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
         }
         
-        async function startRothschild(privateKey, recipient, tps) {
+        async function toggleMiner(address, threads) {
+            try {
+                const stats = await fetch('/api/miner-status').then(r => r.json());
+                minerRunning = stats.running;
+            } catch(e) {
+                minerRunning = false;
+            }
+            
+            if (minerRunning) {
+                await stopMiner();
+            } else {
+                await startMiner(address, threads);
+            }
+        }
+        
+        async function startRothschild(version, privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, randomizeTxVersion) {
             if (!privateKey || !recipient) {
                 log('Error: Private key and recipient required', 'error');
                 return;
             }
+            
+            // First, derive address from private key and check balance
+            try {
+                log('Checking balance...');
+                const addrResp = await fetch('/api/wallet/address?privateKey=' + encodeURIComponent(privateKey));
+                const addrData = await addrResp.json();
+                
+                if (addrData.error) {
+                    log('Error: Could not derive address - ' + addrData.error, 'error');
+                    return;
+                }
+                
+                const address = addrData.address;
+                log('Derived address: ' + address);
+                
+                // Get balance
+                const balResp = await fetch('/api/wallet/balance?address=' + encodeURIComponent(address));
+                const balData = await balResp.json();
+                
+                const balance = balData.balance || 0;
+                log('Balance: ' + balance.toFixed(4) + ' TKAS');
+                
+                if (balance <= 0) {
+                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' TKAS)', 'error');
+                    return;
+                }
+            } catch(e) {
+                log('Warning: Could not check balance - ' + e.message + ', proceeding anyway');
+            }
+            
             try {
                 const resp = await fetch('/api/rothschild', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
+                        version: version || 'rusty-kaspa',
                         privateKey: privateKey,
                         recipient: recipient,
-                        tps: parseInt(tps) || 1
+                        tps: parseInt(tps) || 1,
+                        threads: parseInt(threads) || 2,
+                        priorityFee: parseInt(priorityFee) || 0,
+                        sendAmount: sendAmount ? parseFloat(sendAmount) : null,
+                        randomizeFee: randomizeFee === 'yes',
+                        randomizeTxVersion: randomizeTxVersion === 'yes'
                     })
                 });
                 const data = await resp.json();
+                
+                log('Rothschild started with version: ' + (data.version || version), 'success');
+                
+                // Check for insufficient funds error in stderr or stdout (but don't stop - UTXO might sync later)
+                const outputStr = (data.stderr || '') + (data.stdout || '');
+                if (outputStr.includes('not enough funds') || outputStr.includes('Has not enough funds')) {
+                    log('⚠️ UTXO NOT SYNCED locally - Rothschild will retry automatically', 'error');
+                    log('Your balance shows on public API but local node needs sync', 'error');
+                    // Don't stop - let it keep retrying
+                }
+                
+                // Also check rothschild log file after a short delay for fund errors
+                setTimeout(async () => {
+                    try {
+                        const logResp = await fetch('/api/shell', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ cmd: 'tail -10 rothschild.log' })
+                        });
+                        const logData = await logResp.json();
+                        if (logData.stdout && (logData.stdout.includes('not enough funds') || logData.stdout.includes('Has not enough funds'))) {
+                            log('⚠️ UTXO NOT SYNCED - Balance shows ' + balance.toFixed(4) + ' TKAS on API but local node needs time to sync', 'error');
+                            // Don't stop - let it keep retrying
+                        }
+                    } catch(e) {}
+                }, 3000);
+                
                 log('Rothschild started: ' + JSON.stringify(data), 'success');
+                rothschildRunning = true;
             } catch(e) {
                 log('Error: ' + e.message, 'error');
             }
@@ -617,6 +866,67 @@
             try {
                 await fetch('/api/rothschild-stop', {method: 'POST'});
                 log('Rothschild stopped', 'success');
+                rothschildRunning = false;
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function toggleRothschild(privateKey, recipient, tps, threads, priorityFee, randomizeFee) {
+            try {
+                const resp = await fetch('/api/tx-status').then(r => r.json());
+                rothschildRunning = resp.running;
+            } catch(e) {
+                rothschildRunning = false;
+            }
+            
+            if (rothschildRunning) {
+                await stopRothschild();
+            } else {
+                await startRothschild(privateKey, recipient, tps, threads, priorityFee, randomizeFee);
+            }
+        }
+        
+        async function compileSilverScript(source, args, output) {
+            if (!source) {
+                log('Error: Source file required', 'error');
+                return;
+            }
+            try {
+                log('Compiling ' + source + '...');
+                const resp = await fetch('/api/silverscript-compile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sourceFile: source,
+                        constructorArgs: args || null,
+                        outputFile: output || null
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else {
+                    log('Compiled successfully!', 'success');
+                    if (data.output) {
+                        log('Contract: ' + (data.output.contract_name || 'unknown'), 'success');
+                        log('Script size: ' + (data.output.script ? data.output.script.length : 'N/A') + ' bytes', 'success');
+                        log('Output: ' + (output || source.replace('.sil', '.json')), 'success');
+                    }
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function listSilverExamples() {
+            try {
+                const resp = await fetch('/api/silverscript-examples');
+                const examples = await resp.json();
+                log('SilverScript Examples:', 'success');
+                examples.forEach(ex => {
+                    log('  ' + ex.name + ' -> ' + ex.file, 'success');
+                });
             } catch(e) {
                 log('Error: ' + e.message, 'error');
             }
@@ -689,28 +999,30 @@
                 const input = document.getElementById('consoleInput');
                 const cmd = input.value.trim();
                 if (cmd) {
-                    log('$ ' + cmd);
-                    const parts = cmd.split(' ');
-                    if (COMMANDS[parts[0]]) {
-                        showParams(parts[0]);
-                        // Auto-fill parameters from wallets if available
-                        setTimeout(() => {
-                            const cmdDef = COMMANDS[parts[0]];
-                            cmdDef.params.forEach((p, i) => {
-                                const id = p.id || 'param-' + i;
-                                const el = document.getElementById(id);
-                                if (el && !el.value) {
-                                    if (p.name === 'private_key' || p.id === 'sendKey') {
-                                        // Do NOT auto-fill private keys - user must enter manually or load from vault
-                                    } else if (p.name === 'recipient' || p.id === 'sendTo') {
-                                        el.value = document.getElementById('walletB').value || '';
-                                    } else if (p.name === 'address' || p.id === 'balanceAddr') {
-                                        el.value = document.getElementById('walletB').value || document.getElementById('walletA').value || '';
-                                    }
-                                }
-                            });
-                        }, 100);
-                    }
+                    log('$ ' + cmd, 'cmd-line');
+                    
+                    // Execute shell command directly
+                    fetch('/api/shell', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ cmd: cmd })
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data.stderr) {
+                            log(data.stderr, 'error');
+                        }
+                        if (data.stdout) {
+                            log(data.stdout, 'success');
+                        }
+                        if (data.error && !data.stdout && !data.stderr) {
+                            log('Error: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(e => {
+                        log('Error: ' + e.message, 'error');
+                    });
+                    
                     input.value = '';
                 }
             }

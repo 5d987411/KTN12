@@ -21,8 +21,8 @@ module.exports = {
     ktn12Dir: getConfig('KTN12_DIR', ktn12Dir),
     rustyKaspaDir: getConfig('RUSTY_KASPA_DIR', path.join(process.env.HOME || '/Users/4dsto', 'rusty-kaspa-tn12')),
     
-    // Binaries - use tn12 versions
-    rothschild: getConfig('ROTHSCHILD_BIN', path.join(getConfig('RUSTY_KASPA_DIR', path.join(process.env.HOME || '/Users/4dsto', 'rusty-kaspa-tn12')), 'target/release/rothschild')),
+    // Binaries - use smartgoo rothschild (better TX support)
+    rothschild: getConfig('ROTHSCHILD_BIN', '/Users/4dsto/smartgoo-rusty-kaspa/target/release/rothschild'),
     
     // Log files - default to ktn12 directory
     kaspadLog: getConfig('KASPAD_LOG', path.join(ktn12Dir, 'kaspad.log')),

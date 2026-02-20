@@ -1,0 +1,147 @@
+{
+  "contract_name": "P2PKH",
+  "script": [
+    81,
+    121,
+    170,
+    32,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    135,
+    105,
+    0,
+    121,
+    82,
+    121,
+    172,
+    105,
+    117,
+    117,
+    81
+  ],
+  "ast": {
+    "name": "P2PKH",
+    "params": [
+      {
+        "type_name": "bytes32",
+        "name": "pkh"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "spend",
+        "params": [
+          {
+            "type_name": "pubkey",
+            "name": "pk"
+          },
+          {
+            "type_name": "sig",
+            "name": "s"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "binary",
+                "data": {
+                  "op": "eq",
+                  "left": {
+                    "kind": "call",
+                    "data": {
+                      "name": "blake2b",
+                      "args": [
+                        {
+                          "kind": "identifier",
+                          "data": "pk"
+                        }
+                      ]
+                    }
+                  },
+                  "right": {
+                    "kind": "identifier",
+                    "data": "pkh"
+                  }
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "s"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "pk"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "spend",
+      "inputs": [
+        {
+          "name": "pk",
+          "type_name": "pubkey"
+        },
+        {
+          "name": "s",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": true
+}
