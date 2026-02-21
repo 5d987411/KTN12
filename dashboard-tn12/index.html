@@ -960,10 +960,11 @@
                     } else {
                         log('Generated address is VALID (' + addrLen + ' chars)', 'success');
                     }
-                    // Auto-fill wallet A with generated wallet
-                    document.getElementById('walletA').value = data.address;
-                    document.getElementById('walletAKey').value = data.private_key || '';
-                    log('Wallet A auto-filled with new wallet', 'success');
+                    // Auto-fill wallet C with generated wallet (Wallet A is for miner only)
+                    document.getElementById('walletC').value = data.address;
+                    document.getElementById('walletCKey').value = data.privateKey || data.private_key || '';
+                    refreshWallet('C');
+                    log('Wallet C auto-filled with new wallet', 'success');
                 }
                 
                 // Handle load command - fill Wallet C

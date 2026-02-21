@@ -226,8 +226,24 @@ const server = http.createServer(async (req, res) => {
                 
                 // Handle "generate" command
                 if (cmd === 'generate') {
-                    res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ error: 'Use external tool to generate wallet' }));
+                    // Run rothschild without arguments to generate a new wallet
+                    const fullCmd = ROTHSCHILD_RUSTY;
+                    exec(fullCmd, { timeout: 30000 }, (error, stdout, stderr) => {
+                        // Extract private key and address from output
+                        const privKeyMatch = stdout.match(/Generated private key ([a-f0-9]+)/);
+                        const addrMatch = stdout.match(/address (kaspatest:[a-zA-Z0-9]+)/);
+                        
+                        if (privKeyMatch && addrMatch) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ 
+                                privateKey: privKeyMatch[1], 
+                                address: addrMatch[1] 
+                            }));
+                        } else {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ error: 'Failed to generate wallet', output: stdout, stderr: stderr }));
+                        }
+                    });
                     return;
                 }
                 
