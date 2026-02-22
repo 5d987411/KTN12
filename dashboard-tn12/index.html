@@ -189,7 +189,10 @@
             <div class="card">
                 <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                     <span>7 Kaspad Parameters</span>
-                    <button class="btn" onclick="restartKaspad()">▶ Restart</button>
+                    <div>
+                        <button class="btn" onclick="stopKaspad()" style="background: #881111; margin-right: 8px;">■ Stop</button>
+                        <button class="btn" onclick="restartKaspad()">▶ Restart</button>
+                    </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
                     <div>
@@ -610,6 +613,22 @@
             if (preview) preview.textContent = cmd;
         }
         
+        async function stopKaspad() {
+            log('=== Stopping Kaspad ===');
+            
+            try {
+                const killResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pkill -f "kaspad"' })
+                });
+                const killData = await killResp.json();
+                log('Kaspad stopped', 'success');
+            } catch(e) {
+                log('Error stopping kaspad: ' + e.message, 'error');
+            }
+        }
+        
         async function restartKaspad() {
             const cmd = document.getElementById('kaspadCmdPreview').textContent;
             log('=== Kaspad Restart ===');
@@ -813,7 +832,12 @@
                 document.getElementById('minerHashrate').textContent = isNodeSynced 
                     ? (miner.running ? (miner.hashrate || '0.00 M/s') : 'OFF')
                     : (miner.utxoSync || (miner.running ? 'Syncing...' : 'OFF'));
-                document.getElementById('nodeTps').textContent = node.syncPercent ? ('Syncing ' + node.syncPercent) : (node.syncing ? 'Syncing...' : (node.tps || 'N/A'));
+                
+                // Show OFF when kaspad not running, otherwise show sync status or TPS
+                const isKaspadRunning = services.kaspad === 'running';
+                document.getElementById('nodeTps').textContent = !isKaspadRunning ? 'OFF' 
+                    : (node.syncPercent ? ('Syncing ' + node.syncPercent) 
+                    : (node.syncing ? 'Syncing...' : (node.tps || 'N/A')));
                 document.getElementById('txTps').textContent = tx.running ? (tx.tps || '0') : 'OFF';
             } catch(e) {
                 console.log('Stats update error:', e);
