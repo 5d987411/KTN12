@@ -1,5 +1,5 @@
 [workspace]
-members = ["wallet-cli", "silverscript-lang"]
+members = ["wallet-cli", "silverscript-lang", "kaspa-send"]
 resolver = "2"
 
 # Silverscript compiler - uses covpp-reset1 branch for covenants

@@ -44,7 +44,7 @@
         .top-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
         
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-        .card-title { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .card-title { font-size: 13px; color: #00BFFF; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
         
         .wallet-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 11px; margin-bottom: 8px; }
         .wallet-input:focus { outline: none; border-color: var(--accent); }
@@ -78,7 +78,7 @@
         
         .console-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; }
         .console-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .console-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .console-title { font-size: 13px; color: #00BFFF; text-transform: uppercase; letter-spacing: 1px; }
         .console-content { flex: 1; padding: 16px; overflow-y: auto; font-size: 12px; line-height: 1.6; }
         .console-input-area { display: flex; border-top: 1px solid var(--border); }
         .console-input { flex: 1; background: var(--bg-input); border: none; color: var(--text); padding: 12px 16px; font-family: inherit; font-size: 12px; }
@@ -117,7 +117,7 @@
         
         <div class="top-section">
             <div class="card">
-                <div class="card-title">① Wallet A (Main - Miner)</div>
+                <div class="card-title">1 Wallet A (Main - Miner)</div>
                 <input type="text" class="wallet-input" id="walletA" placeholder="Address" value="kaspatest:qp2ltc576eyy8hag0tckl9kqk62cvfz7p2egrlczyw9978zsh322jtnrx469r">
                 <input type="text" class="wallet-input" id="walletAKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
                 <div class="balance-display">
@@ -132,7 +132,7 @@
             </div>
             
             <div class="card">
-                <div class="card-title">② Wallet B (Recipient)</div>
+                <div class="card-title">2 Wallet B (Recipient)</div>
                 <input type="text" class="wallet-input" id="walletB" placeholder="Address" value="kaspatest:qpx598t8l8l6g7ntq37fd9ecq7g2s90vk376tu28u4r7cnwf4nvmcruc3nd4d">
                 <input type="text" class="wallet-input" id="walletBKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
                 <div class="balance-display">
@@ -147,7 +147,7 @@
             </div>
             
             <div class="card">
-                <div class="card-title">③ Wallet C (Send From)</div>
+                <div class="card-title">3 Wallet C (Send From)</div>
                 <input type="text" class="wallet-input" id="walletC" placeholder="Address" value="">
                 <input type="text" class="wallet-input" id="walletCKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
                 <div class="balance-display">
@@ -164,11 +164,11 @@
         
         <div class="main-section">
             <div class="cmd-sidebar" id="cmdSidebar">
-                <div class="card-title" style="padding:0 0 12px 0">④ Commands</div>
+                <div class="card-title" style="padding:0 0 12px 0">4 Commands</div>
             </div>
             
             <div class="params-panel">
-                <div class="card-title" id="paramsTitle">⑤ Parameters</div>
+                <div class="card-title" id="paramsTitle">5 Parameters</div>
                 <div id="paramsForm">
                     <div class="info-box">Click a command button to see parameters</div>
                 </div>
@@ -176,11 +176,212 @@
             
             <div class="console-panel">
                 <div class="console-header">
-                    <span class="console-title">⑥ Console</span>
+                    <span class="console-title">6 Console</span>
                     <input type="text" id="consoleInput" placeholder="Type command..." style="flex:1;max-width:300px;margin:0 12px;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px" onkeypress="handleConsoleEnter(event)">
                     <button class="btn" onclick="clearConsole()">Clear</button>
                 </div>
                 <div class="console-content" id="consoleOutput"></div>
+            </div>
+        </div>
+        
+        <!-- Panel 7: Kaspad Parameters -->
+        <div class="kaspad-panel" style="margin-top: 24px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>7 Kaspad Parameters</span>
+                    <button class="btn" onclick="restartKaspad()">▶ Restart</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Toggle Args:</div>
+                        <div id="kaspadToggles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Custom Extra Args:</div>
+                        <input type="text" id="kaspadCustomArgs" class="wallet-input" placeholder="--custom-flag --other" style="width: 100%;">
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                    <div style="color: var(--text-muted); margin-bottom: 6px;">Command Preview:</div>
+                    <code id="kaspadCmdPreview" style="color: var(--accent); word-break: break-all; font-size: 10px;"></code>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel 8: Debug Console -->
+        <div class="debug-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>8 Debug Console</span>
+                    <button class="btn" onclick="refreshDebug()">↻ Refresh</button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; font-size: 11px;">
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">SYNC STATUS</div>
+                        <div id="debugSync">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">MINER STATUS</div>
+                        <div id="debugMiner">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">NETWORK</div>
+                        <div id="debugNetwork">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">SYSTEM</div>
+                        <div id="debugSystem">Loading...</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 12px; font-size: 11px;">
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">UTXO CHECK</div>
+                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                            <input type="text" id="utxoAddress" class="wallet-input" placeholder="kaspatest:..." style="flex:1;">
+                            <button class="btn" onclick="checkUTXO()" style="padding: 6px 12px;">Check</button>
+                        </div>
+                        <div id="debugUTXO">Enter address to check</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">RECENT LOGS</div>
+                        <div id="debugLogs" style="height: 80px; overflow-y: auto; font-size: 10px; color: var(--text-muted);">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel 9: Command Reference -->
+        <div class="cmd-ref-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title">9 Command Reference</div>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 12px; font-size: 11px;">
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">WALLET</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            generate - New wallet<br>
+                            load &lt;key&gt; - Load key<br>
+                            balance &lt;addr&gt; - Check balance<br>
+                            utxos &lt;addr&gt; - List UTXOs<br>
+                            send &lt;key&gt; &lt;to&gt; &lt;amt&gt;
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">MINING</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            miner-status - Status<br>
+                            miner-start &lt;addr&gt; &lt;threads&gt;<br>
+                            rothschild-start - TX Gen<br>
+                            rothschild-stop
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">KASPA-CLI</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            wallet create - New wallet<br>
+                            wallet balance - Check balance<br>
+                            wallet send &lt;to&gt; &lt;amount&gt; - Send<br>
+                            settings - Configure<br>
+                            server &lt;rpc&gt; - Change RPC<br>
+                            <span style="color:#888;"># Example: send 1 KAS</span><br>
+                            <span style="color:#00ff88;">kaspa-cli send addr 1</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">CONTRACTS</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            p2pkh - P2PKH Contract<br>
+                            multisig - Multisig<br>
+                            escrow - Escrow<br>
+                            hodl - HODL Vault<br>
+                            mecenas - Mecenas
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">COMPILER</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            silver-compile - Compile<br>
+                            silver-list - List Examples<br>
+                            compile &lt;file&gt;<br>
+                            deploy &lt;contract&gt; &lt;key&gt;
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                    <div style="color: #00BFFF; margin-bottom: 6px;">CLI BINARIES</div>
+                    <div style="color: #ffffff; line-height: 1.5;">
+                        ./kaspad - Node daemon | ./kaspa-miner - CPU miner | ./rothschild - TX generator<br>
+                        ./kaspa-cli - Wallet CLI (requires TTY) | ./silverc - SilverScript compiler
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 10: Wallet CLI -->
+        <div class="wallet-cli-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>10 Wallet CLI (kaspa-graffiti-cli)</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+                    <!-- Left: Load Wallet -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">LOAD WALLET</div>
+                        <input type="text" id="walletCLIPrivateKey" class="wallet-input" placeholder="Private Key (hex)" style="font-family: monospace; font-size: 11px;">
+                        <button class="btn btn-primary" onclick="loadWalletCLI()" style="width: 100%; margin-top: 8px;">Load</button>
+                        <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-size: 10px; color: var(--text-muted);">ADDRESS</span>
+                            </div>
+                            <div id="walletCLIAddress" style="color: var(--accent); font-size: 12px; word-break: break-all;">-</div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px; margin-bottom: 6px;">
+                                <span style="font-size: 10px; color: var(--text-muted);">BALANCE</span>
+                            </div>
+                            <div id="walletCLIBalance" style="color: var(--accent); font-size: 16px; font-weight: 600;">-</div>
+                        </div>
+                        <button class="btn" id="walletCLIMinerBtn" onclick="startMinerFromPanel10()" style="width: 100%; margin-top: 12px; background: #005533; border-color: #00ff88; color: #00ff88;">Start Miner to This Address</button>
+                        <div id="walletCLIMinerStatus" style="margin-top: 8px; font-size: 11px; color: var(--text-muted);"></div>
+                    </div>
+                    <!-- Right: Send -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">SEND KAS</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="public" checked onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Public API (api-tn12.kaspa.org)</span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Direct to public API - reliable, no local sync needed</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="local" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Local RPC (localhost:16210)</span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Via local kaspad - faster but needs UTXO synced</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="rothschild" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Rothschild (TX Generator)</span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">High-throughput TX generator - best for load/stress testing</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="kaspa-send" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">kaspa-send (wRPC)</span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Direct wRPC to localhost:17110 - uses wallet-cli for signing</div>
+                                </div>
+                            </label>
+                        </div>
+                        <input type="text" id="walletCLIRecipient" class="wallet-input" placeholder="Recipient Address (kaspatest:...)">
+                        <input type="text" id="walletCLIAmount" class="wallet-input" placeholder="Amount (KAS)" style="margin-top: 8px;">
+                        <button class="btn btn-primary" onclick="sendViaWalletCLI()" style="width: 100%; margin-top: 8px;">Send</button>
+                        <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px; max-height: 150px; overflow-y: auto;">
+                            <div id="walletCLIOutput" style="color: var(--text-muted);">Output will appear here...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -230,7 +431,7 @@
                 params: [
                     {name: 'private_key', placeholder: 'Private key', id: 'sendKey'},
                     {name: 'recipient', placeholder: 'Recipient address', id: 'sendTo'},
-                    {name: 'amount', placeholder: 'Amount (TKAS)', id: 'sendAmount'}
+                    {name: 'amount', placeholder: 'Amount (KAS)', id: 'sendAmount'}
                 ],
                 action: (args) => sendKAS(args[0], args[1], args[2])
             },
@@ -241,7 +442,10 @@
             },
             'miner-start': { 
                 desc: 'Toggle CPU miner', 
-                params: [{name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, {name: 'threads', placeholder: 'Threads', default: '2'}],
+                params: [
+                    {name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, 
+                    {name: 'threads', placeholder: 'Threads', default: '8', id: 'minerThreads'}
+                ],
                 action: (args) => toggleMiner(args[0], args[1])
             },
             'rothschild-start': { 
@@ -253,11 +457,13 @@
                     {name: 'tps', placeholder: 'TPS (tx/sec)', default: '1', id: 'rothschildTps'},
                     {name: 'threads', placeholder: 'Threads (0=auto)', default: '2', id: 'rothschildThreads'},
                     {name: 'priority_fee', placeholder: 'Priority fee', default: '0', id: 'rothschildFee'},
-                    {name: 'send_amount', placeholder: 'Send amount (TKAS)', default: '', id: 'rothschildAmount'},
+                    {name: 'send_amount', placeholder: 'Send amount (KAS)', default: '', id: 'rothschildAmount'},
                     {name: 'randomize_fee', placeholder: 'yes/no', default: 'no', id: 'rothschildRandFee'},
-                    {name: 'randomize_tx_version', placeholder: 'yes/no', default: 'no', id: 'rothschildRandTx'}
+                    {name: 'randomize_tx_version', placeholder: 'yes/no', default: 'no', id: 'rothschildRandTx'},
+                    {name: 'timeout', placeholder: 'Timeout (seconds, 0=forever)', default: '0', id: 'rothschildTimeout'},
+                    {name: 'custom_args', placeholder: 'Custom args (e.g., --flag)', default: '', id: 'rothschildArgs'}
                 ],
-                action: (args) => startRothschild(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+                action: (args) => startRothschild(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10])
             },
             'rothschild-stop': { 
                 desc: 'Stop TX generator', 
@@ -321,8 +527,250 @@
             refreshWallet('A');
             refreshWallet('B');
             updateStats();
+            renderKaspadToggles();
+            refreshDebug();
             setInterval(updateStats, 5000);
+            setInterval(refreshDebug, 5000);
             log('Console ready. Type commands or use buttons.');
+        }
+        
+        // Kaspad Parameters
+        const KASPAD_FLAGS = [
+            { id: 'testnet', name: '--testnet', type: 'flag', default: true, checked: true },
+            { id: 'netsuffix', name: '--netsuffix', type: 'value', default: '12', placeholder: '12', note: 'net suffix', checked: true },
+            { id: 'utxoindex', name: '--utxoindex', type: 'flag', default: true, checked: true },
+            { id: 'rpclisten', name: '--rpclisten', type: 'value', default: '127.0.0.1:16210', placeholder: 'ip:port', note: 'gRPC', checked: true },
+            { id: 'rpclisten-json', name: '--rpclisten-json', type: 'flag', default: true, checked: true },
+            { id: 'unsaferpc', name: '--unsaferpc', type: 'flag', default: true, checked: true },
+            { id: 'enable-unsynced-mining', name: '--enable-unsynced-mining', type: 'flag', default: true, checked: true, note: 'Mine while syncing' },
+            { id: 'listen', name: '--listen', type: 'value', default: '0.0.0.0:16311', placeholder: 'ip:port', note: 'P2P', checked: true },
+            { id: 'addpeer', name: '--addpeer', type: 'value', default: '23.118.8.168', placeholder: 'ip:port', note: 'peer IP', checked: true },
+            { id: 'archival', name: '--archival', type: 'flag', default: false },
+            { id: 'perf-metrics', name: '--perf-metrics', type: 'flag', default: false },
+            { id: 'reset-db', name: '--reset-db', type: 'flag', default: false },
+            { id: 'async-threads', name: '--async-threads', type: 'value', default: '24', placeholder: '2-12', note: '2-12', checked: true },
+            { id: 'ram-scale', name: '--ram-scale', type: 'value', default: '2', placeholder: '0.5-4', note: '0.5-4', checked: true },
+            { id: 'wrpc', name: '--rpclisten-borsh', type: 'value', default: '127.0.0.1:17110', placeholder: 'host:port', note: 'wRPC', checked: true }
+        ];
+        
+        function renderKaspadToggles() {
+            const container = document.getElementById('kaspadToggles');
+            if (!container) return;
+            
+            let html = '';
+            KASPAD_FLAGS.forEach(flag => {
+                const isChecked = flag.checked ? 'checked' : '';
+                if (flag.type === 'flag') {
+                    html += `<label style="display:flex;align-items:center;gap:6px;padding:4px;background:var(--bg-card);border-radius:3px;cursor:pointer;">
+                        <input type="checkbox" id="kaspad_${flag.id}" ${isChecked} onchange="updateKaspadCmd()">
+                        <span style="color:var(--text);font-size:10px;">${flag.name}</span>
+                    </label>`;
+                } else {
+                    const placeholder = flag.placeholder || '';
+                    const note = flag.note ? `<span style="color:#666;font-size:8px;margin-left:2px;">(${flag.note})</span>` : '';
+                    html += `<label style="display:flex;align-items:center;gap:2px;padding:4px;background:var(--bg-card);border-radius:3px;cursor:pointer;flex-wrap:wrap;">
+                        <input type="checkbox" id="kaspad_${flag.id}" ${isChecked} onchange="updateKaspadCmd()">
+                        <span style="color:var(--text);font-size:10px;white-space:nowrap;">${flag.name}=</span>
+                        <input type="text" id="kaspad_${flag.id}_val" value="${flag.default}" placeholder="${placeholder}" style="width:60px;background:var(--bg-input);border:1px solid var(--border);color:var(--accent);padding:2px 4px;border-radius:2px;font-size:9px;" onchange="updateKaspadCmd()">${note}
+                    </label>`;
+                }
+            });
+            container.innerHTML = html;
+            updateKaspadCmd();
+        }
+        
+        function updateKaspadCmd() {
+            let cmd = './kaspad';
+            
+            KASPAD_FLAGS.forEach(flag => {
+                const checkbox = document.getElementById('kaspad_' + flag.id);
+                if (!checkbox) return;
+                
+                if (checkbox.checked) {
+                    if (flag.type === 'flag') {
+                        cmd += ' ' + flag.name;
+                    } else {
+                        const valInput = document.getElementById('kaspad_' + flag.id + '_val');
+                        const val = valInput ? valInput.value : flag.default;
+                        cmd += ' ' + flag.name + '=' + val;
+                    }
+                }
+            });
+            
+            // Add appdir
+            cmd += ' --appdir=/Users/4dsto/.kaspa-testnet12';
+            
+            // Add custom args
+            const customArgs = document.getElementById('kaspadCustomArgs');
+            if (customArgs && customArgs.value) {
+                cmd += ' ' + customArgs.value;
+            }
+            
+            const preview = document.getElementById('kaspadCmdPreview');
+            if (preview) preview.textContent = cmd;
+        }
+        
+        async function restartKaspad() {
+            const cmd = document.getElementById('kaspadCmdPreview').textContent;
+            log('=== Kaspad Restart ===');
+            
+            // Check if miner was running and get its settings
+            let minerWasRunning = false;
+            let minerAddress = '';
+            let minerThreads = '8';
+            
+            try {
+                const minerStatus = await fetch('/api/miner-status').then(r => r.json());
+                if (minerStatus.running) {
+                    minerWasRunning = true;
+                    // Get miner settings from input fields
+                    const addrInput = document.getElementById('minerAddr');
+                    const threadsInput = document.getElementById('minerThreads');
+                    minerAddress = addrInput ? addrInput.value : '';
+                    minerThreads = threadsInput ? threadsInput.value : '8';
+                    log('Miner was running - will auto-restart after kaspad');
+                }
+            } catch(e) {
+                log('Could not check miner status: ' + e.message);
+            }
+            
+            log('Stopping kaspad...');
+            
+            try {
+                // Kill existing kaspad
+                const killResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pkill -f "kaspad"' })
+                });
+                const killData = await killResp.json();
+                log('Kill: ' + (killData.stdout || killData.stderr || 'OK'));
+                
+                await new Promise(r => setTimeout(r, 2000));
+                
+                // Build full command with cd to ktn12 dir
+                const ktn12Dir = '/Users/4dsto/ktn12';
+                const fullCmd = 'cd ' + ktn12Dir + ' && nohup ' + cmd + ' > kaspad.log 2>&1 &';
+                
+                log('Command: ' + fullCmd);
+                
+                const startResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: fullCmd })
+                });
+                const startData = await startResp.json();
+                
+                log('Start: ' + (startData.stdout || startData.stderr || 'OK'), 'success');
+                
+                // Wait and check status
+                await new Promise(r => setTimeout(r, 3000));
+                
+                const checkResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pgrep -a kaspad' })
+                });
+                const checkData = await checkResp.json();
+                
+                if (checkData.stdout) {
+                    log('SUCCESS: Kaspad running - PID: ' + checkData.stdout.trim().split(' ')[0], 'success');
+                    
+                    // Auto-restart miner if it was running before
+                    if (minerWasRunning && minerAddress) {
+                        log('Waiting for kaspad to be ready...');
+                        await new Promise(r => setTimeout(r, 5000));
+                        
+                        log('Auto-restarting miner...');
+                        try {
+                            const minerResp = await fetch('/api/miner-start', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ address: minerAddress, threads: parseInt(minerThreads) || 8 })
+                            });
+                            const minerData = await minerResp.json();
+                            if (minerData.started || minerData.pid) {
+                                log('SUCCESS: Miner restarted - PID: ' + (minerData.pid || 'unknown'), 'success');
+                            } else {
+                                log('WARNING: Miner restart failed', 'error');
+                            }
+                        } catch(mErr) {
+                            log('ERROR: Miner restart failed: ' + mErr.message, 'error');
+                        }
+                    }
+                } else {
+                    log('FAILED: Kaspad not running', 'error');
+                }
+                
+                refreshDebug();
+                
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        // Debug Console
+        async function refreshDebug() {
+            try {
+                const resp = await fetch('/api/debug');
+                const data = await resp.json();
+                
+                // Sync status
+                const syncEl = document.getElementById('debugSync');
+                if (syncEl) {
+                    syncEl.innerHTML = `Blocks: ${data.sync.blocks || 'N/A'}<br>Headers: ${data.sync.headers || 'N/A'}<br>DAA: ${data.sync.daaScore || 'N/A'}<br>Peers: ${data.sync.peers || 0}`;
+                }
+                
+                // Miner status
+                const minerEl = document.getElementById('debugMiner');
+                if (minerEl) {
+                    const m = data.miner || {};
+                    minerEl.innerHTML = `Hashrate: ${m.hashrate || '0 H/s'}<br>Accepted: ${m.accepted || 0}<br>Rejected: ${m.rejected || 0}<br>Status: ${m.running ? '● Running' : '○ Stopped'}`;
+                }
+                
+                // Network
+                const netEl = document.getElementById('debugNetwork');
+                if (netEl) {
+                    const n = data.network || {};
+                    netEl.innerHTML = `RPC (16210): ${n.rpc ? '● Online' : '○ Offline'}<br>JSON (18210): ${n.json ? '● Online' : '○ Offline'}<br>P2P (16311): ${n.p2p ? '● Online' : '○ Offline'}`;
+                }
+                
+                // System
+                const sysEl = document.getElementById('debugSystem');
+                if (sysEl) {
+                    const s = data.system || {};
+                    sysEl.innerHTML = `CPU: ${s.cpu || '0%'}<br>Memory: ${s.memory || '0 MB'}<br>Disk: ${s.disk || '0 GB'}`;
+                }
+                
+            } catch(e) {
+                console.log('Debug refresh error:', e);
+            }
+        }
+        
+        async function checkUTXO() {
+            const addr = document.getElementById('utxoAddress').value.trim();
+            const el = document.getElementById('debugUTXO');
+            if (!addr) {
+                if (el) el.textContent = 'Enter address to check';
+                return;
+            }
+            
+            if (el) el.textContent = 'Checking...';
+            
+            try {
+                const resp = await fetch('/api/debug/utxo?address=' + encodeURIComponent(addr));
+                const data = await resp.json();
+                
+                if (data.error) {
+                    if (el) el.innerHTML = `Error: ${data.error}`;
+                } else {
+                    const balance = (data.balance || 0) / 1e8;
+                    const utxos = data.utxos || 0;
+                    if (el) el.innerHTML = `Balance: ${balance.toFixed(4)} KAS<br>UTXOs: ${utxos}`;
+                }
+            } catch(e) {
+                if (el) el.textContent = 'Error: ' + e.message;
+            }
         }
         
         async function updateStats() {
@@ -460,7 +908,7 @@
             let html = '<div class="info-box">' + (isRunning ? 'Miner is running' : 'Start CPU miner') + '</div>';
             
             html += '<div class="param-group"><div class="param-label">address</div><input type="text" class="param-input" id="minerAddr" placeholder="Mining address" value="' + addrValue + '"></div>';
-            html += '<div class="param-group"><div class="param-label">threads</div><input type="text" class="param-input" id="param-1" placeholder="Threads" value="2"></div>';
+            html += '<div class="param-group"><div class="param-label">threads (2-8)</div><input type="text" class="param-input" id="minerThreads" placeholder="Threads" value="8"></div>';
             
             if (isRunning) {
                 html += '<button class="run-btn" onclick="stopMiner()">■ MINER-STOP</button>';
@@ -488,12 +936,14 @@
                     priority_fee: document.getElementById('rothschildFee') ? document.getElementById('rothschildFee').value : '0',
                     send_amount: document.getElementById('rothschildAmount') ? document.getElementById('rothschildAmount').value : '',
                     randomize_fee: document.getElementById('rothschildRandFee') ? document.getElementById('rothschildRandFee').value : 'no',
-                    randomize_tx_version: document.getElementById('rothschildRandTx') ? document.getElementById('rothschildRandTx').value : 'no'
+                    randomize_tx_version: document.getElementById('rothschildRandTx') ? document.getElementById('rothschildRandTx').value : 'no',
+                    timeout: document.getElementById('rothschildTimeout') ? document.getElementById('rothschildTimeout').value : '0',
+                    customArgs: document.getElementById('rothschildArgs') ? document.getElementById('rothschildArgs').value : ''
                 };
                 
                 // Log current parameters
                 log('Rothschild Status: ' + (isRunning ? 'RUNNING' : 'STOPPED') + ' | TPS: ' + status.tps, isRunning ? 'success' : 'error');
-                log('Params: version=' + params.version + ', private_key=' + params.private_key.substring(0, 8) + '..., recipient=' + params.recipient.substring(0, 16) + '..., tps=' + params.tps + ', threads=' + params.threads + ', priority_fee=' + params.priority_fee + ', send_amount=' + params.send_amount + ', randomize_fee=' + params.randomize_fee + ', randomize_tx_version=' + params.randomize_tx_version, 'success');
+                log('Params: version=' + params.version + ', private_key=' + params.private_key.substring(0, 8) + '..., recipient=' + params.recipient.substring(0, 16) + '..., tps=' + params.tps + ', threads=' + params.threads + ', priority_fee=' + params.priority_fee + ', send_amount=' + params.send_amount + ', randomize_fee=' + params.randomize_fee + ', randomize_tx_version=' + params.randomize_tx_version + ', timeout=' + params.timeout + ', custom_args=' + params.customArgs, 'success');
             }).catch(() => {});
             
             let html = '<div class="info-box">Start TX Generator</div>';
@@ -504,9 +954,11 @@
             html += '<div class="param-group"><div class="param-label">tps (tx/sec)</div><input type="text" class="param-input" id="rothschildTps" placeholder="Transactions per second" value="1"></div>';
             html += '<div class="param-group"><div class="param-label">threads</div><input type="text" class="param-input" id="rothschildThreads" placeholder="Threads (0=auto)" value="2"></div>';
             html += '<div class="param-group"><div class="param-label">priority_fee</div><input type="text" class="param-input" id="rothschildFee" placeholder="Priority fee" value="0"></div>';
-            html += '<div class="param-group"><div class="param-label">send_amount</div><input type="text" class="param-input" id="rothschildAmount" placeholder="Send amount (TKAS)" value=""></div>';
+            html += '<div class="param-group"><div class="param-label">send_amount</div><input type="text" class="param-input" id="rothschildAmount" placeholder="Send amount (KAS)" value=""></div>';
             html += '<div class="param-group"><div class="param-label">randomize_fee</div><input type="text" class="param-input" id="rothschildRandFee" placeholder="yes/no" value="no"></div>';
             html += '<div class="param-group"><div class="param-label">randomize_tx_version</div><input type="text" class="param-input" id="rothschildRandTx" placeholder="yes/no" value="no"></div>';
+            html += '<div class="param-group"><div class="param-label">timeout (seconds, 0=forever)</div><input type="text" class="param-input" id="rothschildTimeout" placeholder="0" value="0"></div>';
+            html += '<div class="param-group"><div class="param-label">custom_args (e.g., --flag)</div><input type="text" class="param-input" id="rothschildArgs" placeholder="" value=""></div>';
             
             // Always show SEND button
             html += '<button class="run-btn" onclick="executeCommand()">▶ SEND</button>';
@@ -567,7 +1019,7 @@
                         }
                     }
                     if (data.balance !== undefined) {
-                        balEl.textContent = data.balance.toFixed(4) + ' TKAS';
+                        balEl.textContent = data.balance.toFixed(4) + ' KAS';
                         addrEl.textContent = address.substring(0, 20) + '...';
                         return;
                     }
@@ -598,7 +1050,7 @@
                 if (data.error) {
                     balEl.textContent = 'Error';
                 } else {
-                    balEl.textContent = data.balance.toFixed(4) + ' TKAS';
+                    balEl.textContent = data.balance.toFixed(4) + ' KAS';
                 }
             } catch(e) {
                 balEl.textContent = 'Error';
@@ -624,7 +1076,7 @@
                 const data = await resp.json();
                 if (data.balance) {
                     const bal = Number(data.balance) / 1e8;
-                    log('Balance: ' + bal.toFixed(2) + ' TKAS', 'success');
+                    log('Balance: ' + bal.toFixed(2) + ' KAS', 'success');
                 } else {
                     log('Error: ' + JSON.stringify(data), 'error');
                 }
@@ -665,7 +1117,7 @@
                 return;
             }
             
-            log('Sending ' + amount + ' TKAS to ' + address + '...');
+            log('Sending ' + amount + ' KAS to ' + address + '...');
             
             // Use the new wallet/send endpoint
             try {
@@ -696,7 +1148,14 @@
         async function checkMinerStatus() {
             try {
                 const stats = await fetch('/api/miner-status').then(r => r.json());
-                log('Miner Status: Running=' + stats.running + ', Hashrate=' + stats.hashrate, stats.running ? 'success' : 'error');
+                let status = '=== MINER STATUS ===\n';
+                status += 'Running: ' + (stats.running ? '✓ YES' : '✗ NO') + '\n';
+                status += 'Hashrate: ' + (stats.hashrate || '0 M/s') + '\n';
+                status += 'UTXO Sync: ' + (stats.utxoSync || 'N/A') + '\n';
+                status += 'Accepted: ' + (stats.accepted || '0') + '\n';
+                status += 'Rejected: ' + (stats.rejected || '0');
+                
+                log(status, stats.running ? 'success' : 'error');
             } catch(e) {
                 log('Error: ' + e.message, 'error');
             }
@@ -776,7 +1235,7 @@
             }
         }
         
-        async function startRothschild(version, privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, randomizeTxVersion) {
+        async function startRothschild(version, privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, randomizeTxVersion, timeout, customArgs) {
             if (!privateKey || !recipient) {
                 log('Error: Private key and recipient required', 'error');
                 return;
@@ -801,10 +1260,10 @@
                 const balData = await balResp.json();
                 
                 const balance = balData.balance || 0;
-                log('Balance: ' + balance.toFixed(4) + ' TKAS');
+                log('Balance: ' + balance.toFixed(4) + ' KAS');
                 
                 if (balance <= 0) {
-                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' TKAS)', 'error');
+                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' KAS)', 'error');
                     return;
                 }
             } catch(e) {
@@ -824,7 +1283,9 @@
                         priorityFee: parseInt(priorityFee) || 0,
                         sendAmount: sendAmount ? parseFloat(sendAmount) : null,
                         randomizeFee: randomizeFee === 'yes',
-                        randomizeTxVersion: randomizeTxVersion === 'yes'
+                        randomizeTxVersion: randomizeTxVersion === 'yes',
+                        timeout: timeout || '0',
+                        customArgs: customArgs || ''
                     })
                 });
                 const data = await resp.json();
@@ -849,7 +1310,7 @@
                         });
                         const logData = await logResp.json();
                         if (logData.stdout && (logData.stdout.includes('not enough funds') || logData.stdout.includes('Has not enough funds'))) {
-                            log('⚠️ UTXO NOT SYNCED - Balance shows ' + balance.toFixed(4) + ' TKAS on API but local node needs time to sync', 'error');
+                            log('⚠️ UTXO NOT SYNCED - Balance shows ' + balance.toFixed(4) + ' KAS on API but local node needs time to sync', 'error');
                             // Don't stop - let it keep retrying
                         }
                     } catch(e) {}
@@ -883,7 +1344,10 @@
             if (rothschildRunning) {
                 await stopRothschild();
             } else {
-                await startRothschild(privateKey, recipient, tps, threads, priorityFee, randomizeFee);
+                const sendAmount = document.getElementById('rothschildAmount') ? document.getElementById('rothschildAmount').value : '';
+                const timeout = document.getElementById('rothschildTimeout') ? document.getElementById('rothschildTimeout').value : '0';
+                const customArgs = document.getElementById('rothschildArgs') ? document.getElementById('rothschildArgs').value : '';
+                await startRothschild('rusty-kaspa', privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, 'no', timeout, customArgs);
             }
         }
         
@@ -994,7 +1458,187 @@
         function clearConsole() {
             document.getElementById('consoleOutput').innerHTML = '';
         }
-        
+
+        // ========== Wallet CLI Panel Functions ==========
+        async function loadWalletCLI() {
+            const privateKey = document.getElementById('walletCLIPrivateKey').value.trim();
+            if (!privateKey) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Private key required</span>';
+                return;
+            }
+
+            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Loading wallet...</span>';
+
+            try {
+                // First derive address from private key
+                const loadResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: './wallet-cli.sh load ' + privateKey })
+                });
+                const loadData = await loadResp.json();
+                const loadOutput = loadData.stdout || '';
+
+                // Extract address from output
+                let address = '';
+                const addrMatch = loadOutput.match(/"address"\s*:\s*"(kaspatest:[^"]+)"/);
+                if (addrMatch) {
+                    address = addrMatch[1];
+                }
+
+                if (!address) {
+                    document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Could not derive address</span><br>' + loadOutput;
+                    return;
+                }
+
+                document.getElementById('walletCLIAddress').innerText = address;
+
+                // Now get balance
+                const balResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: './wallet-cli.sh balance ' + address })
+                });
+                const balData = await balResp.json();
+                const balOutput = balData.stdout || '';
+
+                // Extract balance
+                let balance = '-';
+                const balMatch = balOutput.match(/"kas"\s*:\s*([0-9.]+)/);
+                if (balMatch) {
+                    balance = parseFloat(balMatch[1]).toFixed(8) + ' KAS';
+                }
+
+                document.getElementById('walletCLIBalance').innerText = balance;
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Wallet loaded successfully!</span><br>' + loadOutput.replace(/\n/g, '<br>');
+
+            } catch(e) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        function updateWalletCLIRPC() {
+            const method = document.querySelector('input[name="walletCLIMethod"]:checked').value;
+            // Just for visual feedback - no label to update now
+        }
+
+        function getWalletCLIMethod() {
+            return document.querySelector('input[name="walletCLIMethod"]:checked').value;
+        }
+
+        async function sendViaWalletCLI() {
+            const privateKey = document.getElementById('walletCLIPrivateKey').value.trim();
+            const recipient = document.getElementById('walletCLIRecipient').value.trim();
+            const amount = document.getElementById('walletCLIAmount').value.trim();
+            const method = getWalletCLIMethod();
+
+            if (!privateKey) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Private key required</span>';
+                return;
+            }
+            if (!recipient) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Recipient address required</span>';
+                return;
+            }
+            if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Valid amount required</span>';
+                return;
+            }
+
+            let cmd = '';
+            let methodLabel = '';
+            
+            if (method === 'public') {
+                cmd = './wallet-cli.sh transfer ' + privateKey + ' ' + recipient + ' ' + amount;
+                methodLabel = 'Public API';
+            } else if (method === 'local') {
+                cmd = './wallet-cli.sh transfer ' + privateKey + ' ' + recipient + ' ' + amount + ' --rpc http://localhost:16210';
+                methodLabel = 'Local RPC';
+            } else if (method === 'rothschild') {
+                cmd = 'timeout 10s /Users/4dsto/rusty-kaspa-tn12/target/release/rothschild -k "' + privateKey + '" -a "' + recipient + '" --send-amount ' + amount + ' -s localhost:16210 -t 1';
+                methodLabel = 'Rothschild';
+            } else if (method === 'kaspa-send') {
+                cmd = '/Users/4dsto/ktn12/target/debug/kaspa-send --rpc 127.0.0.1:17110 --network testnet-12 send --private-key ' + privateKey + ' --recipient ' + recipient + ' --amount ' + amount;
+                methodLabel = 'kaspa-send (wRPC)';
+            }
+
+            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Sending ' + amount + ' KAS to ' + recipient + ' via ' + methodLabel + '...</span>';
+
+            try {
+                const resp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: cmd })
+                });
+                const data = await resp.json();
+                const output = (data.stdout || '') + (data.stderr || '');
+
+                if (output.includes('Transfer successful') || output.includes('txid') || output.includes('Transaction') || output.includes('sent')) {
+                    // Extract TXID - try multiple formats
+                    const txidMatch = output.match(/"txid"\s*:\s*"([a-f0-9]+)"/i) 
+                        || output.match(/TX ID:? ([a-f0-9]+)/i)
+                        || output.match(/transaction:? ([a-f0-9]{64})/i)
+                        || output.match(/txid:? ([a-f0-9]{64})/i)
+                        || output.match(/Transaction ID:? ([a-f0-9]{64})/i);
+                    const txid = txidMatch ? txidMatch[1] : 'unknown';
+
+                    document.getElementById('walletCLIOutput').innerHTML = 
+                        '<span style="color: #00ff88;">✓ Transfer successful!</span><br>' +
+                        'TXID: <span style="color: #00ff88;">' + txid + '</span>';
+
+                    // Refresh balance after short delay
+                    setTimeout(loadWalletCLI, 3000);
+                } else if (output.includes('Error') || output.includes('error')) {
+                    document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Transfer failed:</span><br>' + output.replace(/\n/g, '<br>');
+                } else {
+                    document.getElementById('walletCLIOutput').innerHTML = output.replace(/\n/g, '<br>');
+                }
+
+            } catch(e) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        async function startMinerFromPanel10() {
+            const address = document.getElementById('walletCLIAddress').innerText;
+            if (!address || address === '-' || !address.startsWith('kaspatest:')) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Load a wallet first to get an address</span>';
+                return;
+            }
+
+            document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #00ff88;">Starting miner to ' + address + '...</span>';
+
+            try {
+                const resp = await fetch('/api/miner-start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ address: address, threads: 4 })
+                });
+                const data = await resp.json();
+                
+                if (data.started || data.pid) {
+                    document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #00ff88;">Miner started! PID: ' + data.pid + '</span>';
+                    document.getElementById('walletCLIMinerBtn').innerText = 'Miner Running (Click to Stop)';
+                    document.getElementById('walletCLIMinerBtn').onclick = stopMinerFromPanel10;
+                } else {
+                    document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Failed to start miner</span>';
+                }
+            } catch(e) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        async function stopMinerFromPanel10() {
+            try {
+                await fetch('/api/miner-stop', { method: 'POST' });
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ffaa00;">Miner stopped</span>';
+                document.getElementById('walletCLIMinerBtn').innerText = 'Start Miner to This Address';
+                document.getElementById('walletCLIMinerBtn').onclick = startMinerFromPanel10;
+            } catch(e) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
         function handleConsoleEnter(e) {
             if (e.key === 'Enter') {
                 const input = document.getElementById('consoleInput');
