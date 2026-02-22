@@ -346,30 +346,30 @@
                         <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">SEND KAS</div>
                         <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
                             <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
-                                <input type="radio" name="walletCLIMethod" value="public" checked onchange="updateWalletCLIRPC()">
+                                <input type="radio" name="walletCLIMethod" value="public" onchange="updateWalletCLIRPC()">
                                 <div>
-                                    <span style="font-size: 11px; color: var(--text);">Public API (api-tn12.kaspa.org)</span>
+                                    <span style="font-size: 11px; color: var(--text);">Public API (api-tn12.kaspa.org) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
                                     <div style="font-size: 10px; color: var(--text-muted);">Direct to public API - reliable, no local sync needed</div>
                                 </div>
                             </label>
                             <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
                                 <input type="radio" name="walletCLIMethod" value="local" onchange="updateWalletCLIRPC()">
                                 <div>
-                                    <span style="font-size: 11px; color: var(--text);">Local RPC (localhost:16210)</span>
+                                    <span style="font-size: 11px; color: var(--text);">Local RPC (localhost:16210) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
                                     <div style="font-size: 10px; color: var(--text-muted);">Via local kaspad - faster but needs UTXO synced</div>
                                 </div>
                             </label>
                             <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
                                 <input type="radio" name="walletCLIMethod" value="rothschild" onchange="updateWalletCLIRPC()">
                                 <div>
-                                    <span style="font-size: 11px; color: var(--text);">Rothschild (TX Generator)</span>
+                                    <span style="font-size: 11px; color: var(--text);">Rothschild (TX Generator) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
                                     <div style="font-size: 10px; color: var(--text-muted);">High-throughput TX generator - best for load/stress testing</div>
                                 </div>
                             </label>
                             <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
-                                <input type="radio" name="walletCLIMethod" value="kaspa-send" onchange="updateWalletCLIRPC()">
+                                <input type="radio" name="walletCLIMethod" value="kaspa-send" checked onchange="updateWalletCLIRPC()">
                                 <div>
-                                    <span style="font-size: 11px; color: var(--text);">kaspa-send (wRPC)</span>
+                                    <span style="font-size: 11px; color: var(--text);">kaspa-send (wRPC) <span style="color: #00ff88; font-size: 9px;">[DEFAULT]</span></span>
                                     <div style="font-size: 10px; color: var(--text-muted);">Direct wRPC to localhost:17110 - uses wallet-cli for signing</div>
                                 </div>
                             </label>
@@ -548,7 +548,7 @@
             { id: 'archival', name: '--archival', type: 'flag', default: false },
             { id: 'perf-metrics', name: '--perf-metrics', type: 'flag', default: false },
             { id: 'reset-db', name: '--reset-db', type: 'flag', default: false },
-            { id: 'async-threads', name: '--async-threads', type: 'value', default: '24', placeholder: '2-12', note: '2-12', checked: true },
+            { id: 'async-threads', name: '--async-threads', type: 'value', default: '12', placeholder: '2-24', note: '2-24 (default: 12)', checked: true },
             { id: 'ram-scale', name: '--ram-scale', type: 'value', default: '2', placeholder: '0.5-4', note: '0.5-4', checked: true },
             { id: 'wrpc', name: '--rpclisten-borsh', type: 'value', default: '127.0.0.1:17110', placeholder: 'host:port', note: 'wRPC', checked: true }
         ];
@@ -766,7 +766,7 @@
                 } else {
                     const balance = (data.balance || 0) / 1e8;
                     const utxos = data.utxos || 0;
-                    if (el) el.innerHTML = `Balance: ${balance.toFixed(4)} KAS<br>UTXOs: ${utxos}`;
+                    if (el) el.innerHTML = `Balance: ${balance.toFixed(4)} ${getCurrencyUnit(addr)}<br>UTXOs: ${utxos}`;
                 }
             } catch(e) {
                 if (el) el.textContent = 'Error: ' + e.message;
@@ -808,7 +808,11 @@
                 document.getElementById('ktn12Size').textContent = sys.ktn12Size;
                 document.getElementById('chainSize').textContent = sys.chainSize;
                 
-                document.getElementById('minerHashrate').textContent = miner.utxoSync || (miner.running ? (miner.hashrate || 'Syncing...') : 'OFF');
+                // Show UTXO sync % while syncing, show hashrate (m/s) when 100% synced
+                const isNodeSynced = !node.syncing && !node.syncPercent;
+                document.getElementById('minerHashrate').textContent = isNodeSynced 
+                    ? (miner.running ? (miner.hashrate || '0.00 M/s') : 'OFF')
+                    : (miner.utxoSync || (miner.running ? 'Syncing...' : 'OFF'));
                 document.getElementById('nodeTps').textContent = node.syncPercent ? ('Syncing ' + node.syncPercent) : (node.syncing ? 'Syncing...' : (node.tps || 'N/A'));
                 document.getElementById('txTps').textContent = tx.running ? (tx.tps || '0') : 'OFF';
             } catch(e) {
@@ -1019,7 +1023,7 @@
                         }
                     }
                     if (data.balance !== undefined) {
-                        balEl.textContent = data.balance.toFixed(4) + ' KAS';
+                        balEl.textContent = data.balance.toFixed(4) + ' ' + getCurrencyUnit(address);
                         addrEl.textContent = address.substring(0, 20) + '...';
                         return;
                     }
@@ -1050,7 +1054,7 @@
                 if (data.error) {
                     balEl.textContent = 'Error';
                 } else {
-                    balEl.textContent = data.balance.toFixed(4) + ' KAS';
+                    balEl.textContent = data.balance.toFixed(4) + ' ' + getCurrencyUnit(address);
                 }
             } catch(e) {
                 balEl.textContent = 'Error';
@@ -1076,7 +1080,7 @@
                 const data = await resp.json();
                 if (data.balance) {
                     const bal = Number(data.balance) / 1e8;
-                    log('Balance: ' + bal.toFixed(2) + ' KAS', 'success');
+                    log('Balance: ' + bal.toFixed(2) + ' ' + getCurrencyUnit(address), 'success');
                 } else {
                     log('Error: ' + JSON.stringify(data), 'error');
                 }
@@ -1117,7 +1121,7 @@
                 return;
             }
             
-            log('Sending ' + amount + ' KAS to ' + address + '...');
+            log('Sending ' + amount + ' ' + getCurrencyUnit(address) + ' to ' + address + '...');
             
             // Use the new wallet/send endpoint
             try {
@@ -1260,10 +1264,10 @@
                 const balData = await balResp.json();
                 
                 const balance = balData.balance || 0;
-                log('Balance: ' + balance.toFixed(4) + ' KAS');
+                log('Balance: ' + balance.toFixed(4) + ' ' + getCurrencyUnit(address));
                 
                 if (balance <= 0) {
-                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' KAS)', 'error');
+                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' ' + getCurrencyUnit(address) + ')', 'error');
                     return;
                 }
             } catch(e) {
@@ -1459,6 +1463,10 @@
             document.getElementById('consoleOutput').innerHTML = '';
         }
 
+        function getCurrencyUnit(address) {
+            return (address && address.startsWith('kaspatest:')) ? 'TKAS' : 'KAS';
+        }
+
         // ========== Wallet CLI Panel Functions ==========
         async function loadWalletCLI() {
             const privateKey = document.getElementById('walletCLIPrivateKey').value.trim();
@@ -1506,7 +1514,7 @@
                 let balance = '-';
                 const balMatch = balOutput.match(/"kas"\s*:\s*([0-9.]+)/);
                 if (balMatch) {
-                    balance = parseFloat(balMatch[1]).toFixed(8) + ' KAS';
+                    balance = parseFloat(balMatch[1]).toFixed(8) + ' ' + getCurrencyUnit(address);
                 }
 
                 document.getElementById('walletCLIBalance').innerText = balance;
@@ -1562,7 +1570,12 @@
                 methodLabel = 'kaspa-send (wRPC)';
             }
 
-            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Sending ' + amount + ' KAS to ' + recipient + ' via ' + methodLabel + '...</span>';
+            let recipientAddr = recipient;
+            if (!recipientAddr.startsWith('kaspatest:')) {
+                recipientAddr = 'kaspatest:' + recipientAddr;
+            }
+
+            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Sending ' + amount + ' ' + getCurrencyUnit(recipientAddr) + ' to ' + recipient + ' via ' + methodLabel + '...</span>';
 
             try {
                 const resp = await fetch('/api/shell', {

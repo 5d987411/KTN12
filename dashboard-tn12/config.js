@@ -19,10 +19,10 @@ function getConfig(envVar, defaultVal) {
 module.exports = {
     // Base directories
     ktn12Dir: getConfig('KTN12_DIR', ktn12Dir),
-    rustyKaspaDir: getConfig('RUSTY_KASPA_DIR', path.join(process.env.HOME || '/Users/4dsto', 'rusty-kaspa-tn12')),
+    rustyKaspaDir: getConfig('RUSTY_KASPA_DIR', path.join(process.env.HOME || '/home/user', 'rusty-kaspa-tn12')),
     
-    // Binaries - use smartgoo rothschild (better TX support)
-    rothschild: getConfig('ROTHSCHILD_BIN', '/Users/4dsto/smartgoo-rusty-kaspa/target/release/rothschild'),
+    // Binaries - adjust path to your rusty-kaspa-tn12 build
+    rothschild: getConfig('ROTHSCHILD_BIN', path.join(process.env.HOME || '/home/user', 'rusty-kaspa-tn12/target/release/rothschild')),
     
     // Log files - default to ktn12 directory
     kaspadLog: getConfig('KASPAD_LOG', path.join(ktn12Dir, 'kaspad.log')),
@@ -38,5 +38,5 @@ module.exports = {
     miningAddress: getConfig('MINING_ADDRESS', ''),
     
     // Miner threads
-    minerThreads: parseInt(getConfig('MINER_THREADS', '2'))
+    minerThreads: parseInt(getConfig('MINER_THREADS', '8'))
 };

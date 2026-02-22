@@ -4,40 +4,68 @@
 
 Kaspa Testnet 12 (Covenant) with integrated dashboard, wallet, miner, and transaction generator.
 
+## Network Ports
+
+| Port | Purpose |
+|------|---------|
+| **16311** | P2P (node-to-node communication) - required for TN12 |
+| **16210** | RPC (miner/wallet connection) |
+| **17110** | wRPC (WebSocket RPC, enabled via --rpclisten-borsh) |
+| **3001** | Dashboard web UI |
+
+**Important:** TN12 uses dedicated ports (16311 P2P, 16210 RPC) to separate from TN10.
+
 ## First-Time Setup
 
 ```bash
-# 1. Clone and enter the project
+# 1. Clone this repository
 git clone https://github.com/5d987411/KTN12.git
 cd KTN12
 
-# 2. Check configuration (it will guide you)
-./check_config.sh
+# 2. Build rusty-kaspa-tn12 (REQUIRED)
+git clone --branch tn12 https://github.com/kaspanet/rusty-kaspa.git rusty-kaspa-tn12
+cd rusty-kaspa-tn12
 
-# 3. Edit config.env to set your paths
+# Build kaspad (node)
+cargo build --release --bin kaspad
+
+# Build rothschild (transaction generator)
+cargo build --release --bin rothschild
+
+cd ..
+
+# 3. Get kaspa-miner (pre-built binary)
+# Download from: https://github.com/kaspanet/kaspa-miner/releases
+# Place as: ./kaspa-miner
+# Or build from: https://github.com/kaspanet/cpuminer
+
+# 4. Configure
+cp config.env.example config.env
 nano config.env
-# Key settings:
-#   - RUSTY_KASPA_DIR: where you cloned rusty-kaspa-tn12
-#   - MINING_ADDRESS: your Kaspa testnet address (REQUIRED)
-
-# 4. Start the node
-./start_tn12_kaspad.sh
 ```
 
-## Quick Start (After Setup)
+Edit `config.env`:
+```bash
+RUSTY_KASPA_DIR="$HOME/rusty-kaspa-tn12"  # Path to rusty-kaspa-tn12
+MINING_ADDRESS="kaspatest:..."              # Your mining address (REQUIRED)
+MINER_THREADS=8                            # Number of miner threads
+```
+
+## Quick Start
 
 ```bash
-cd KTN12
-
-# Start node
+# Start node (with wRPC enabled on port 17110)
 ./start_tn12_kaspad.sh
 
-# Start miner (optional)
+# Start miner
 source config.env
 ./kaspa-miner --testnet --mining-address $MINING_ADDRESS -p $RPC_PORT -t $MINER_THREADS
 
+# Or mine before sync completes (use --enable-unsynced-mining)
+./kaspa-miner --testnet --mining-address $MINING_ADDRESS -p $RPC_PORT -t $MINER_THREADS --enable-unsynced-mining
+
 # Start dashboard
-cd dashboard-tn12 && node server.js
+cd dashboard-tn12 && npm install && node server.js
 # Open http://localhost:3001
 ```
 
@@ -45,81 +73,102 @@ cd dashboard-tn12 && node server.js
 
 | Script | Description |
 |--------|-------------|
-| `start_tn12_kaspad.sh` | Start kaspad (NEW tn12 build) |
-| `start_rk_node.sh` | Start kaspad (old binary) |
-| `start_tn12.sh` | Start from rusty-kaspa-tn12 directory |
+| `start_tn12_kaspad.sh` | Start kaspad (tn12 build with wRPC on port 17110) |
+| `start_rk_node.sh` | Start kaspad (legacy binary) |
 | `stop_node.sh` | Stop running kaspad |
+| `check_config.sh` | Check configuration |
 
 ## Configuration
 
-Before running, edit `config.env` to set your paths:
+### config.env
 
-```bash
-# Edit configuration
-nano config.env
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `RUSTY_KASPA_DIR` | `$HOME/rusty-kaspa-tn12` | Path to rusty-kaspa-tn12 |
+| `MINING_ADDRESS` | (none) | **REQUIRED** - Your mining address |
+| `MINER_THREAD8 | Number of mining threads |
+| `P2PS` | _PORT` | 16311 | P2P port for TN12 |
+| `RPC_PORT` | 16210 | RPC port |
+| `DASHBOARD_PORT` | 3001 | Dashboard port |
+
+### dashboard-tn12/config.js
+
+Edit paths if your rusty-kaspa-tn12 is in a different location:
+```javascript
+rustyKaspaDir: getConfig('RUSTY_KASPA_DIR', '/path/to/rusty-kaspa-tn12'),
+rothschild: getConfig('ROTHSCHILD_BIN', '/path/to/rusty-kaspa-tn12/target/release/rothschild'),
 ```
-
-Key settings in `config.env`:
-- `RUSTY_KASPA_DIR` - Path to rusty-kaspa-tn12 (default: $HOME/rusty-kaspa-tn12)
-- `MINING_ADDRESS` - **REQUIRED** - Your mining address
-- `RPC_PORT` - RPC port (default: 16210)
-- `MINER_THREADS` - Number of mining threads (default: 2)
-
-For the dashboard, edit `dashboard-tn12/config.js` or set environment variables.
 
 ## Components
 
-| Component | Binary | Path |
+| Component | Source | Path |
 |-----------|--------|------|
-| Node (NEW) | `kaspad` | `/Users/4dsto/rusty-kaspa-tn12/target/release/kaspad` |
-| Node (OLD) | `kaspad` | `/Users/4dsto/ktn12/kaspad` |
-| Tx Generator | `rothschild` | `/Users/4dsto/ktn12/rothschild` |
-| Miner | `kaspa-miner` | `/Users/4dsto/ktn12/kaspa-miner` |
-| Dashboard | `dashboard-tn12/` | Web UI (port 3001) |
+| Node | rusty-kaspa-tn12 | `$RUSTY_KASPA_DIR/target/release/kaspad` |
+| Rothschild | rusty-kaspa-tn12 | `$RUSTY_KASPA_DIR/target/release/rothschild` |
+| Miner | kaspanet/cpuminer | `./kaspa-miner` |
+| Dashboard | ktn12 | `./dashboard-tn12/` |
 
-## Pre-funded Wallets
+## Official TN12 Commands
 
-### Main Wallet (Sender)
-- **Private Key:** (this wwill be different on your miner)
-- **Address:** (Use dashboard to load)
+From the official documentation:
 
-### Recipient Wallet
-- **Address:** `kaspatest:qztewtux4hsrcekswxcrrfhaez692n44fegr3rd5z3rjm85d2ug8xhp0lzg33`
-
-## Usage
-
-### Check Balance
+### Start Node
 ```bash
-./target/release/kaspa-wallet-cli balance <address>
+cd rusty-kaspa-tn12
+cargo run --release --bin kaspad -- --testnet --netsuffix=12 --utxoindex
 ```
 
-### Generate New Wallet
+### Generate Wallet
 ```bash
-./target/release/kaspa-wallet-cli generate
+cd rusty-kaspa-tn12
+cargo run --release --bin rothschild
+# Output includes private key and address
 ```
 
 ### Start Mining
 ```bash
-./kaspa-miner --testnet --mining-address <address> -p 16210 -t 2
+# Standard (wait for sync)
+kaspa-miner --testnet --mining-address <address> -p 16210 -t 1
+
+# Mine immediately (before sync)
+kaspa-miner --testnet --mining-address <address> -p 16210 -t 1 --enable-unsynced-mining
 ```
 
-### Start Transaction Generator (Rothschild)
+### Start Transaction Generator
 ```bash
-./rothschild -k <private_key> -a <recipient> -t 1 -s localhost:16210
+# After wallet is funded
+cargo run --release --bin rothschild -- --private-key <key> -t 5
+# -t 5 = 5 TPS, recommended: 1-100 TPS
 ```
 
-## Dashboard
+## Dashboard Features
 
-Access at **http://localhost:3001**
-
-Features:
-- 3 wallet inputs with balance display
+- 3 wallet inputs with balance display (TKAS for testnet)
 - Console for interactive commands
-- Buttons for: generate, balance, send, miner, rothschild, contracts
+- Send KAS via multiple methods (wRPC recommended)
+- Miner control (start/stop/status)
+- Transaction generator (Rothschild)
+- Contract deployment tools
+
+## Network Info
+
+| Item | Value |
+|------|-------|
+| Network | Testnet 12 |
+| P2P Port | 16311 |
+| RPC Port | 16210 |
+| wRPC Port | 17110 |
+| Dashboard Port | 3001 |
+| Data Dir | `~/.kaspa-testnet12` |
+
+## Known Issues
+
+- Default TX fee (~5000 sompi) may be too low for fast confirmation
+- Use higher priority fees for faster transaction confirmation
 
 ## Building from Source
 
-Requires rusty-kaspa tn12 branch:
+### Rusty-Kaspa (TN12)
 ```bash
 git clone --branch tn12 https://github.com/kaspanet/rusty-kaspa.git rusty-kaspa-tn12
 cd rusty-kaspa-tn12
@@ -127,31 +176,36 @@ cd rusty-kaspa-tn12
 # Build node
 cargo build --release --bin kaspad
 
-# Build rothschild  
+# Build rothschild
 cargo build --release --bin rothschild
-
-# Build miner (from cpuminer repo)
-cargo build --release
 ```
 
-## Rusty-Kaspa Location
+### Kaspa-Miner
+```bash
+git clone https://github.com/kaspanet/cpuminer.git
+cd cpuminer
+./autogen.sh
+./configure
+make
+# Result: kaspa-miner binary
+```
 
-- **Path:** `/Users/4dsto/rusty-kaspa-tn12`
-- **GitHub:** https://github.com/kaspanet/rusty-kaspa/tree/tn12
+## Architecture
 
-## Dependencies
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   index.html    │────▶│   server.js     │────▶│  wallet-cli.sh  │
+│   (Frontend)    │     │   (Node.js)     │     │     (Bash)      │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+                               │
+                               ▼
+                        ┌─────────────────┐
+                        │  kaspad/rothschild │
+                        │   (Rust bins)   │
+                        └─────────────────┘
+```
 
-- **rusty-kaspa**: https://github.com/kaspanet/rusty-kaspa (tn12 branch)
-- **cpuminer**: https://github.com/kaspanet/cpuminer (v0.2.6)
-
-## Network Info
-
-- **Network:** Testnet 12
-- **P2P Port:** 16311
-- **RPC Port:** 16210
-- **Dashboard Port:** 3001
-- **Data Dir:** `~/.kaspa-testnet12`
-
-## Known Issues
-
-- `kaspa-wallet-cli generate` produces addresses with incorrect length (58 chars vs 61-63 required). Use pre-funded wallets or external address generation.
+Dashboard backend (server.js):
+- API endpoints for wallet, balance, send, miner control
+- Executes CLI commands via child_process
+- Returns JSON to frontend

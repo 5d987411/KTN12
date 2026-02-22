@@ -12,9 +12,9 @@ const ROTHschild_LOG = config.rothschildLog;
 const RPC_HOST = 'localhost';
 const RPC_PORT = config.rpcPort;
 
-// Both rothschild versions
-const ROTHSCHILD_SMARTGOO = '/Users/4dsto/smartgoo-rusty-kaspa/target/release/rothschild';
-const ROTHSCHILD_RUSTY = '/Users/4dsto/rusty-kaspa-tn12/target/release/rothschild';
+// Rothschild binaries - use config paths
+const ROTHSCHILD_SMARTGOO = config.rothschild;
+const ROTHSCHILD_RUSTY = path.join(config.rustyKaspaDir, 'target/release/rothschild');
 
 const RPC_URL = 'https://api-tn12.kaspa.org';
 const API_BASE = 'https://api-tn12.kaspa.org';
@@ -56,8 +56,7 @@ async function getUTXOs(address) {
 
 async function sendTransaction(privateKey, recipient, amount) {
     // Use rothschild (rusty-kaspa version) for sending with exact amounts
-    // smartgoo version doesn't support --send-amount
-    const rothschildBinary = '/Users/4dsto/rusty-kaspa-tn12/target/release/rothschild';
+    const rothschildBinary = path.join(config.rustyKaspaDir, 'target/release/rothschild');
     return new Promise((resolve) => {
         // Run rothschild at 1 TPS and kill after 3 seconds to send exactly 1 transaction
         const cmd = `timeout 3s ${rothschildBinary} -k "${privateKey}" -a "${recipient}" -t 1 --send-amount ${amount} -s ${RPC_HOST}:${RPC_PORT} 2>&1`;
@@ -807,16 +806,20 @@ const server = http.createServer(async (req, res) => {
 
         // Get miner status (hashrate)
         if (urlPath === '/api/miner-status' && req.method === 'GET') {
-            // Check if node is syncing UTXO
-            exec('tail -50 ' + KASPAD_LOG + ' 2>/dev/null | grep "UTXO set chunks" | tail -1', (utxoErr, utxoOut) => {
-                let utxoPercent = '';
-                if (utxoOut.includes('UTXO set chunks')) {
-                    const utxoMatch = utxoOut.match(/(\d+)\s+UTXOs/);
-                    if (utxoMatch) {
-                        const utxoCount = parseInt(utxoMatch[1]);
-                        // Estimate ~10M UTXOs total for testnet
-                        const percent = Math.min(100, Math.round(utxoCount / 100000));
-                        utxoPercent = 'UTXO ' + percent + '%';
+            // Check if node is syncing UTXO - check for various sync indicators
+            exec('tail -50 ' + KASPAD_LOG + ' 2>/dev/null | grep -iE "UTXO-validated|IBD|Processed.*blocks" | tail -1', (utxoErr, utxoOut) => {
+                let utxoPercent = '100%'; // Default to synced
+                
+                // If there's recent block processing, node is likely synced
+                if (!utxoOut.includes('UTXO-validated') && !utxoOut.includes('Processed')) {
+                    utxoPercent = 'Syncing...';
+                } else if (utxoOut.includes('IBD')) {
+                    // Still in Initial Block Download
+                    const match = utxoOut.match(/(\d+)%/);
+                    if (match) {
+                        utxoPercent = match[1] + '%';
+                    } else {
+                        utxoPercent = 'Syncing...';
                     }
                 }
                 
@@ -825,18 +828,18 @@ const server = http.createServer(async (req, res) => {
                     const match = stdout.match(/([\d.]+)\s*Mhash\/s/);
                     if (match) hashrate = match[1] + ' M/s';
                     
-                    // Get accepted/rejected counts
-                    exec('tail -100 ' + MINER_LOG + ' 2>/dev/null | grep -i "accepted\|rejected" | tail -5', (arErr, arOut) => {
-                        let accepted = '0', rejected = '0';
-                        const accMatch = arOut.match(/accepted.*?(\d+)/i);
-                        const rejMatch = arOut.match(/rejected.*?(\d+)/i);
-                        if (accMatch) accepted = accMatch[1];
-                        if (rejMatch) rejected = rejMatch[1];
+                    // Get block counts from log
+                    exec('tail -200 ' + MINER_LOG + ' 2>/dev/null | grep -c "Found a block"', (arErr, arOut) => {
+                        let accepted = arOut.trim() || '0';
                         
-                        exec('pgrep -f "kaspa-miner"', (err, out) => {
-                            const running = out.trim().length > 0;
-                            res.writeHead(200, { 'Content-Type': 'application/json' });
-                            res.end(JSON.stringify({ hashrate: hashrate, running: running, utxoSync: utxoPercent, accepted: accepted, rejected: rejected }));
+                        exec('tail -200 ' + MINER_LOG + ' 2>/dev/null | grep -c "successfully"', (rejErr, rejOut) => {
+                            let rejected = '0'; // No rejected in this miner version
+                            
+                            exec('pgrep -f "kaspa-miner"', (err, out) => {
+                                const running = out.trim().length > 0;
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ hashrate: hashrate, running: running, utxoSync: utxoPercent, accepted: accepted, rejected: rejected }));
+                            });
                         });
                     });
                 });
