@@ -2,6 +2,17 @@ const https = require('https');
 const http = require('http');
 const { exec } = require('child_process');
 const path = require('path');
+const crypto = require('crypto');
+const WebSocket = require('ws');
+
+let grpcClient = null;
+try {
+    const { Client } = require('@kaspa/grpc');
+    grpcClient = new Client({ host: '127.0.0.1:16210' });
+    grpcClient.connect().catch(() => { grpcClient = null; });
+} catch (e) {
+    console.log('gRPC client not available:', e.message);
+}
 
 const config = require('./config.js');
 
@@ -11,6 +22,16 @@ const MINER_LOG = config.minerLog;
 const ROTHschild_LOG = config.rothschildLog;
 const RPC_HOST = 'localhost';
 const RPC_PORT = config.rpcPort;
+const USE_LOCAL_RPC = config.useLocalRpc;
+
+// API endpoint for balance/utxo - always uses public API (requires REST)
+// Note: local kaspad doesn't provide REST API, only gRPC/WebSocket
+const KASPA_API = 'https://api-tn12.kaspa.org';
+
+// RPC URL for kaspa-igra CLI - ws for local, https for public
+const LOCAL_RPC_URL = 'ws://localhost:17210';
+const PUBLIC_RPC_URL = 'https://api-tn12.kaspa.org';
+const KGRPC3_RPC = USE_LOCAL_RPC ? LOCAL_RPC_URL : PUBLIC_RPC_URL;
 
 // Rothschild binaries - use config paths
 const ROTHSCHILD_SMARTGOO = config.rothschild;
@@ -19,6 +40,29 @@ const ROTHSCHILD_RUSTY = path.join(config.rustyKaspaDir, 'target/release/rothsch
 const RPC_URL = 'https://api-tn12.kaspa.org';
 const API_BASE = 'https://api-tn12.kaspa.org';
 const PORT = config.dashboardPort;
+
+/**
+ * Kaspa RPC API Notes (2025):
+ * 
+ * REST API (current): Uses https://api-tn12.kaspa.org for balance/UTXO queries
+ *   - GET /addresses/{addr}/balance
+ *   - GET /addresses/{addr}/utxos
+ * 
+ * NEWER wRPC API (recommended for new code):
+ *   const { RpcClient } = require('kaspa');
+ *   const rpc = new RpcClient({
+ *       url: 'ws://localhost:17210',  // or 'https://api-tn12.kaspa.org' for public
+ *       networkId: 'testnet-12'
+ *   });
+ *   await rpc.connect();
+ *   const utxos = await rpc.getUtxosByAddresses(['kaspatest:...']);
+ *   await rpc.disconnect();
+ * 
+ * Ports (Testnet-12):
+ *   - gRPC:      16210
+ *   - wRPC-Borsh: 17210 (recommended)
+ *   - wRPC-JSON:  18210
+ */
 
 function fetchUrl(url) {
     return new Promise((resolve, reject) => {
@@ -32,9 +76,46 @@ function fetchUrl(url) {
     });
 }
 
-const KASPA_API = 'https://api-tn12.kaspa.org';
 const SOMPI_PER_KAS = 1e8;
 const DUST = 1000;
+const bech32 = require('bech32');
+
+// Generate proper Kaspa P2SH address using Bech32
+function scriptToP2SHAddress(script) {
+    const scriptBuf = Buffer.from(script);
+    // Hash160 of the script
+    const sha256 = crypto.createHash('sha256').update(scriptBuf).digest();
+    const hash160 = crypto.createHash('ripemd160').update(sha256).digest();
+    
+    // Convert to 5-bit words for bech32
+    const bits5 = bytesToBits(Array.from(hash160));
+    const words = bitsToWords(bits5, 5);
+    
+    // Encode as bech32 with 'kaspatest' prefix and version byte 0x02 (P2SH for testnet)
+    return bech32.bech32.encode('kaspatest', [2, ...words]);
+}
+
+function bytesToBits(bytes) {
+    let bits = [];
+    for (let i = 0; i < bytes.length; i++) {
+        for (let j = 7; j >= 0; j--) {
+            bits.push((bytes[i] >> j) & 1);
+        }
+    }
+    return bits;
+}
+
+function bitsToWords(bits, bitsPerWord) {
+    let words = [];
+    for (let i = 0; i < bits.length; i += bitsPerWord) {
+        let word = 0;
+        for (let j = 0; j < bitsPerWord && i + j < bits.length; j++) {
+            word = (word << 1) | bits[i + j];
+        }
+        words.push(word);
+    }
+    return words;
+}
 
 async function getBalance(address) {
     try {
@@ -58,17 +139,17 @@ async function sendTransaction(privateKey, recipient, amount) {
     // Use rothschild (rusty-kaspa version) for sending with exact amounts
     const rothschildBinary = path.join(config.rustyKaspaDir, 'target/release/rothschild');
     return new Promise((resolve) => {
-        // Run rothschild at 1 TPS and kill after 3 seconds to send exactly 1 transaction
-        const cmd = `timeout 3s ${rothschildBinary} -k "${privateKey}" -a "${recipient}" -t 1 --send-amount ${amount} -s ${RPC_HOST}:${RPC_PORT} 2>&1`;
-        exec(cmd, { timeout: 10000 }, (error, stdout, stderr) => {
+        // Run rothschild at 1 TPS with longer timeout for transaction to complete
+        const cmd = `timeout 30s ${rothschildBinary} -k "${privateKey}" -a "${recipient}" -t 1 --send-amount ${amount} -s ${RPC_HOST}:${RPC_PORT} 2>&1`;
+        exec(cmd, { timeout: 60000 }, (error, stdout, stderr) => {
             console.log('rothschild send stdout:', stdout);
             console.log('rothschild send stderr:', stderr);
-            if (error && !stdout.includes('Transaction')) {
+            if (error && !stdout) {
                 resolve({ error: error.message, stderr: stderr });
                 return;
             }
             // Check for success indicators in output
-            if (stdout.includes('Transaction') || stdout.includes('sent') || stdout.includes('txid')) {
+            if (stdout.includes('Transaction') || stdout.includes('sent') || stdout.includes('txid') || stdout.includes('TXID')) {
                 resolve({ success: true, output: stdout });
             } else {
                 resolve({ error: 'Transaction may have failed', output: stdout, stderr: stderr });
@@ -109,11 +190,22 @@ const server = http.createServer(async (req, res) => {
 
     const urlPath = req.url.split('?')[0];
     const queryString = req.url.split('?')[1] || '';
+    
+    console.log('URL:', req.method, urlPath);
 
     // Serve index.html at root
     if (urlPath === '/' || urlPath === '/index.html') {
         const fs = require('fs');
         const html = fs.readFileSync(__dirname + '/index.html', 'utf8');
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(html);
+        return;
+    }
+    
+    // Serve controlpanel.html
+    if (urlPath === '/controlpanel.html') {
+        const fs = require('fs');
+        const html = fs.readFileSync(__dirname + '/controlpanel.html', 'utf8');
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.end(html);
         return;
@@ -129,42 +221,66 @@ const server = http.createServer(async (req, res) => {
     };
 
     try {
-        // Load wallet - get address from private key using rothschild
+        // Load wallet - get address from private key using kaspa-igra CLI, then get balance from API
         if (urlPath === '/api/wallet-load' && req.method === 'POST') {
             let body = '';
             req.on('data', chunk => body += chunk);
-            req.on('end', () => {
+            req.on('end', async () => {
                 const { privateKey } = JSON.parse(body);
                 if (!privateKey) {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: 'No private key provided' }));
                     return;
                 }
-                // Run rothschild with timeout, kill after 5 seconds
-                const cmd = `timeout 5s ${ROTHschild} -k ${privateKey} -s ${RPC_HOST}:${RPC_PORT} 2>&1`;
-                exec(cmd, { timeout: 10000 }, (error, stdout, stderr) => {
-                    console.log('rothschild output:', stdout);
-                    console.log('rothschild error:', error);
-                    if (error && !stdout) {
+                
+                // Use kaspa-igra CLI to derive address
+                const kaspaIgra = '/Users/4dsto/ktn12/kaspa-igra-cli/target/release/kaspa-igra-cli';
+                const cmd = `${kaspaIgra} load "${privateKey}" --rpc ${KGRPC3_RPC} 2>&1`;
+                
+                exec(cmd, { timeout: 10000 }, async (error, stdout, stderr) => {
+                    console.log('kgraf3 output:', stdout);
+                    console.log('kgraf3 error:', error);
+                    
+                    let address = '';
+                    let publicKey = '';
+                    let parseError = '';
+                    
+                    try {
+                        const data = JSON.parse(stdout);
+                        if (data.error) {
+                            parseError = data.error;
+                        } else {
+                            address = data.address || '';
+                            publicKey = data.public_key || '';
+                        }
+                    } catch(e) {
+                        parseError = 'Failed to parse output';
+                    }
+                    
+                    if (!address) {
                         res.writeHead(200, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify({ error: error.message, stderr: stderr, stdout: stdout }));
+                        res.end(JSON.stringify({ error: parseError || 'Could not derive address from key', raw: stdout }));
                         return;
                     }
-                    const addressMatch = stdout.match(/from address:\s*(\S+)/i);
-                    const utxoMatch = stdout.match(/Estimated available UTXOs:\s*(\d+)/i);
-                    const avgMatch = stdout.match(/Avg UTXO amount:\s*(\d+)/i);
                     
-                    const address = addressMatch ? addressMatch[1] : '';
-                    const utxos = utxoMatch ? parseInt(utxoMatch[1]) : 0;
-                    const avgUtxo = avgMatch ? parseInt(avgMatch[1]) : 0;
-                    const balance = (utxos * avgUtxo) / 1e8;
+                    // Get actual balance from API
+                    let balance = 0;
+                    let utxos = 0;
+                    try {
+                        const balanceData = await fetchUrl(`${KASPA_API}/addresses/${address}/balance`);
+                        balance = parseInt(balanceData.balance || 0) / SOMPI_PER_KAS;
+                        const utxoData = await fetchUrl(`${KASPA_API}/addresses/${address}/utxos`);
+                        utxos = Array.isArray(utxoData) ? utxoData.length : 0;
+                    } catch(e) {
+                        console.log('Balance API error:', e.message);
+                    }
                     
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ 
                         address: address, 
+                        publicKey: publicKey,
                         balance: balance,
-                        utxos: utxos,
-                        raw: stdout 
+                        utxos: utxos
                     }));
                 });
             });
@@ -488,11 +604,12 @@ const server = http.createServer(async (req, res) => {
             let body = '';
             req.on('data', chunk => body += chunk);
             req.on('end', () => {
-                const { address, threads } = JSON.parse(body);
-                const cmd = `nohup ${config.ktn12Dir}/kaspa-miner --testnet --mining-address ${address} -p ${RPC_PORT} -t ${threads || 8} > ${MINER_LOG} 2>&1 & echo $!`;
+                const { address, threads, noSync } = JSON.parse(body);
+                const noSyncFlag = noSync ? '--mine-when-not-synced' : '';
+                const cmd = `nohup ${config.ktn12Dir}/kaspa-miner --testnet --mining-address ${address} -p ${RPC_PORT} -t ${threads || 8} ${noSyncFlag} > ${MINER_LOG} 2>&1 & echo $!`;
                 exec(cmd, (error, stdout, stderr) => {
                     res.writeHead(200, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({ started: true, pid: stdout.trim() }));
+                    res.end(JSON.stringify({ started: true, pid: stdout.trim(), noSync: noSync }));
                 });
             });
             return;
@@ -574,6 +691,33 @@ const server = http.createServer(async (req, res) => {
                         error: error ? error.message : null
                     }));
                 });
+            });
+            return;
+        }
+
+        // New @kaspa/wallet-cli (v1.1.34)
+        if (urlPath === '/api/kaspa-wallet' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const { command, args = [], noSync = true } = JSON.parse(body);
+                    // --no-sync for faster balance checks, --utxoindex required on kaspad
+                    const syncFlag = noSync ? '--no-sync' : '';
+                    const walletCmd = `export PATH="/usr/local/bin:$PATH" && /usr/local/bin/kaspa-wallet ${command} --testnet --rpc localhost:16210 ${syncFlag} ${args.join(' ')}`;
+                    
+                    exec(walletCmd, { timeout: 60000 }, (error, stdout, stderr) => {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ 
+                            stdout: stdout, 
+                            stderr: stderr,
+                            error: error ? error.message : null
+                        }));
+                    });
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
             });
             return;
         }
@@ -902,6 +1046,364 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // SilverScript Compile - use existing compiled contracts
+        if (urlPath === '/api/silver/compile' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const { contract, args } = JSON.parse(body);
+                    const fs = require('fs');
+                    
+                    // Map contract names to their JSON files
+                    const contractFiles = {
+                        'p2pkh': '/Users/4dsto/ktn12/p2pkh.json',
+                        'bar': '/Users/4dsto/ktn12/bar.json',
+                        'escrow': '/Users/4dsto/ktn12/escrow.json',
+                        'hodl_vault': '/Users/4dsto/ktn12/hodl_vault.json',
+                        'mecenas': '/Users/4dsto/ktn12/mecenas.json',
+                        'multisig': '/Users/4dsto/ktn12/multisig_args.json',
+                        'deadman': '/Users/4dsto/ktn12/deadman.json'
+                    };
+                    
+                    const contractFile = contractFiles[contract];
+                    if (!contractFile || !fs.existsSync(contractFile)) {
+                        // Try to compile with silverc if it exists
+                        const silverc = '/Users/4dsto/ktn12/target/release/silverc';
+                        
+                        if (!fs.existsSync(silverc)) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ 
+                                error: 'Contract not found and silverc not built',
+                                contract: contract,
+                                availableContracts: Object.keys(contractFiles)
+                            }));
+                            return;
+                        }
+                        
+                        // Create args file and compile
+                        const argsFile = '/tmp/' + contract + '_args.json';
+                        fs.writeFileSync(argsFile, JSON.stringify(args || []));
+                        
+                        const silFile = '/Users/4dsto/ktn12/' + contract + '.sil';
+                        const outputFile = '/tmp/' + contract + '_compiled.json';
+                        
+                        const cmd = `${silverc} "${silFile}" -a "${argsFile}" -o "${outputFile}" 2>&1`;
+                        exec(cmd, { timeout: 30000 }, (error, stdout, stderr) => {
+                            if (error && !fs.existsSync(outputFile)) {
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ error: error.message + '\n' + stderr }));
+                                return;
+                            }
+                            try {
+                                const compiled = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ ...compiled, address: 'pending' }));
+                            } catch(e) {
+                                res.writeHead(200, { 'Content-Type': 'application/json' });
+                                res.end(JSON.stringify({ error: 'Failed to parse: ' + e.message }));
+                            }
+                        });
+                        return;
+                    }
+                    
+                    // Load existing compiled contract
+                    const compiled = JSON.parse(fs.readFileSync(contractFile, 'utf8'));
+                    
+                    // Generate P2SH address using Python SDK
+                    const p2shScript = '/Users/4dsto/ktn12/dashboard-tn12/scripts/generate_p2sh_address.py';
+                    const p2shCmd = `python3 "${p2shScript}" "${contractFile}"`;
+                    
+                    exec(p2shCmd, { timeout: 10000 }, (err, stdout, stderr) => {
+                        let p2shAddress = '';
+                        try {
+                            const result = JSON.parse(stdout.trim());
+                            p2shAddress = result.address || '';
+                        } catch(e) {
+                            console.log('P2SH address generation error:', e.message);
+                        }
+                        
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({
+                            ...compiled,
+                            address: p2shAddress || 'error_generating_address',
+                            note: p2shAddress ? 'Contract address - send KAS here to fund' : 'Address generation failed'
+                        }));
+                    });
+                    return;
+                } catch(e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+
+        // SilverScript Deploy - send funds to contract address using rothschild
+        if (urlPath === '/api/silver/deploy' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const { contract, privateKey, amount } = JSON.parse(body);
+                    
+                    if (!privateKey) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Private key required' }));
+                        return;
+                    }
+                    
+                    if (!contract || !contract.address) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Compiled contract required' }));
+                        return;
+                    }
+                    
+                    const contractAddress = contract.address;
+                    const sendAmount = amount || 10;
+                    
+                    // Use kaspa-igra CLI to send to P2SH address
+                    const kaspaIgra = '/Users/4dsto/ktn12/kaspa-igra-cli/target/release/kaspa-igra-cli';
+                    const cmd = `${kaspaIgra} transfer "${privateKey}" "${contractAddress}" ${sendAmount} --rpc ${KGRPC3_RPC}`;
+                    
+                    console.log('Deploying contract with kgraf3:', cmd);
+                    
+                    exec(cmd, { timeout: 120000 }, async (error, stdout, stderr) => {
+                        console.log('kgraf3 stdout:', stdout.slice(-500));
+                        console.log('kgraf3 stderr:', stderr.slice(-500));
+                        
+                        if (error && !stdout.includes('tx ID')) {
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({ 
+                                address: contractAddress,
+                                amount: sendAmount,
+                                status: 'manual_funding_required',
+                                error: error.message,
+                                instructions: [
+                                    '1. Transfer failed - copy address below',
+                                    '2. Go to Wallet panel (Panel 1)',
+                                    '3. Send ' + sendAmount + ' KAS to that address',
+                                    '4. Come back and click Refresh Status'
+                                ]
+                            }));
+                            return;
+                        }
+                        
+                        // Extract transaction ID
+                        const txMatch = stdout.match(/tx ID.*?([a-f0-9]{64})/);
+                        const txId = txMatch ? txMatch[1] : 'unknown';
+                        
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ 
+                            address: contractAddress,
+                            amount: sendAmount,
+                            status: 'deployed',
+                            txId: txId,
+                            message: 'Contract funded! Waiting for confirmation...'
+                        }));
+                    });
+                    return;
+                } catch(e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+
+        // SilverScript Call Entrypoint - update status and show instructions
+        if (urlPath === '/api/silver/call' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const { contractAddress, entrypoint, privateKey } = JSON.parse(body);
+                    
+                    if (!contractAddress || !contractAddress.includes('kaspatest:')) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Valid contract address required' }));
+                        return;
+                    }
+                    
+                    // Get contract balance and info
+                    let balance = 0;
+                    let utxos = [];
+                    try {
+                        const balanceData = await fetchUrl(`${KASPA_API}/addresses/${contractAddress}/balance`);
+                        balance = parseInt(balanceData.balance || 0) / SOMPI_PER_KAS;
+                        utxos = await fetchUrl(`${KASPA_API}/addresses/${contractAddress}/utxos`);
+                    } catch(e) {
+                        console.log('Error fetching contract info:', e.message);
+                    }
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ 
+                        message: 'Entrypoint call requires P2SH spending transaction',
+                        entrypoint: entrypoint,
+                        contractAddress: contractAddress,
+                        balance: balance,
+                        utxoCount: Array.isArray(utxos) ? utxos.length : 0,
+                        instructions: 'To call ' + entrypoint + ', you need to build a P2SH spending transaction with the entrypoint call as the unlocking script. This requires the compiled contract script and proper transaction building.'
+                    }));
+                } catch(e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+
+        // SilverScript Status
+        if (urlPath === '/api/silver/status' && req.method === 'GET') {
+            const contractAddress = getQueryParam('address');
+            
+            // Get balance via API
+            try {
+                const balanceData = await fetchUrl(`${KASPA_API}/addresses/${contractAddress}/balance`);
+                const balance = parseInt(balanceData.balance || 0) / SOMPI_PER_KAS;
+                const pendingBalance = parseInt(balanceData.pendingBalance || 0) / SOMPI_PER_KAS;
+                
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ 
+                    address: contractAddress,
+                    balance: balance,
+                    pendingBalance: pendingBalance
+                }));
+            } catch(e) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            }
+            return;
+        }
+
+        // Guardian Config Endpoint
+        if (urlPath === '/api/guardian-config' && req.method === 'GET') {
+            try {
+                const guardianConfig = fs.readFileSync(path.join(config.ktn12Dir, 'guardian/config.json'), 'utf8');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(guardianConfig);
+            } catch(e) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Config not found' }));
+            }
+            return;
+        }
+
+        // Update Guardian from Silver Panel
+        if (urlPath === '/api/guardian-update' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', () => {
+                try {
+                    const data = JSON.parse(body);
+                    const guardianConfigPath = path.join(config.ktn12Dir, 'guardian/config.json');
+                    let guardianConfig = JSON.parse(fs.readFileSync(guardianConfigPath, 'utf8'));
+                    
+                    if (data.privateKey) guardianConfig.owner.privateKey = data.privateKey;
+                    if (data.ownerAddress) guardianConfig.owner.address = data.ownerAddress;
+                    if (data.contractAddress) {
+                        guardianConfig.contract.address = data.contractAddress;
+                        guardianConfig.contract.type = data.contractType || 'DeadmanSwitch';
+                        guardianConfig.contract.deployedAt = new Date().toISOString();
+                    }
+                    if (data.beneficiaryAddress) {
+                        guardianConfig.beneficiaries = [{
+                            name: 'Primary Beneficiary',
+                            address: data.beneficiaryAddress,
+                            threshold: 0,
+                            notify: true
+                        }];
+                    }
+                    if (data.timeoutPeriod) guardianConfig.timing.timeoutPeriod = parseInt(data.timeoutPeriod);
+                    if (data.gracePeriod) guardianConfig.timing.gracePeriod = parseInt(data.gracePeriod);
+                    
+                    fs.writeFileSync(guardianConfigPath, JSON.stringify(guardianConfig, null, 2));
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true, message: 'Guardian updated', contract: guardianConfig.contract }));
+                } catch(e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+
+        // RPC API endpoint - uses gRPC client
+        if (urlPath === '/api/rpc' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const { method, params = [] } = JSON.parse(body);
+                    
+                    if (!grpcClient || !grpcClient.isConnected) {
+                        // Fallback: use public API for some methods
+                        if (method === 'get_block_dag_info') {
+                            const resp = await fetch('https://api-tn12.kaspa.org/info').then(r => r.json());
+                            res.writeHead(200, { 'Content-Type': 'application/json' });
+                            res.end(JSON.stringify({
+                                blockCount: resp.blockCount,
+                                headerCount: resp.headerCount,
+                                virtualSelectedParentBlueScore: resp.virtualSelectedParentBlueScore,
+                                difficulty: resp.difficulty,
+                                networkName: resp.networkName
+                            }));
+                            return;
+                        }
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'gRPC not connected. Use public API or start local kaspad.' }));
+                        return;
+                    }
+
+                    // Map UI method names to gRPC request names
+                    const methodMap = {
+                        'get_info': 'getInfoRequest',
+                        'get_block_dag_info': 'getBlockDagInfoRequest',
+                        'get_block_count': 'getBlockCountRequest',
+                        'get_balance_by_address': 'getBalanceByAddressRequest',
+                        'get_balances_by_addresses': 'getBalancesByAddressesRequest',
+                        'get_utxos_by_addresses': 'getUtxosByAddressesRequest',
+                        'get_peer_addresses': 'getPeerAddressesRequest',
+                        'get_connected_peer_info': 'getConnectedPeerInfoRequest',
+                        'get_fee_estimate': 'getFeeEstimateRequest',
+                        'get_sink': 'getSinkRequest',
+                        'get_sink_blue_score': 'getSinkBlueScoreRequest',
+                        'get_mempool_entries': 'getMempoolEntriesRequest',
+                        'get_metrics': 'getMetricsRequest'
+                    };
+
+                    const rpcMethod = methodMap[method] || method + 'Request';
+                    const requestPayload = params.length > 0 ? params[0] : {};
+                    
+                    const result = await grpcClient.call(rpcMethod, requestPayload);
+
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(result));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+
+        // Get kaspad log
+        if (urlPath === '/api/kaspad/log' && req.method === 'GET') {
+            const fs = require('fs');
+            const logPath = '/Users/4dsto/ktn12/kaspad.log';
+            try {
+                const content = fs.readFileSync(logPath, 'utf8');
+                const lines = content.split('\n').slice(-30).join('\n');
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ log: lines }));
+            } catch (e) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: e.message }));
+            }
+            return;
+        }
+
         res.writeHead(404);
         res.end(JSON.stringify({ error: 'Not found' }));
     } catch (e) {
@@ -910,4 +1412,4 @@ const server = http.createServer(async (req, res) => {
     }
 });
 
-server.listen(3001, () => console.log('kgraf3 API running on http://localhost:3001'));
+server.listen(PORT, () => console.log('Dashboard API running on http://localhost:' + PORT));

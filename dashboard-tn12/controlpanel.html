@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KASPA TN12 Control Panel</title>
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: #0a0a0a;
+            --bg-card-hover: #111111;
+            --bg-input: #050505;
+            --accent: #00ff88;
+            --accent-dim: #005533;
+            --accent-glow: rgba(0, 255, 136, 0.15);
+            --text: #e0e0e0;
+            --text-muted: #404040;
+            --border: #1a1a1a;
+            --border-hover: #2a2a2a;
+            --error: #ff4444;
+            --warning: #ffaa00;
+            --info: #0088ff;
+            --sidebar-width: 260px;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 13px;
+        }
+        
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-card);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo h1 { font-size: 16px; font-weight: 600; }
+        .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        
+        .header-stats { display: flex; gap: 20px; font-size: 11px; color: var(--text-muted); }
+        .header-stats span { color: var(--accent); }
+        
+        .nav-link { 
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); 
+            padding: 6px 14px; border-radius: 4px; cursor: pointer; font-family: inherit; 
+            font-size: 11px; text-decoration: none; transition: all 0.2s;
+        }
+        .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+        
+        /* Main Layout */
+        .layout { display: flex; min-height: calc(100vh - 52px); }
+        
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .sidebar-section {
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--bg-input);
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--info);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            user-select: none;
+        }
+        .sidebar-header:hover { background: var(--bg-card-hover); }
+        .sidebar-header .arrow { transition: transform 0.2s; }
+        .sidebar-header.collapsed .arrow { transform: rotate(-90deg); }
+        
+        .sidebar-btns {
+            padding: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .sidebar-btns.collapsed { display: none; }
+        
+        .chip-btn { 
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); 
+            padding: 6px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; 
+            font-size: 11px; transition: all 0.2s; flex: 1 1 auto; min-width: 70px; text-align: center;
+        }
+        .chip-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .chip-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .chip-btn.start { border-color: var(--accent); color: var(--accent); }
+        .chip-btn.stop { border-color: var(--error); color: var(--error); }
+        
+        /* Main Content */
+        .main { flex: 1; display: flex; flex-direction: column; }
+        
+        /* Console */
+        .console-section {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+        }
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .console-title { font-size: 11px; color: var(--info); text-transform: uppercase; letter-spacing: 1px; }
+        .console-tabs { display: flex; gap: 6px; }
+        .console-tab {
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted);
+            padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 10px;
+        }
+        .console-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        
+        .console-box {
+            background: #000000;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.6;
+            font-family: 'SF Mono', 'Monaco', monospace;
+        }
+        .console-line { margin-bottom: 2px; word-break: break-all; }
+        .console-line.info { color: var(--text); }
+        .console-line.warn { color: var(--warning); }
+        .console-line.error { color: var(--error); }
+        .console-line.success { color: var(--accent); }
+        .console-line.json { color: var(--info); }
+        
+        /* Panel Content */
+        .panel-section {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        .card { 
+            background: var(--bg-card); border: 1px solid var(--border); 
+            border-radius: 8px; padding: 16px; margin-bottom: 16px; 
+        }
+        .card-title { 
+            font-size: 12px; color: var(--info); margin-bottom: 12px; 
+            text-transform: uppercase; letter-spacing: 1px; 
+        }
+        
+        /* Form Elements */
+        .form-group { margin-bottom: 12px; }
+        .form-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; display: block; }
+        
+        .input { 
+            width: 100%; background: var(--bg-input); border: 1px solid var(--border); 
+            color: var(--text); padding: 10px; border-radius: 4px; 
+            font-family: inherit; font-size: 12px; 
+        }
+        .input:focus { outline: none; border-color: var(--accent); }
+        
+        .btn { 
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text); 
+            padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; 
+            font-size: 12px; transition: all 0.2s; 
+        }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .btn-primary:hover { background: var(--accent); color: #000; }
+        .btn-sm { padding: 6px 12px; font-size: 11px; }
+        .btn-block { width: 100%; }
+        
+        .btn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat { background: var(--bg-input); padding: 12px; border-radius: 4px; }
+        .stat-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+        .stat-value { font-size: 14px; font-weight: 600; color: var(--accent); }
+        
+        /* Wallet Panel */
+        .wallet-balance { font-size: 28px; font-weight: 600; color: var(--accent); margin: 8px 0; }
+        .wallet-address { font-size: 11px; color: var(--text-muted); word-break: break-all; background: var(--bg-input); padding: 8px; border-radius: 4px; }
+        
+        /* RPC Panel */
+        .rpc-methods { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; 
+            margin-bottom: 12px; 
+        }
+        .rpc-result { 
+            background: #000000; border: 1px solid var(--border); 
+            padding: 12px; border-radius: 4px; 
+            max-height: 300px; overflow-y: auto; 
+            font-size: 11px; white-space: pre-wrap; 
+        }
+        
+        /* Contract Panel */
+        .contract-btns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        
+        /* Output Box */
+        .output-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            min-height: 100px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 900px) {
+            .layout { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+            .header-stats { display: none; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .btn-grid { grid-template-columns: repeat(2, 1fr); }
+            .rpc-methods { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-dot"></div>
+            <h1>KASPA TN12 Control Panel</h1>
+        </div>
+        <div class="header-stats">
+            Peers: <span id="hPeers">-</span> |
+            TPS: <span id="hTps">-</span> |
+            Blocks: <span id="hBlocks">-</span> |
+            Sync: <span id="hSync">-</span>
+        </div>
+        <a href="index.html" class="nav-link">Dashboard</a>
+    </header>
+    
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <!-- SYSTEM -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>System</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn start" onclick="runCmd('kaspad-start')">▶ Start</button>
+                    <button class="chip-btn stop" onclick="runCmd('kaspad-stop')">■ Stop</button>
+                    <button class="chip-btn" onclick="runCmd('kaspad-restart')">↻ Restart</button>
+                    <button class="chip-btn" onclick="runCmd('kaspad-status')">Status</button>
+                    <button class="chip-btn" onclick="runCmd('kaspad-log')">Log</button>
+                </div>
+            </div>
+            
+            <!-- MINER -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Miner</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn start" onclick="runCmd('miner-start')">▶ Start</button>
+                    <button class="chip-btn stop" onclick="runCmd('miner-stop')">■ Stop</button>
+                    <button class="chip-btn" onclick="runCmd('miner-status')">Status</button>
+                </div>
+            </div>
+            
+            <!-- ROTHSCILD -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Rothschild</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn start" onclick="runCmd('roth-start')">▶ Start</button>
+                    <button class="chip-btn stop" onclick="runCmd('roth-stop')">■ Stop</button>
+                </div>
+            </div>
+            
+            <!-- NETWORK -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Network</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="rpcCall('getInfo')">getInfo</button>
+                    <button class="chip-btn" onclick="rpcCall('getBlockCount')">getBlockCount</button>
+                    <button class="chip-btn" onclick="rpcCall('getBlockDagInfo')">getBlockDagInfo</button>
+                    <button class="chip-btn" onclick="rpcCall('getPeerAddresses')">getPeers</button>
+                    <button class="chip-btn" onclick="rpcCall('getConnectedPeerInfo')">Connected</button>
+                    <button class="chip-btn" onclick="rpcCall('getMempoolEntries')">getMempool</button>
+                    <button class="chip-btn" onclick="rpcCall('getMetrics')">getMetrics</button>
+                    <button class="chip-btn" onclick="rpcCall('getFeeEstimate')">getFee</button>
+                    <button class="chip-btn" onclick="rpcCall('getSink')">getSink</button>
+                    <button class="chip-btn" onclick="rpcCall('getSinkBlueScore')">getSinkScore</button>
+                </div>
+            </div>
+            
+            <!-- WALLET -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Wallet</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="showPanel('wallet')">Wallet Panel</button>
+                    <button class="chip-btn" onclick="checkBalanceFromInput()">getBalance</button>
+                    <button class="chip-btn" onclick="checkUTXOsFromInput()">getUTXOs</button>
+                </div>
+            </div>
+            
+            <!-- CONTRACTS -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Contracts</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="showPanel('contracts')">Contract Panel</button>
+                    <button class="chip-btn" onclick="runCmd('silver-compile')">Compile</button>
+                    <button class="chip-btn" onclick="runCmd('guardian-config')">Guardian</button>
+                </div>
+            </div>
+            
+            <!-- RPC -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>RPC Tester</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="showPanel('rpc')">RPC Tester</button>
+                </div>
+            </div>
+            
+            <!-- LOGS -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Logs</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="showLog('kaspad')">Kaspad</button>
+                    <button class="chip-btn" onclick="showLog('miner')">Miner</button>
+                    <button class="chip-btn" onclick="showLog('rothschild')">Rothschild</button>
+                    <button class="chip-btn" onclick="runCmd('system-info')">System</button>
+                </div>
+            </div>
+            
+            <!-- UTXO -->
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <span>Tools</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="sidebar-btns">
+                    <button class="chip-btn" onclick="showPanel('default'); checkUTXO()">UTXO Check</button>
+                    <button class="chip-btn" onclick="refreshStats()">Refresh Stats</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MAIN CONTENT -->
+        <div class="main">
+            <!-- CONSOLE -->
+            <div class="console-section">
+                <div class="console-header">
+                    <span class="console-title" id="consoleTitle">Console Output</span>
+                    <div class="console-tabs">
+                        <button class="console-tab active" onclick="clearConsole()">Clear</button>
+                    </div>
+                </div>
+                <div class="console-box" id="consoleOutput">
+                    <div class="console-line info">Welcome to KASPA TN12 Control Panel</div>
+                    <div class="console-line info">Select a command from the sidebar...</div>
+                </div>
+            </div>
+            
+            <!-- PANELS -->
+            <div class="panel-section">
+                <!-- DEFAULT PANEL -->
+                <div class="panel active" id="panel-default">
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-label">Kaspad</div>
+                            <div class="stat-value" id="sKaspad">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Miner</div>
+                            <div class="stat-value" id="sMiner">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">Rothschild</div>
+                            <div class="stat-value" id="sRothschild">-</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-label">UTXO Index</div>
+                            <div class="stat-value" id="sUtxo">-</div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top:16px;">
+                        <div class="card-title">Quick UTXO Check</div>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" class="input" id="utxoCheckAddr" placeholder="kaspatest:..." style="flex:1;">
+                            <button class="btn btn-primary" onclick="checkUTXO()">Check</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- WALLET PANEL -->
+                <div class="panel" id="panel-wallet">
+                    <div class="card">
+                        <div class="card-title">Load Wallet</div>
+                        <div class="form-group">
+                            <label class="form-label">Private Key</label>
+                            <input type="password" class="input" id="walletKey" placeholder="Enter private key...">
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="loadWallet()">Load Wallet</button>
+                    </div>
+                    <div class="card" id="walletInfo" style="display:none;">
+                        <div class="form-label">Balance</div>
+                        <div class="wallet-balance" id="walletBalance">0 KAS</div>
+                        <button class="btn btn-sm" onclick="checkBalanceFromInput()" style="margin-top:8px;">↻ Refresh Balance</button>
+                        <div class="form-label" style="margin-top:12px;">Address</div>
+                        <div class="wallet-address" id="walletAddress">-</div>
+                        <button class="btn btn-sm" onclick="checkUTXOsFromInput()" style="margin-top:8px;">Check UTXOs</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Send KAS</div>
+                        <div class="form-group">
+                            <label class="form-label">From (Private Key)</label>
+                            <input type="password" class="input" id="sendKey" placeholder="Private key...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">To Address</label>
+                            <input type="text" class="input" id="sendTo" placeholder="kaspatest:...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount</label>
+                            <input type="number" class="input" id="sendAmount" placeholder="Amount in KAS">
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="sendKAS()">Send KAS</button>
+                        <div id="sendResult" style="margin-top:8px;font-size:11px;"></div>
+                    </div>
+                </div>
+                
+                <!-- CONTRACTS PANEL -->
+                <div class="panel" id="panel-contracts">
+                    <div class="card">
+                        <div class="card-title">SilverScript</div>
+                        <div class="form-group">
+                            <label class="form-label">Owner Private Key</label>
+                            <input type="password" class="input" id="contractKey" placeholder="Private key...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Contract Type</label>
+                            <select class="input" id="contractType">
+                                <option value="p2pkh">P2PKH</option>
+                                <option value="multisig">Multisig</option>
+                                <option value="escrow">Escrow</option>
+                                <option value="hodl">HODL Vault</option>
+                                <option value="mecenas">Mecenas</option>
+                                <option value="deadman">Deadman Switch</option>
+                            </select>
+                        </div>
+                        <div class="contract-btns">
+                            <button class="btn btn-primary" onclick="silverCompile()">Compile</button>
+                            <button class="btn" onclick="silverDeploy()">Deploy</button>
+                            <button class="btn" onclick="silverCall()">Call</button>
+                        </div>
+                        <div id="contractResult" style="margin-top:12px;font-size:11px;" class="output-box"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Guardian Config</div>
+                        <button class="btn btn-sm" onclick="loadGuardianConfig()">Load Config</button>
+                        <div id="guardianConfig" style="margin-top:12px;font-size:11px;" class="output-box"></div>
+                    </div>
+                </div>
+                
+                <!-- RPC PANEL -->
+                <div class="panel" id="panel-rpc">
+                    <div class="card">
+                        <div class="card-title">RPC Method</div>
+                        <select class="input" id="rpcMethod">
+                            <option value="getInfo">getInfo - Node Information</option>
+                            <option value="getBlockDagInfo">getBlockDagInfo - DAG Info</option>
+                            <option value="getBlockCount">getBlockCount - Block Count</option>
+                            <option value="getBalanceByAddress">getBalanceByAddress - Balance</option>
+                            <option value="getUtxosByAddresses">getUtxosByAddresses - UTXOs</option>
+                            <option value="getPeerAddresses">getPeerAddresses - Known Peers</option>
+                            <option value="getConnectedPeerInfo">getConnectedPeerInfo - Connected</option>
+                            <option value="getMempoolEntries">getMempoolEntries - Mempool</option>
+                            <option value="getMetrics">getMetrics - Metrics</option>
+                            <option value="getFeeEstimate">getFeeEstimate - Fee Estimate</option>
+                            <option value="getSink">getSink - Current Sink</option>
+                            <option value="getSinkBlueScore">getSinkBlueScore - Sink Score</option>
+                        </select>
+                        <div class="form-group" style="margin-top:12px;">
+                            <label class="form-label">Parameters (JSON)</label>
+                            <input type="text" class="input" id="rpcParams" placeholder='{"address": "..."}'>
+                        </div>
+                        <button class="btn btn-primary btn-block" onclick="executeRPC()">Execute</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Response</div>
+                        <div class="rpc-result" id="rpcResponse">No response yet...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // State
+        let currentLog = 'kaspad';
+        
+        // Initialize
+        window.onload = function() {
+            refreshStats();
+            showLog('kaspad');
+            setInterval(refreshStats, 10000);
+        };
+        
+        // Toggle Sidebar Section
+        function toggleSection(el) {
+            el.classList.toggle('collapsed');
+            el.nextElementSibling.classList.toggle('collapsed');
+        }
+        
+        // Show Panel
+        function showPanel(panel) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('panel-' + panel).classList.add('active');
+            log('info', 'Opened ' + panel + ' panel');
+        }
+        
+        // Console Functions
+        function log(type, msg) {
+            const output = document.getElementById('consoleOutput');
+            const line = document.createElement('div');
+            line.className = 'console-line ' + type;
+            line.textContent = msg;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '<div class="console-line info">Console cleared</div>';
+        }
+        
+        // Show Log
+        async function showLog(type) {
+            currentLog = type;
+            document.getElementById('consoleTitle').textContent = type.toUpperCase() + ' Log';
+            
+            const lines = type === 'kaspad' ? 30 : 20;
+            const file = type === 'kaspad' ? 'kaspad.log' : type === 'miner' ? 'miner.log' : 'rothschild.log';
+            
+            try {
+                const resp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: `tail -${lines} ${file}` })
+                });
+                const data = await resp.json();
+                
+                clearConsole();
+                const lines_ = (data.stdout || '').split('\n').slice(-lines);
+                lines_.forEach(line => {
+                    let cls = 'info';
+                    if (line.includes('ERROR') || line.includes('error')) cls = 'error';
+                    else if (line.includes('WARN') || line.includes('warn')) cls = 'warn';
+                    else if (line.includes('submitted') || line.includes('Found')) cls = 'success';
+                    log(cls, line);
+                });
+            } catch(e) {
+                log('error', 'Error loading log: ' + e.message);
+            }
+        }
+        
+        // Run Command
+        async function runCmd(cmd) {
+            log('info', 'Running: ' + cmd);
+            
+            try {
+                if (cmd === 'kaspad-start') {
+                    await fetch('/api/shell', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ cmd: 'cd /Users/4dsto/rusty-kaspa-tn12/target/release && nohup ./kaspad --testnet --netsuffix=12 --utxoindex --rpclisten=127.0.0.1:16210 --rpclisten-json=127.0.0.1:18210 --rpclisten-borsh=127.0.0.1:17210 --unsaferpc --enable-unsynced-mining --listen=0.0.0.0:16311 > /Users/4dsto/ktn12/kaspad.log 2>&1 &' })
+                    });
+                    log('success', 'Kaspad start command sent');
+                }
+                else if (cmd === 'kaspad-stop') {
+                    await fetch('/api/shell', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ cmd: 'pkill -f "kaspad.*netsuffix=12"' }) });
+                    log('success', 'Kaspad stop command sent');
+                }
+                else if (cmd === 'kaspad-restart') {
+                    await fetch('/api/shell', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ cmd: 'pkill -f "kaspad.*netsuffix=12"; sleep 2; cd /Users/4dsto/rusty-kaspa-tn12/target/release && nohup ./kaspad --testnet --netsuffix=12 --utxoindex --rpclisten=127.0.0.1:16210 --rpclisten-json=127.0.0.1:18210 --rpclisten-borsh=127.0.0.1:17210 --unsaferpc --enable-unsynced-mining --listen=0.0.0.0:16311 > /Users/4dsto/ktn12/kaspad.log 2>&1 &' }) });
+                    log('success', 'Kaspad restart command sent');
+                }
+                else if (cmd === 'miner-start') {
+                    const addr = document.getElementById('walletKey').value || '';
+                    const resp = await fetch('/api/miner-start', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ address: addr, threads: 8 }) });
+                    const data = await resp.json();
+                    log('success', 'Miner started: ' + (data.pid || 'OK'));
+                }
+                else if (cmd === 'miner-stop') {
+                    await fetch('/api/shell', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ cmd: 'pkill -f "kaspa-miner"' }) });
+                    log('success', 'Miner stop command sent');
+                }
+                else if (cmd === 'miner-status') {
+                    const resp = await fetch('/api/miner-status');
+                    const data = await resp.json();
+                    log('info', 'Miner running: ' + data.running + ', Hashrate: ' + (data.hashrate || '0 M/s'));
+                }
+                else if (cmd === 'roth-start') {
+                    const resp = await fetch('/api/rothschild', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ version: 'rusty-kaspa', private_key: '', recipient: '', tps: 1, threads: 2 }) });
+                    const data = await resp.json();
+                    log('success', 'Rothschild started');
+                }
+                else if (cmd === 'roth-stop') {
+                    await fetch('/api/rothschild-stop', { method: 'POST' });
+                    log('success', 'Rothschild stop command sent');
+                }
+                else if (cmd === 'kaspad-status') {
+                    const resp = await fetch('/api/node-status');
+                    const data = await resp.json();
+                    log('json', JSON.stringify(data, null, 2));
+                }
+                else if (cmd === 'kaspad-log') {
+                    showLog('kaspad');
+                }
+                else if (cmd === 'system-info') {
+                    const resp = await fetch('/api/system-info');
+                    const data = await resp.json();
+                    log('json', JSON.stringify(data, null, 2));
+                }
+                else if (cmd === 'silver-compile') {
+                    showPanel('contracts');
+                    log('info', 'Select contract type and click Compile');
+                }
+                else if (cmd === 'guardian-config') {
+                    loadGuardianConfig();
+                }
+                
+                refreshStats();
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // RPC Call
+        async function rpcCall(method) {
+            log('info', 'Calling: ' + method);
+            
+            try {
+                const resp = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ method: method, params: {} })
+                });
+                const data = await resp.json();
+                log('json', JSON.stringify(data, null, 2));
+            } catch(e) {
+                log('error', 'RPC Error: ' + e.message);
+            }
+        }
+        
+        // Execute RPC from panel
+        async function executeRPC() {
+            const method = document.getElementById('rpcMethod').value;
+            const paramsStr = document.getElementById('rpcParams').value;
+            let params = {};
+            
+            try {
+                if (paramsStr) params = JSON.parse(paramsStr);
+            } catch(e) {
+                document.getElementById('rpcResponse').textContent = 'Invalid JSON params';
+                return;
+            }
+            
+            document.getElementById('rpcResponse').textContent = 'Loading...';
+            
+            try {
+                const resp = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ method: method, params: params })
+                });
+                const data = await resp.json();
+                document.getElementById('rpcResponse').textContent = JSON.stringify(data, null, 2);
+                log('json', JSON.stringify(data, null, 2));
+            } catch(e) {
+                document.getElementById('rpcResponse').textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        // Wallet Functions
+        async function loadWallet() {
+            const key = document.getElementById('walletKey').value.trim();
+            if (!key) return log('error', 'Please enter a private key');
+            
+            log('info', 'Loading wallet...');
+            
+            try {
+                const resp = await fetch('/api/wallet-load', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ privateKey: key })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    log('error', data.error);
+                    return;
+                }
+                
+                document.getElementById('walletInfo').style.display = 'block';
+                document.getElementById('walletBalance').textContent = (data.balance || 0).toFixed(2) + ' KAS';
+                document.getElementById('walletAddress').textContent = data.address || '-';
+                document.getElementById('sendKey').value = key;
+                
+                log('success', 'Wallet loaded: ' + data.address);
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        async function sendKAS() {
+            const key = document.getElementById('sendKey').value.trim();
+            const to = document.getElementById('sendTo').value.trim();
+            const amount = document.getElementById('sendAmount').value.trim();
+            
+            if (!key || !to || !amount) return log('error', 'Please fill all fields');
+            
+            log('info', 'Sending ' + amount + ' KAS to ' + to.substring(0, 20) + '...');
+            
+            try {
+                const resp = await fetch('/api/wallet/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ privateKey: key, recipient: to, amount: parseFloat(amount) })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    log('error', data.error);
+                    document.getElementById('sendResult').textContent = 'Error: ' + data.error;
+                    document.getElementById('sendResult').style.color = 'var(--error)';
+                } else {
+                    log('success', 'Sent! TX: ' + (data.txId || 'submitted'));
+                    document.getElementById('sendResult').textContent = 'Success! TX: ' + (data.txId || 'submitted');
+                    document.getElementById('sendResult').style.color = 'var(--accent)';
+                }
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // Contract Functions
+        async function silverCompile() {
+            const key = document.getElementById('contractKey').value.trim();
+            const type = document.getElementById('contractType').value;
+            
+            if (!key) return log('error', 'Please enter owner private key');
+            
+            log('info', 'Compiling ' + type + '...');
+            
+            try {
+                const resp = await fetch('/api/silver/compile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ contract: type, args: [] })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    log('error', data.error);
+                    document.getElementById('contractResult').textContent = 'Error: ' + data.error;
+                } else {
+                    log('success', 'Compiled: ' + (data.address || 'OK'));
+                    document.getElementById('contractResult').textContent = JSON.stringify(data, null, 2);
+                }
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // Balance Check
+        async function checkBalanceFromInput() {
+            const addr = document.getElementById('walletAddress').textContent;
+            if (!addr || addr === '-' || addr === 'Click Load Wallet first') {
+                showPanel('wallet');
+                return log('error', 'Please load wallet first or enter address');
+            }
+            
+            log('info', 'Checking balance for: ' + addr.substring(0, 30) + '...');
+            
+            try {
+                const resp = await fetch('/api/balance?address=' + encodeURIComponent(addr));
+                const data = await resp.json();
+                
+                if (data.balance) {
+                    const bal = Number(data.balance) / 1e8;
+                    log('success', 'Balance: ' + bal.toFixed(2) + ' KAS');
+                } else {
+                    log('error', 'Error: ' + JSON.stringify(data));
+                }
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // UTXO Check
+        async function checkUTXOsFromInput() {
+            const addr = document.getElementById('walletAddress').textContent;
+            if (!addr || addr === '-' || addr === 'Click Load Wallet first') {
+                showPanel('wallet');
+                return log('error', 'Please load wallet first or enter address');
+            }
+            
+            log('info', 'Checking UTXOs for: ' + addr.substring(0, 30) + '...');
+            
+            try {
+                const resp = await fetch('/api/utxos?address=' + encodeURIComponent(addr));
+                const data = await resp.json();
+                
+                if (data.entries) {
+                    log('success', 'UTXOs found: ' + data.entries.length);
+                    log('json', JSON.stringify(data, null, 2));
+                } else {
+                    log('info', 'No UTXOs found');
+                }
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // Check Wallet Balance (panel button)
+        async function checkUTXO() {
+            const addr = document.getElementById('utxoCheckAddr').value.trim();
+            if (!addr) return log('error', 'Please enter an address');
+            
+            log('info', 'Checking UTXO for: ' + addr.substring(0, 30) + '...');
+            
+            try {
+                const resp = await fetch('/api/utxos?address=' + encodeURIComponent(addr));
+                const data = await resp.json();
+                
+                if (data.entries && data.entries.length > 0) {
+                    let total = 0;
+                    data.entries.forEach(e => total += e.value);
+                    const totalKAS = total / 1e8;
+                    log('success', 'Found ' + data.entries.length + ' UTXOs, Total: ' + totalKAS.toFixed(2) + ' KAS');
+                    log('json', JSON.stringify(data, null, 2));
+                } else {
+                    log('info', 'No UTXOs found for this address');
+                }
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        async function silverDeploy() {
+            log('info', 'Deploy not implemented in control panel - use Dashboard');
+        }
+        
+        async function silverCall() {
+            log('info', 'Call not implemented in control panel - use Dashboard');
+        }
+        
+        // Guardian Config
+        async function loadGuardianConfig() {
+            log('info', 'Loading Guardian config...');
+            
+            try {
+                const resp = await fetch('/api/guardian-config');
+                const data = await resp.json();
+                document.getElementById('guardianConfig').textContent = JSON.stringify(data, null, 2);
+                log('json', JSON.stringify(data, null, 2));
+            } catch(e) {
+                log('error', 'Error: ' + e.message);
+            }
+        }
+        
+        // Refresh Stats
+        async function refreshStats() {
+            try {
+                const [serviceResp, nodeResp] = await Promise.all([
+                    fetch('/api/service-status'),
+                    fetch('/api/node-status')
+                ]);
+                const services = await serviceResp.json();
+                const node = await nodeResp.json();
+                
+                // Header stats
+                document.getElementById('hPeers').textContent = node.peers || '-';
+                document.getElementById('hTps').textContent = node.tps || '-';
+                document.getElementById('hBlocks').textContent = node.blocks || '-';
+                document.getElementById('hSync').textContent = node.syncPercent || '0%';
+                
+                // Panel stats
+                document.getElementById('sKaspad').textContent = services.kaspad || '-';
+                document.getElementById('sKaspad').style.color = services.kaspad === 'running' ? 'var(--accent)' : 'var(--error)';
+                
+                document.getElementById('sMiner').textContent = services.miner || '-';
+                document.getElementById('sMiner').style.color = services.miner === 'running' ? 'var(--accent)' : 'var(--error)';
+                
+                document.getElementById('sRothschild').textContent = services.rothschild || '-';
+                document.getElementById('sRothschild').style.color = services.rothschild === 'running' ? 'var(--accent)' : 'var(--error)';
+                
+                document.getElementById('sUtxo').textContent = node.utxoIndex === true ? '✓' : '✗';
+            } catch(e) {
+                console.error('Stats error:', e);
+            }
+        }
+    </script>
+</body>
+</html>
