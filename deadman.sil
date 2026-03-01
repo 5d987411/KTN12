@@ -1,0 +1,39 @@
+pragma silverscript ^0.1.0;
+
+contract DeadmanSwitch(
+    pubkey owner,
+    pubkey beneficiary,
+    int timeoutPeriod
+) {
+    entrypoint function heartbeat(sig ownerSig) {
+        require(checkSig(ownerSig, owner));
+        
+        int minerFee = 1000;
+        int inputValue = tx.inputs[this.activeInputIndex].value;
+        require(tx.outputs[0].lockingBytecode == tx.inputs[this.activeInputIndex].lockingBytecode);
+        require(tx.outputs[0].value == inputValue - minerFee);
+    }
+    
+    entrypoint function claim(sig beneficiarySig) {
+        require(checkSig(beneficiarySig, beneficiary));
+        require(this.age >= timeoutPeriod);
+        
+        bytes34 dest = new LockingBytecodeP2PK(beneficiary);
+        require(tx.outputs[0].lockingBytecode == dest);
+        
+        int minerFee = 1000;
+        int inputValue = tx.inputs[this.activeInputIndex].value;
+        require(tx.outputs[0].value == inputValue - minerFee);
+    }
+    
+    entrypoint function cancel(sig ownerSig) {
+        require(checkSig(ownerSig, owner));
+        
+        bytes34 dest = new LockingBytecodeP2PK(owner);
+        require(tx.outputs[0].lockingBytecode == dest);
+        
+        int minerFee = 1000;
+        int inputValue = tx.inputs[this.activeInputIndex].value;
+        require(tx.outputs[0].value == inputValue - minerFee);
+    }
+}
