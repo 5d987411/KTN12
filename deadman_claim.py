@@ -68,27 +68,26 @@ def main():
     print(f"Signature: {signature}")
     
     # Build the signature script (unlocking script)
+    # For contracts with selectors: <signature> <selector>
+    # claim = selector 1
     sig_bytes = bytes.fromhex(signature)
-    pubkey_bytes = bytes.fromhex(beneficiary_pubkey_hex)
+    selector = bytes([1])  # claim entrypoint
     
     sig_script = (
         varint(len(sig_bytes)) + sig_bytes +
-        varint(len(pubkey_bytes)) + pubkey_bytes +
-        varint(len(contract_script)) + contract_script
+        varint(len(selector)) + selector
     )
     sig_script_hex = sig_script.hex()
     print(f"Signature script (hex): {sig_script_hex[:80]}...")
-    
+
     # Calculate fee
     fee = 1000
     send_amount = utxo_amount - fee
     
-    # Build output script using proper P2PK from address
-    # For Kaspa P2PK, we need the x-only 32-byte pubkey with 0x20 prefix + OP_CHECKSIG
-    # Get the x-only pubkey
-    xonly_pubkey = beneficiary_pubkey.to_x_only_public_key()
-    xonly_pubkey_bytes = bytes.fromhex(xonly_pubkey.to_string())
-    output_script = bytes([0x20]) + xonly_pubkey_bytes + bytes([0xac])  # OP_PUSHBYTES_32 + 32-byte xonly + OP_CHECKSIG
+    # Build output script using P2PK with 33-byte compressed pubkey
+    # The contract uses LockingBytecodeP2PK(beneficiary) - expects 33-byte compressed
+    pubkey_bytes = bytes.fromhex(beneficiary_pubkey_hex)  # 33-byte compressed pubkey
+    output_script = pubkey_bytes + bytes([0xac])  # <33-byte-pubkey> OP_CHECKSIG
     output_script_hex = output_script.hex()
     print(f"\nOutput script (hex): {output_script_hex}")
     
