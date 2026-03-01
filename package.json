@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@kaspa/grpc": "^1.4.0",
+    "@kcoin/kaspa-web3.js": "^1.1.4",
+    "@noble/hashes": "^2.0.1",
+    "@noble/secp256k1": "^3.0.0",
+    "axios": "^1.13.5",
+    "kaspa": "^0.13.0",
+    "kaspa-wasm": "^0.13.0",
+    "protobufjs": "^8.0.0",
+    "ws": "^8.19.0"
+  }
+}

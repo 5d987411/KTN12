@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KaspaGraffiti - CLI Test Console</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        color: #fff;
+        line-height: 1.6;
+      }
+      .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+      .header { text-align: center; margin-bottom: 32px; }
+      .header h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #5c6bc0 0%, #ff7043 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .header p { color: #a0aec0; margin-top: 8px; }
+      .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      @media (max-width: 1024px) { .two-col { grid-template-columns: 1fr; } }
+      .card {
+        background: #16213e;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+      .card h2 {
+        font-size: 1.25rem;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #1f3460;
+      }
+      .btn-group { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn-primary { background: linear-gradient(135deg, #5c6bc0, #3f51b5); color: white; }
+      .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(92, 107, 192, 0.4); }
+      .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+      .btn-secondary { background: #1f3460; color: #fff; }
+      .btn-secondary:hover { background: #2a4470; }
+      .input-group { margin-bottom: 12px; }
+      .input-group label { display: block; margin-bottom: 6px; color: #a0aec0; font-size: 0.875rem; }
+      .input-group input, .input-group select, .input-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #1f3460;
+        border-radius: 8px;
+        background: #0d1117;
+        color: #fff;
+        font-size: 0.875rem;
+        font-family: monospace;
+      }
+      .input-group input:focus, .input-group textarea:focus {
+        outline: none;
+        border-color: #5c6bc0;
+      }
+      .input-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; align-items: end; }
+      .terminal {
+        background: #0d1117;
+        border-radius: 8px;
+        padding: 16px;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.8rem;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #30363d;
+      }
+      .terminal-line { margin: 4px 0; word-break: break-all; }
+      .terminal-line.command { color: #d2a8ff; }
+      .terminal-line.output { color: #a5d6ff; }
+      .terminal-line.error { color: #ff7b72; }
+      .terminal-line.success { color: #7ee787; }
+      .terminal-line.info { color: #8b949e; }
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+      }
+      .status-working { background: rgba(72, 187, 120, 0.2); color: #48bb78; }
+      .status-disabled { background: rgba(245, 101, 101, 0.2); color: #f56565; }
+      .table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+      .table th, .table td { padding: 10px; text-align: left; border-bottom: 1px solid #1f3460; }
+      .table th { color: #a0aec0; font-weight: 600; font-size: 0.8rem; }
+      .table code { background: #0d1117; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+      .nav { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+      .nav button {
+        padding: 10px 20px;
+        background: #16213e;
+        border-radius: 8px;
+        color: #a0aec0;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .nav button.active, .nav button:hover { background: #5c6bc0; color: white; }
+      .fix-box {
+        background: rgba(92, 107, 192, 0.1);
+        border: 1px solid #5c6bc0;
+        border-radius: 8px;
+        padding: 16px;
+        margin: 12px 0;
+      }
+      .fix-box h4 { color: #5c6bc0; margin-bottom: 8px; }
+      .result-json { background: #0d1117; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 0.75rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+      footer { text-align: center; padding: 32px; color: #a0aec0; font-size: 0.875rem; }
+      .quick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+      .test-address { background: rgba(72, 187, 120, 0.1); border: 1px solid #48bb78; border-radius: 8px; padding: 12px; margin-bottom: 16px; }
+      .test-address code { color: #7ee787; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>KaspaGraffiti CLI Test Console</h1>
+        <p>Test kaspa-graffiti CLI commands directly from your browser</p>
+      </header>
+
+      <nav class="nav">
+        <button class="active" onclick="showSection('wallet')">Wallet</button>
+        <button onclick="showSection('hdwallet')">HD Wallet</button>
+        <button onclick="showSection('network')">Network</button>
+        <button onclick="showSection('all')">All Commands</button>
+      </nav>
+
+      <div id="wallet-section" class="two-col">
+        <div class="card">
+          <h2>Wallet Commands <span class="status-badge status-working">Working</span></h2>
+          
+          <div id="loaded-wallets-section" style="background: #0d1117; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #1f3460;">
+            <h4 style="margin-bottom: 12px; color: #a0aec0;">Loaded Wallets <span id="wallet-count" style="font-size: 0.8rem; color: #8b949e;">(0)</span></h4>
+            <div id="loaded-wallets-list"></div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runCommand('generate')">Generate Wallet</button>
+            <button class="btn btn-secondary" onclick="runWalletAction('load')">Load Wallet</button>
+          </div>
+
+          <div class="input-group">
+            <label>Private Key (hex)</label>
+            <input type="text" id="wallet-key" placeholder="Enter private key hex..." value="be881898241a86f3a653dc8aa44366ff5dcdbfb1670126a74204494270031cd4">
+          </div>
+          
+          <hr style="border-color: #1f3460; margin: 16px 0;">
+          
+          <div class="input-group">
+            <label>Address</label>
+            <input type="text" id="wallet-address" placeholder="kaspatest:..." value="kaspatest:qp0gz6pz0640shjmazxgvx94v5kn6as9rtdh5tdwkzyxs2yxc257wanzr230e">
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runWalletAction('balance')">Get Balance</button>
+            <button class="btn btn-primary" onclick="runWalletAction('refresh-balance')">↻ Refresh</button>
+            <button class="btn btn-primary" onclick="runWalletAction('utxos')">Get UTXOs</button>
+            <button class="btn btn-secondary" onclick="runWalletAction('copy-key')">Copy Key</button>
+            <button class="btn btn-secondary" onclick="runWalletAction('copy-addr')">Copy Address</button>
+          </div>
+
+          <div class="test-address">
+            <strong>Current Balance:</strong> <span id="current-balance" style="color: #7ee787; font-size: 1.2em;">-- TKAS</span><br>
+            <code>kaspatest:qp0gz6pz0640shjmazxgvx94v5kn6as9rtdh5tdwkzyxs2yxc257wanzr230e</code>
+          </div>
+
+          <hr style="border-color: #1f3460; margin: 20px 0;">
+
+          <h3 style="margin-bottom: 12px;">Send KAS</h3>
+          <div class="input-group">
+            <label>Recipient Address</label>
+            <input type="text" id="send-address" placeholder="kaspatest:...">
+          </div>
+          <div class="input-row">
+            <div class="input-group">
+              <label>Amount (KAS)</label>
+              <input type="number" id="send-amount" placeholder="0.0" step="0.00000001" min="0">
+            </div>
+            <button class="btn btn-primary" style="margin-bottom: 12px;" onclick="runWalletAction('send')">Send</button>
+          </div>
+
+          <hr style="border-color: #1f3460; margin: 20px 0;">
+
+          <h3 style="margin-bottom: 12px;">Receive KAS</h3>
+          <div class="input-group">
+            <label>Your Receive Address</label>
+            <input type="text" id="receive-address" readonly>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="runWalletAction('receive')">Generate New Address</button>
+            <button class="btn btn-secondary" onclick="runWalletAction('copy-receive')">Copy</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Command Output</h2>
+          <div class="terminal" id="terminal">
+            <div class="terminal-line info">Ready. Click a button to run a command...</div>
+          </div>
+          <div class="btn-group" style="margin-top: 12px;">
+            <button class="btn btn-secondary" onclick="clearTerminal()">Clear</button>
+            <button class="btn btn-secondary" onclick="copyOutput()">Copy Output</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="hdwallet-section" class="two-col" style="display: none;">
+        <div class="card">
+          <h2>HD Wallet Commands <span class="status-badge status-working">Working</span></h2>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runCommand('hd-generate')">Generate HD Wallet</button>
+            <button class="btn btn-primary" onclick="runHdAction('derive-address')">Derive Address</button>
+            <button class="btn btn-secondary" onclick="runHdAction('derive-many')">Derive Many</button>
+          </div>
+
+          <div class="input-group">
+            <label>HD Seed (hex)</label>
+            <input type="text" id="hd-seed" placeholder="Enter 64-char seed hex...">
+          </div>
+
+          <div class="input-row">
+            <div class="input-group">
+              <label>Index</label>
+              <input type="number" id="hd-index" value="0" min="0">
+            </div>
+            <div class="input-group">
+              <label>Count</label>
+              <input type="number" id="hd-count" value="5" min="1" max="20">
+            </div>
+          </div>
+
+          <div class="input-group" style="margin-top: 16px;">
+            <label>Derived Address</label>
+            <input type="text" id="hd-derived-address" readonly placeholder="Derived address will appear here...">
+          </div>
+          <button class="btn btn-secondary" onclick="copyHdAddress()" style="margin-top: 8px;">Copy Address</button>
+        </div>
+
+        <div class="card">
+          <h2>HD Output</h2>
+          <div class="terminal" id="hd-terminal">
+            <div class="terminal-line info">HD Wallet ready...</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="network-section" class="two-col" style="display: none;">
+        <div class="card">
+          <h2>Network Commands <span class="status-badge status-working">Working</span></h2>
+          
+          <div class="input-group">
+            <label>RPC URL</label>
+            <input type="text" id="rpc-url" value="https://api-tn10.kaspa.org">
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="runNetworkAction('info')">Get Network Info</button>
+            <button class="btn btn-primary" onclick="runNetworkAction('test-connection')">Test Connection</button>
+          </div>
+
+          <div class="input-group">
+            <label>Address to Query</label>
+            <input type="text" id="query-address" value="kaspatest:qp0gz6pz0640shjmazxgvx94v5kn6as9rtdh5tdwkzyxs2yxc257wanzr230e">
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Network Output</h2>
+          <div class="terminal" id="network-terminal">
+            <div class="terminal-line info">Network commands ready...</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="all-section" style="display: none;">
+        <div class="card">
+          <h2>All CLI Commands Reference</h2>
+          <table class="table">
+            <tr><th>Command</th><th>Description</th><th>Status</th><th>Test</th></tr>
+            <tr><td><code>generate</code></td><td>Generate new wallet</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('generate')">Run</button></td></tr>
+            <tr><td><code>load &lt;key&gt;</code></td><td>Load wallet from key</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('load be8818...')">Run</button></td></tr>
+            <tr><td><code>balance &lt;addr&gt;</code></td><td>Check balance</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('balance')">Run</button></td></tr>
+            <tr><td><code>utxos &lt;addr&gt;</code></td><td>Get UTXOs</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('utxos')">Run</button></td></tr>
+            <tr><td><code>hd-generate</code></td><td>Generate HD wallet</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('hd-generate')">Run</button></td></tr>
+            <tr><td><code>hd-load &lt;seed&gt;</code></td><td>Load HD wallet</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('hd-load')">Run</button></td></tr>
+            <tr><td><code>derive-address &lt;seed&gt; &lt;idx&gt;</code></td><td>Derive address</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('derive-address')">Run</button></td></tr>
+            <tr><td><code>derive-many &lt;key&gt; &lt;count&gt;</code></td><td>Derive many addresses</td><td>✅ Working</td><td><button class="btn btn-primary" style="padding: 4px 12px;" onclick="runQuickCommand('derive-many')">Run</button></td></tr>
+            <tr><td><code>graffiti &lt;key&gt; &lt;msg&gt;</code></td><td>Post graffiti</td><td>⚠️ Disabled</td><td><button class="btn btn-secondary" style="padding: 4px 12px;" disabled>Disabled</button></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <footer>
+        <p>KaspaGraffiti CLI Test Console v0.2.0</p>
+        <p>Kaspa testnet-10 | BIP-32 HD Wallets</p>
+      </footer>
+    </div>
+
+    <script>
+      const CLI_PATH = '/home/cliff/kaspa-graffiti/target/release/kaspa-graffiti-cli';
+      
+      // Wallet storage
+      let loadedWallets = [];
+      let activeWalletIndex = -1;
+      
+      function getCurrencyLabel(address) {
+        if (address && address.startsWith('kaspatest:')) {
+          return 'TKAS';
+        }
+        return 'KAS';
+      }
+      
+      function log(terminalId, type, message) {
+        const terminal = document.getElementById(terminalId);
+        const line = document.createElement('div');
+        line.className = 'terminal-line ' + type;
+        line.textContent = message;
+        terminal.appendChild(line);
+        terminal.scrollTop = terminal.scrollHeight;
+      }
+
+      function renderWallets() {
+        // Update wallet count
+        document.getElementById('wallet-count').textContent = '(' + loadedWallets.length + ')';
+        
+        const container = document.getElementById('loaded-wallets-list');
+        if (loadedWallets.length === 0) {
+          container.innerHTML = '<div style="color: #8b949e; font-size: 0.875rem;">No wallets loaded yet</div>';
+          return;
+        }
+        
+        let html = '<div style="display: flex; flex-direction: column; gap: 8px;">';
+          loadedWallets.forEach((wallet, index) => {
+            const currency = getCurrencyLabel(wallet.address);
+            const isActive = index === activeWalletIndex;
+            const style = isActive 
+              ? 'background: rgba(72, 187, 120, 0.2); border-color: #48bb78;' 
+              : 'background: #16213e; border-color: #1f3460; cursor: pointer;';
+            const label = isActive ? '✓ ' : '';
+            html += `
+              <div onclick="selectWallet(${index})" style="padding: 12px; border-radius: 8px; border: 1px solid ${isActive ? '#48bb78' : '#1f3460'}; background: ${isActive ? 'rgba(72, 187, 120, 0.15)' : '#16213e'}; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: ${isActive ? '#48bb78' : '#a0aec0'}; font-weight: 600;">${label}Wallet ${index + 1}</span>
+                  <span id="wallet-${index}-balance" style="color: #7ee787;">-- ${currency}</span>
+                </div>
+              <div style="font-family: monospace; font-size: 0.8rem; color: #a0aec0; margin-top: 4px; word-break: break-all;">${wallet.address}</div>
+            </div>
+          `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Refresh all wallet balances
+        loadedWallets.forEach((wallet, index) => {
+          fetch('/run-cmd', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({cmd: 'balance ' + wallet.address})
+          })
+          .then(r => r.json())
+          .then(data => {
+            if (data.kas) {
+              const currency = getCurrencyLabel(wallet.address);
+              document.getElementById('wallet-' + index + '-balance').textContent = data.kas + ' ' + currency;
+            }
+          })
+          .catch(() => {});
+        });
+      }
+      
+      function selectWallet(index) {
+        const wallet = loadedWallets[index];
+        if (wallet) {
+          activeWalletIndex = index;
+          document.getElementById('wallet-key').value = wallet.privateKey;
+          document.getElementById('wallet-address').value = wallet.address;
+          document.getElementById('receive-address').value = wallet.address;
+          
+          // Refresh balance display
+          runCommand('balance ' + wallet.address, (data) => {
+            const currency = getCurrencyLabel(wallet.address);
+            document.getElementById('current-balance').textContent = data.kas + ' ' + currency;
+          });
+          
+          renderWallets();
+          log('terminal', 'info', 'Switched to Wallet ' + (index + 1));
+        }
+      }
+      
+      function runCommand(cmd, callback, rpcUrl) {
+        const termId = cmd.includes('hd') || cmd.includes('derive-many') ? 'hd-terminal' : 'terminal';
+        
+        // Add --rpc flag if custom URL provided
+        const fullCmd = rpcUrl ? cmd + ' --rpc ' + rpcUrl : cmd;
+        log(termId, 'command', '$ ./kaspa-graffiti-cli ' + fullCmd);
+        
+        fetch('/run-cmd', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({cmd: fullCmd})
+        })
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            log(termId, 'error', 'Error: ' + data.error);
+          } else {
+            // Check if this is a balance response with kas field
+            if (data.kas !== undefined) {
+              // Round to 5 decimal places to avoid floating point precision issues
+              const roundedKas = Math.round(data.kas * 100000) / 100000;
+              data.kas = roundedKas;
+            }
+            log(termId, 'output', JSON.stringify(data, null, 2));
+            if (callback) callback(data);
+          }
+        })
+        .catch(e => {
+          log(termId, 'error', 'Failed: ' + e.message);
+        });
+      }
+
+      function runWalletAction(action) {
+        const key = document.getElementById('wallet-key').value;
+        const addrField = document.getElementById('wallet-address');
+        const sendAddr = document.getElementById('send-address').value;
+        const sendAmount = document.getElementById('send-amount').value;
+        const receiveAddr = document.getElementById('receive-address');
+        
+        if (action === 'balance') {
+          const currency1 = getCurrencyLabel(addrField.value);
+          runCommand('balance ' + addrField.value, (data) => {
+            document.getElementById('current-balance').textContent = data.kas + ' ' + currency1;
+          });
+        } else if (action === 'refresh-balance') {
+          const currency2 = getCurrencyLabel(addrField.value);
+          runCommand('balance ' + addrField.value, (data) => {
+            document.getElementById('current-balance').textContent = data.kas + ' ' + currency2;
+            log('terminal', 'success', 'Balance refreshed: ' + data.kas + ' ' + currency2);
+          });
+        } else if (action === 'utxos') {
+          runCommand('utxos ' + addrField.value);
+        } else if (action === 'load') {
+          runCommand('load ' + key, (data) => {
+            if (data.address) {
+              addrField.value = data.address;
+              receiveAddr.value = data.address;
+              
+              // Add to loaded wallets if not already there
+              const exists = loadedWallets.findIndex(w => w.address === data.address);
+              if (exists === -1) {
+                loadedWallets.push({
+                  privateKey: key,
+                  address: data.address
+                });
+                activeWalletIndex = loadedWallets.length - 1;
+              } else {
+                activeWalletIndex = exists;
+              }
+              
+              renderWallets();
+              
+              // Show notification toast
+              const toast = document.createElement('div');
+              toast.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #48bb78; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600; z-index: 9999; animation: fadeIn 0.3s ease;';
+              toast.textContent = '✓ Wallet ' + (activeWalletIndex + 1) + ' loaded!';
+              document.body.appendChild(toast);
+              setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2000);
+              
+              // Scroll to and flash the wallets section
+              const walletsSection = document.getElementById('loaded-wallets-section');
+              walletsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              walletsSection.style.borderColor = '#48bb78';
+              setTimeout(() => { walletsSection.style.borderColor = '#1f3460'; }, 2000);
+              
+              log('terminal', 'success', 'Wallet loaded! Address: ' + data.address);
+              // Refresh balance for new wallet
+              runCommand('balance ' + data.address, (balData) => {
+                const currency3 = getCurrencyLabel(data.address);
+                document.getElementById('current-balance').textContent = balData.kas + ' ' + currency3;
+              });
+            }
+          });
+        } else if (action === 'copy-key') {
+          navigator.clipboard.writeText(key).then(() => log('terminal', 'success', 'Private key copied!'));
+        } else if (action === 'copy-addr') {
+          navigator.clipboard.writeText(addrField.value).then(() => log('terminal', 'success', 'Address copied!'));
+        } else if (action === 'send') {
+          if (!sendAddr || !sendAmount) {
+            log('terminal', 'error', 'Enter recipient address and amount');
+            return;
+          }
+          log('terminal', 'info', 'Transferring ' + sendAmount + ' KAS to ' + sendAddr + '...');
+          runCommand('transfer ' + key + ' ' + sendAddr + ' ' + sendAmount, () => {
+            // Refresh balance after successful transfer
+            runCommand('balance ' + addrField.value, (data) => {
+              const currency4 = getCurrencyLabel(addrField.value);
+              document.getElementById('current-balance').textContent = data.kas + ' ' + currency4;
+              log('terminal', 'success', 'Balance updated: ' + data.kas + ' ' + currency4);
+              // Refresh all wallet balances in the list
+              renderWallets();
+            });
+          });
+        } else if (action === 'receive') {
+          if (!key) {
+            log('terminal', 'error', 'Enter a private key first');
+            return;
+          }
+          runCommand('derive-many ' + key + ' 1', (data) => {
+            if (Array.isArray(data) && data.length > 0) {
+              receiveAddr.value = data[0].address;
+              log('terminal', 'success', 'New receive address: ' + data[0].address);
+            }
+          });
+        } else if (action === 'copy-receive') {
+          if (receiveAddr.value) {
+            navigator.clipboard.writeText(receiveAddr.value).then(() => log('terminal', 'success', 'Receive address copied!'));
+          } else {
+            log('terminal', 'error', 'Generate a receive address first');
+          }
+        }
+      }
+
+      function runHdAction(action) {
+        const seed = document.getElementById('hd-seed').value;
+        const index = document.getElementById('hd-index').value;
+        const count = document.getElementById('hd-count').value;
+        const receiveAddr = document.getElementById('receive-address');
+        
+        if (action === 'hd-generate') {
+          runCommand('hd-generate', (data) => {
+            document.getElementById('hd-seed').value = data.seed || '';
+            document.getElementById('hd-seed').placeholder = data.seed || '';
+          });
+        } else if (action === 'derive-address') {
+          if (!seed) { log('hd-terminal', 'error', 'Enter a seed first'); return; }
+          runCommand('derive-address ' + seed + ' ' + index, (data) => {
+            if (data.address) {
+              document.getElementById('hd-derived-address').value = data.address;
+              log('hd-terminal', 'success', 'Derived Address: ' + data.address);
+              log('hd-terminal', 'success', 'Private Key: ' + data.private_key);
+            }
+          });
+        } else if (action === 'derive-many') {
+          if (!seed) { log('hd-terminal', 'error', 'Enter a seed first'); return; }
+          runCommand('derive-many ' + seed + ' ' + count);
+        }
+      }
+
+      function runNetworkAction(action) {
+        const rpcUrl = document.getElementById('rpc-url').value;
+        const addr = document.getElementById('query-address').value;
+        
+        if (action === 'test-connection') {
+          testConnection(rpcUrl, addr);
+        } else if (action === 'info') {
+          getNetworkInfo(rpcUrl);
+        }
+      }
+
+      async function getNetworkInfo(rpcUrl) {
+        const term = 'network-terminal';
+        log(term, 'info', 'Fetching network info...');
+        
+        try {
+          const resp = await fetch(rpcUrl + '/info/network');
+          if (resp.ok) {
+            const info = await resp.json();
+            log(term, 'success', 'Network: ' + info.networkName);
+            log(term, 'success', 'Blocks: ' + info.blockCount);
+            log(term, 'success', 'Difficulty: ' + info.difficulty);
+          } else {
+            log(term, 'error', 'HTTP ' + resp.status);
+          }
+        } catch (e) {
+          log(term, 'error', 'CORS blocked. Using CLI proxy...');
+          runCommand('balance kaspatest:qp0gz6pz0640shjmazxgvx94v5kn6as9rtdh5tdwkzyxs2yxc257wanzr230e', (data) => {
+            log(term, 'info', 'CLI connection works. Network is accessible.');
+          }, rpcUrl);
+        }
+      }
+
+      async function testConnection(rpcUrl, testAddress) {
+        const term = 'network-terminal';
+        log(term, 'info', 'Testing Kaspa Testnet-10 Connection...');
+        log(term, 'info', 'RPC URL: ' + rpcUrl);
+        
+        try {
+          log(term, 'info', 'Step 1: Testing balance endpoint...');
+          const balanceResp = await fetch(rpcUrl + '/addresses/' + encodeURIComponent(testAddress) + '/balance');
+          if (balanceResp.ok) {
+            const balanceData = await balanceResp.json();
+            log(term, 'success', 'Balance: ' + balanceData.balance + ' sompi (' + (balanceData.balance / 100000000).toFixed(8) + ' KAS)');
+          } else {
+            log(term, 'error', 'Balance endpoint: HTTP ' + balanceResp.status);
+          }
+          
+          log(term, 'info', 'Step 2: Testing UTXO endpoint...');
+          const utxoResp = await fetch(rpcUrl + '/addresses/' + encodeURIComponent(testAddress) + '/utxos');
+          if (utxoResp.ok) {
+            const utxoData = await utxoResp.json();
+            const entries = Array.isArray(utxoData) ? utxoData : (utxoData.entries || []);
+            log(term, 'success', 'UTXOs found: ' + entries.length);
+          } else {
+            log(term, 'error', 'UTXO endpoint: HTTP ' + utxoResp.status);
+          }
+          
+          log(term, 'success', 'Connection test complete!');
+        } catch (e) {
+          log(term, 'error', 'Browser CORS blocked direct API access.');
+          log(term, 'info', 'Testing via CLI proxy instead...');
+          runCommand('balance ' + testAddress, (data) => {
+            if (data.kas) {
+              log(term, 'success', 'CLI connection works! Balance: ' + data.kas + ' TKAS');
+              log(term, 'success', 'Network is accessible.');
+            } else {
+              log(term, 'error', 'CLI connection failed.');
+            }
+          }, rpcUrl);
+        }
+      }
+
+      function runQuickCommand(cmd) {
+        runCommand(cmd);
+        showSection('wallet');
+      }
+
+      function clearTerminal() {
+        document.getElementById('terminal').innerHTML = '<div class="terminal-line info">Cleared...</div>';
+        document.getElementById('hd-terminal').innerHTML = '<div class="terminal-line info">Cleared...</div>';
+        document.getElementById('network-terminal').innerHTML = '<div class="terminal-line info">Cleared...</div>';
+      }
+
+      function copyOutput() {
+        const text = document.getElementById('terminal').textContent;
+        navigator.clipboard.writeText(text).then(() => alert('Copied!'));
+      }
+
+      function copyHdAddress() {
+        const addr = document.getElementById('hd-derived-address').value;
+        if (addr) {
+          navigator.clipboard.writeText(addr).then(() => log('hd-terminal', 'success', 'Address copied!'));
+        } else {
+          log('hd-terminal', 'error', 'No derived address to copy');
+        }
+      }
+
+      function showSection(id) {
+        document.querySelectorAll('.two-col, #all-section').forEach(el => el.style.display = 'none');
+        document.getElementById(id + '-section').style.display = 'grid';
+        document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+      }
+
+      // Initialize wallet display if wallet is already loaded
+      window.addEventListener('DOMContentLoaded', () => {
+        const addrField = document.getElementById('wallet-address');
+        const keyField = document.getElementById('wallet-key');
+        if (addrField && addrField.value) {
+          // Add existing wallet to the list
+          loadedWallets.push({
+            privateKey: keyField.value,
+            address: addrField.value
+          });
+          activeWalletIndex = 0;
+          renderWallets();
+          
+          // Scroll to wallets section
+          const walletsSection = document.getElementById('loaded-wallets-section');
+          walletsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    </script>
+  </body>
+</html>

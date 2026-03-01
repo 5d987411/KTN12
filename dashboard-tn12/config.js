@@ -29,10 +29,14 @@ module.exports = {
     minerLog: getConfig('MINER_LOG', path.join(ktn12Dir, 'miner.log')),
     rothschildLog: getConfig('ROTHSCHILD_LOG', path.join(ktn12Dir, 'rothschild.log')),
     
-    // Ports
+    // Ports - gRPC for rothschild/wallet-cli
     rpcPort: parseInt(getConfig('RPC_PORT', '16210')),
     p2pPort: parseInt(getConfig('P2P_PORT', '16311')),
     dashboardPort: parseInt(getConfig('DASHBOARD_PORT', '3001')),
+    
+    // Use local wRPC (17210) instead of public API for testing
+    // Set USE_LOCAL_RPC=true environment variable to enable
+    useLocalRpc: getConfig('USE_LOCAL_RPC', 'false').toLowerCase() === 'true',
     
     // Default mining address (user must set this!)
     miningAddress: getConfig('MINING_ADDRESS', ''),

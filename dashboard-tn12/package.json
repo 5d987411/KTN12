@@ -3,16 +3,27 @@
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "/usr/local/bin/node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@kaspa/wallet": "^1.4.27",
+    "@kluster/kaspa-address": "^0.1.5",
+    "bech32": "^2.0.0",
+    "bs58": "^6.0.0",
+    "bs58check": "^4.0.0",
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "isomorphic-ws": "^3.0.0",
+    "kaspa": "^0.13.0",
+    "node-fetch": "^2.7.0",
+    "ws": "^8.0.0"
   }
 }

@@ -1,0 +1,38 @@
+{
+  "name": "Guardian System",
+  "version": "1.0.0",
+  "description": "Digital estate planner with Kaspa integration",
+  "owner": {
+    "address": "",
+    "privateKey": "",
+    "heartbeatKey": "guardian_heartbeat_key"
+  },
+  "contract": {
+    "address": "",
+    "type": "",
+    "deployedAt": ""
+  },
+  "beneficiaries": [],
+  "timing": {
+    "timeoutPeriod": 600,
+    "gracePeriod": 60,
+    "checkInterval": 10
+  },
+  "notifications": {
+    "email": {
+      "enabled": false,
+      "smtp": {},
+      "recipients": []
+    },
+    "telegram": {
+      "enabled": false,
+      "botToken": "",
+      "chatIds": []
+    }
+  },
+  "files": {
+    "enabled": false,
+    "releasePath": "./guardian/files",
+    "files": []
+  }
+}

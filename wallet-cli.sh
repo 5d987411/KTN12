@@ -1,16 +1,16 @@
 #!/bin/bash
 #
 # Wallet CLI for Kaspa TN12
-# Wrapper around kgraf3 CLI with TN12 defaults
+# Wrapper around kaspa-igra CLI with TN12 defaults
 #
 
 set -e
 
 # Configuration
-CLI_NAME="kaspa-graffiti-cli"
+CLI_NAME="kaspa-igra-cli"
 DEFAULT_RPC="https://api-tn12.kaspa.org"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLI_PATH="${SCRIPT_DIR}/../kgraf3/target/release/${CLI_NAME}"
+CLI_PATH="${SCRIPT_DIR}/../kaspa-igra-cli/target/release/${CLI_NAME}"
 
 # Colors
 RED='\033[0;31m'
@@ -77,8 +77,8 @@ check_cli() {
             echo -e "${RED}Error: ${CLI_NAME} not found${NC}"
             echo ""
             echo "To build:"
-            echo "  cd ../kgraf3 && cargo build --release"
-            echo "  cp ../kgraf3/target/release/${CLI_NAME} ${SCRIPT_DIR}/"
+            echo "  cd ../kaspa-igra-cli && cargo build --release"
+            echo "  cp ../kaspa-igra-cli/target/release/${CLI_NAME} ${SCRIPT_DIR}/"
             exit 1
         fi
     fi
@@ -256,7 +256,7 @@ case "${1:-help}" in
         ;;
     silverc)
         # Compile silverscript - check for silverc binary
-        SILVERC="${SCRIPT_DIR}/../kgraf3/target/release/silverc"
+        SILVERC="${SCRIPT_DIR}/../kaspa-igra-cli/target/release/silverc"
         if [[ ! -f "$SILVERC" ]]; then
             SILVERC="${SCRIPT_DIR}/silverc"
         fi

@@ -1,0 +1,2881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KASPA TN12 Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: #0a0a0a;
+            --bg-card-hover: #111111;
+            --bg-input: #050505;
+            --accent: #00ff88;
+            --accent-dim: #005533;
+            --accent-glow: rgba(0, 255, 136, 0.15);
+            --text: #e0e0e0;
+            --text-muted: #404040;
+            --border: #1a1a1a;
+            --border-hover: #2a2a2a;
+            --error: #ff4444;
+            --warning: #ffaa00;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            background: var(--bg-primary);
+            color: var(--text);
+            min-height: 100vh;
+            font-size: 13px;
+        }
+        .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 0; border-bottom: 1px solid var(--border); margin-bottom: 24px;
+        }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo h1 { font-size: 18px; font-weight: 600; }
+        .logo-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .network-badge { background: var(--bg-card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 4px; font-size: 11px; color: var(--text-muted); }
+        .network-badge span { color: var(--accent); }
+        
+        .top-section { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .card-title { font-size: 13px; color: #00BFFF; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .wallet-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 11px; margin-bottom: 8px; }
+        .wallet-input:focus { outline: none; border-color: var(--accent); }
+        
+        .balance-display { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+        .balance-display:last-child { border-bottom: none; }
+        .balance-label { font-size: 10px; color: var(--text-muted); }
+        .balance-value { font-size: 14px; font-weight: 600; color: var(--accent); }
+        
+        .btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.2s; }
+        .btn:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        .btn-primary:hover { background: var(--accent); color: #000; }
+        
+        .main-section { display: grid; grid-template-columns: 200px 300px 1fr; gap: 16px; }
+        
+        .cmd-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .cat-header { background: var(--bg-input); padding: 10px 12px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .cmd-btns { padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+        .chip-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 11px; }
+        .chip-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .chip-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+        
+        .params-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .param-group { margin-bottom: 12px; }
+        .param-label { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .param-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 4px; font-family: inherit; font-size: 12px; }
+        .param-input:focus { outline: none; border-color: var(--accent); }
+        .run-btn { width: 100%; background: var(--accent); border: none; color: #000; padding: 12px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 600; margin-top: 16px; }
+        .run-btn:hover { opacity: 0.9; }
+        
+        .console-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; display: flex; flex-direction: column; height: 300px; }
+        .console-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .console-title { font-size: 13px; color: #00BFFF; text-transform: uppercase; letter-spacing: 1px; }
+        .console-content { flex: 1; padding: 16px; overflow-y: auto; overflow-x: hidden; font-size: 12px; line-height: 1.6; background: #000000; word-wrap: break-word; word-break: break-all; }
+        .console-input-area { display: flex; border-top: 1px solid var(--border); }
+        .console-input { flex: 1; background: var(--bg-input); border: none; color: var(--text); padding: 12px 16px; font-family: inherit; font-size: 12px; }
+        .console-input:focus { outline: none; }
+        
+        .cmd-line { color: var(--accent); margin-bottom: 8px; }
+        .output-line { color: var(--text-muted); margin-bottom: 4px; }
+        .error-line { color: var(--error); }
+        .success-line { color: var(--accent); }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--accent); color: #000; padding: 12px 24px; border-radius: 4px; font-weight: 600; opacity: 0; transition: opacity 0.3s; }
+        .toast.show { opacity: 1; }
+        
+        .info-box { background: var(--bg-input); border: 1px solid var(--border); padding: 12px; border-radius: 4px; font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><div class="logo-dot"></div><h1>KASPA TN12 Dashboard</h1></div>
+            <div class="network-badge" id="headerStats">
+                Kaspad: <span style="color:#00ff88">tn12</span> |
+                SERVICES: 
+                <span id="serviceKaspad" style="color:#888">Kaspad...</span> | 
+                <span id="serviceMiner" style="color:#888">Miner...</span> | 
+                <span id="serviceRothschild" style="color:#888">Rothschild...</span> |
+                NETWORK: <span id="networkName">TESTNET 12</span> | | 
+                IP: <span id="sysIP">-</span> | 
+                HD: <span id="sysHD">-</span> | 
+                KTN12: <span id="ktn12Size">-</span> | 
+                Chain: <span id="chainSize">-</span> | 
+                Hashrate: <span id="minerHashrate">-</span> | 
+                Kaspad TPS: <span id="nodeTps">-</span> | 
+                Rothschild TPS: <span id="txTps">-</span>
+            </div>
+            <a href="controlpanel.html" class="btn" style="margin-left: 12px;">Control Panel</a>
+        </header>
+        
+        <div class="top-section">
+            <div class="card">
+                <div class="card-title">1 Wallet A (Main - Miner)</div>
+                <input type="text" class="wallet-input" id="walletA" placeholder="Address" value="kaspatest:qp2ltc576eyy8hag0tckl9kqk62cvfz7p2egrlczyw9978zsh322jtnrx469r">
+                <input type="text" class="wallet-input" id="walletAKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrA">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balA">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('A')" style="width:100%">↻ Refresh</button>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">2 Wallet B (Recipient)</div>
+                <input type="text" class="wallet-input" id="walletB" placeholder="Address" value="kaspatest:qpx598t8l8l6g7ntq37fd9ecq7g2s90vk376tu28u4r7cnwf4nvmcruc3nd4d">
+                <input type="text" class="wallet-input" id="walletBKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrB">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balB">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('B')" style="width:100%">↻ Refresh</button>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">3 Wallet C (Send From)</div>
+                <input type="text" class="wallet-input" id="walletC" placeholder="Address" value="">
+                <input type="text" class="wallet-input" id="walletCKey" placeholder="Private Key (hex)" style="margin-top:4px;font-family:monospace;font-size:11px">
+                <div class="balance-display">
+                    <span class="balance-label">ADDRESS</span>
+                    <span class="balance-value" id="addrC">-</span>
+                </div>
+                <div class="balance-display">
+                    <span class="balance-label">BALANCE</span>
+                    <span class="balance-value" id="balC">-</span>
+                </div>
+                <button class="btn" onclick="refreshWallet('C')" style="width:100%">↻ Refresh</button>
+            </div>
+        </div>
+        
+        <div class="main-section">
+            <div class="cmd-sidebar" id="cmdSidebar">
+                <div class="card-title" style="padding:0 0 12px 0">4 Commands</div>
+            </div>
+            
+            <div class="params-panel">
+                <div class="card-title" id="paramsTitle">5 Parameters</div>
+                <div id="paramsForm">
+                    <div class="info-box">Click a command button to see parameters</div>
+                </div>
+            </div>
+            
+            <div class="console-panel">
+                <div class="console-header">
+                    <span class="console-title">6 Console</span>
+                    <input type="text" id="consoleInput" placeholder="Type command..." style="flex:1;max-width:300px;margin:0 12px;background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:4px;font-size:12px" onkeypress="handleConsoleEnter(event)">
+                    <button class="btn" onclick="clearConsole()">Clear</button>
+                </div>
+                <div class="console-content" id="consoleOutput"></div>
+            </div>
+        </div>
+        
+        <!-- Panel 7: Kaspad Parameters -->
+        <div class="kaspad-panel" style="margin-top: 24px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>7 Kaspad Parameters</span>
+                    <div>
+                        <button class="btn" onclick="stopKaspad()" style="background: #881111; margin-right: 8px;">■ Stop</button>
+                        <button class="btn" onclick="restartKaspad()">▶ Restart</button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Toggle Args:</div>
+                        <div id="kaspadToggles" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Custom Extra Args:</div>
+                        <input type="text" id="kaspadCustomArgs" class="wallet-input" placeholder="--custom-flag --other" style="width: 100%;">
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                    <div style="color: var(--text-muted); margin-bottom: 6px;">Command Preview:</div>
+                    <code id="kaspadCmdPreview" style="color: var(--accent); word-break: break-all; font-size: 10px;"></code>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel 8: Debug Console -->
+        <div class="debug-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>8 Debug Console</span>
+                    <div>
+                        <button class="btn" onclick="refreshDebug()">↻ Refresh</button>
+                        <button class="btn" onclick="checkKaspadStatus()" style="margin-left: 8px; background: #004488;">Check Kaspad</button>
+                        <button class="btn" onclick="checkMinerStatus()" style="margin-left: 8px; background: #884400;">Check Miner</button>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; font-size: 11px;">
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">SYNC STATUS</div>
+                        <div id="debugSync">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">MINER STATUS</div>
+                        <div id="debugMiner">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">NETWORK</div>
+                        <div id="debugNetwork">Loading...</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">SYSTEM</div>
+                        <div id="debugSystem">Loading...</div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 12px; font-size: 11px;">
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">UTXO CHECK</div>
+                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                            <input type="text" id="utxoAddress" class="wallet-input" placeholder="kaspatest:..." style="flex:1;">
+                            <button class="btn" onclick="checkUTXO()" style="padding: 6px 12px;">Check</button>
+                        </div>
+                        <div id="debugUTXO">Enter address to check</div>
+                    </div>
+                    <div style="background: var(--bg-input); padding: 10px; border-radius: 4px;">
+                        <div style="color: #00BFFF; margin-bottom: 8px;">RECENT LOGS</div>
+                        <div id="debugLogs" style="height: 80px; overflow-y: auto; font-size: 10px; color: var(--text-muted);">Loading...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel 9: Command Reference -->
+        <div class="cmd-ref-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title">9 Command Reference</div>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 12px; font-size: 11px;">
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">WALLET</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            generate - New wallet<br>
+                            load &lt;key&gt; - Load key<br>
+                            balance &lt;addr&gt; - Check balance<br>
+                            utxos &lt;addr&gt; - List UTXOs<br>
+                            send &lt;key&gt; &lt;to&gt; &lt;amt&gt;
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">MINING</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            miner-status - Status<br>
+                            miner-start &lt;addr&gt; &lt;threads&gt;<br>
+                            rothschild-start - TX Gen<br>
+                            rothschild-stop
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">KASPA-CLI</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            wallet create - New wallet<br>
+                            wallet balance - Check balance<br>
+                            wallet send &lt;to&gt; &lt;amount&gt; - Send<br>
+                            settings - Configure<br>
+                            server &lt;rpc&gt; - Change RPC<br>
+                            <span style="color:#888;"># Example: send 1 KAS</span><br>
+                            <span style="color:#00ff88;">kaspa-cli send addr 1</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">CONTRACTS</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            p2pkh - P2PKH Contract<br>
+                            multisig - Multisig<br>
+                            escrow - Escrow<br>
+                            hodl - HODL Vault<br>
+                            mecenas - Mecenas
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: #00BFFF; margin-bottom: 6px;">COMPILER</div>
+                        <div style="color: #ffffff; line-height: 1.5;">
+                            silver-compile - Compile<br>
+                            silver-list - List Examples<br>
+                            compile &lt;file&gt;<br>
+                            deploy &lt;contract&gt; &lt;key&gt;
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                    <div style="color: #00BFFF; margin-bottom: 6px;">CLI BINARIES</div>
+                    <div style="color: #ffffff; line-height: 1.5;">
+                        ./kaspad - Node daemon | ./kaspa-miner - CPU miner | ./rothschild - TX generator<br>
+                        ./kaspa-cli - Wallet CLI (requires TTY) | ./silverc - SilverScript compiler
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 10: Wallet CLI -->
+        <div class="wallet-cli-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>10 @kaspa/wallet-cli (v1.1.34)</span>
+                    <span style="font-size: 10px; color: #00ff88;">NEW!</span>
+                </div>
+                <div style="font-size: 9px; color: var(--text-muted); margin-top: 4px; margin-bottom: 12px;">
+                    ⚠️ Note: "Load from Key" uses kaspa-igra (no import in @kaspa/wallet-cli)
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+                    <!-- Left: Wallet Actions -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">WALLET OPTIONS</div>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                            <input type="checkbox" id="walletNoSync" checked style="width: 14px; height: 14px;">
+                            <span style="font-size: 10px; color: var(--text-muted);">--no-sync (faster, skip UTXO scan)</span>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">WALLET OPERATIONS</div>
+                        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                            <button class="btn btn-primary" onclick="runKaspaWallet('create', ['--force'])" style="font-size: 10px; padding: 8px;">Create New</button>
+                            <button class="btn" onclick="runKaspaWallet('create', ['--force', '--mnemonic'])" style="font-size: 10px; padding: 8px;">Create + Mnemonic</button>
+                        </div>
+                        
+                        <div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">LOAD FROM PRIVATE KEY</div>
+                        <input type="text" id="kaspaWalletPrivateKey" class="wallet-input" placeholder="Private Key (hex)" style="font-family: monospace; font-size: 10px;">
+                        <button class="btn" onclick="loadKaspaWalletFromKey()" style="width: 100%; margin-top: 4px; font-size: 10px;">Load from Key</button>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 16px; margin-bottom: 8px;">WALLET COMMANDS</div>
+                        <div style="display: flex; flex-direction: column; gap: 6px;">
+                            <button class="btn" onclick="runKaspaWallet('address')" style="font-size: 11px; padding: 8px;">Get Address</button>
+                            <button class="btn" onclick="runKaspaWallet('balance')" style="font-size: 11px; padding: 8px;">Get Balance</button>
+                            <button class="btn" onclick="runKaspaWallet('addresses')" style="font-size: 11px; padding: 8px;">List Addresses</button>
+                            <button class="btn" onclick="runKaspaWallet('transactions')" style="font-size: 11px; padding: 8px;">List Transactions</button>
+                            <button class="btn" onclick="runKaspaWallet('info')" style="font-size: 11px; padding: 8px;">Wallet Info</button>
+                        </div>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 16px; margin-bottom: 8px;">SEND KAS</div>
+                        <input type="text" id="walletSendTo" class="wallet-input" placeholder="Recipient Address" style="font-size: 11px;">
+                        <input type="text" id="walletSendAmount" class="wallet-input" placeholder="Amount (KAS)" style="font-size: 11px; margin-top: 4px;">
+                        <button class="btn btn-primary" onclick="runKaspaWallet('send')" style="width: 100%; margin-top: 8px; font-size: 11px;">Send</button>
+                        
+                        <div id="walletCLIAddress" style="margin-top: 16px; padding: 10px; background: var(--bg-input); border-radius: 4px;">
+                            <div style="font-size: 10px; color: var(--text-muted);">ADDRESS</div>
+                            <div id="kaspaWalletAddress" style="color: var(--accent); font-size: 11px; word-break: break-all;">-</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right: Output -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">OUTPUT</div>
+                        <div id="kaspaWalletOutput" style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 12px; font-size: 10px; color: var(--accent); height: 300px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">
+                            Click a button to test...
+                        </div>
+                        
+                        <!-- SDK Info -->
+                        <div style="margin-top: 12px; padding: 10px; background: #1a1a2e; border: 1px solid #333; border-radius: 4px;">
+                            <div style="font-size: 10px; color: #00ff88; margin-bottom: 6px;">📡 Wallet SDK Options</div>
+                            <div style="font-size: 9px; color: var(--text-muted); line-height: 1.5;">
+                                • Direct Node RPC - requires --utxoindex<br>
+                                • Wallet SDK - client-side WASM<br>
+                                • Wallet API - server-side<br>
+                                • 3rd Party APIs - Explorer/REST
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+                                <code style="color: #00ff88;">await rpc.disconnect();</code><br><br>
+                                <b>Ports:</b> gRPC(16210) | wRPC-Borsh(17210) | wRPC-JSON(18210)
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right: Send -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">SEND KAS</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="public" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Public API (api-tn12.kaspa.org) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Direct to public API - reliable, no local sync needed</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="local" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Local RPC (localhost:16210) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Via local kaspad - faster but needs UTXO synced</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="rothschild" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">Rothschild (TX Generator) <span style="color: #ff4444; font-size: 9px;">[NOT WORKING]</span></span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">High-throughput TX generator - best for load/stress testing</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="kaspa-wallet" onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">@kaspa/wallet-cli (NEW!) <span style="color: #00ff88; font-size: 9px;">[v1.1.34]</span></span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Official Kaspa wallet CLI - supports testnet-12</div>
+                                </div>
+                            </label>
+                            <label style="display: flex; align-items: flex-start; gap: 8px; cursor: pointer; padding: 6px; background: var(--bg-input); border-radius: 4px;">
+                                <input type="radio" name="walletCLIMethod" value="kaspa-send" checked onchange="updateWalletCLIRPC()">
+                                <div>
+                                    <span style="font-size: 11px; color: var(--text);">kaspa-send (wRPC) <span style="color: #00ff88; font-size: 9px;">[DEFAULT]</span></span>
+                                    <div style="font-size: 10px; color: var(--text-muted);">Direct wRPC to localhost:17110 - uses wallet-cli for signing</div>
+                                </div>
+                            </label>
+                        </div>
+                        <input type="text" id="walletCLIRecipient" class="wallet-input" placeholder="Recipient Address (kaspatest:...)">
+                        <input type="text" id="walletCLIAmount" class="wallet-input" placeholder="Amount (KAS)" style="margin-top: 8px;">
+                        <button class="btn btn-primary" onclick="sendViaWalletCLI()" style="width: 100%; margin-top: 8px;">Send</button>
+                        <div style="margin-top: 12px; padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px; max-height: 150px; overflow-y: auto;">
+                            <div id="walletCLIOutput" style="color: var(--text-muted);">Output will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 11: SilverScript Control Panel -->
+        <div class="silver-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>SilverScript Control Panel</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+                    <!-- LEFT: Inputs -->
+                    <div>
+                        <!-- Step 1: Owner Key -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">1. OWNER KEY (for signing)</div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="silverOwnerKey" class="wallet-input" value="b23f42d4a5f9c2963f4b73403f7efcb12b28983f808f0092b43da55ee53317e7" style="flex:1;">
+                                <button class="btn" onclick="loadSilverWallet()" style="padding: 8px 16px;">Load</button>
+                            </div>
+                            <div id="silverWalletInfo" style="margin-top: 6px; font-size: 10px; color: var(--accent);"></div>
+                        </div>
+                        
+                        <!-- Step 2: Contract Type -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">2. CONTRACT TYPE</div>
+                            <select id="silverContractSelect" onchange="updateSilverForm()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;width:100%;">
+                                <option value="deadman">Deadman Switch - Funds to beneficiary after timeout</option>
+                                <option value="p2pkh">P2PKH - Simple public key hash</option>
+                                <option value="multisig">Multisig - Multiple signers</option>
+                                <option value="escrow">Escrow - Third-party arbiter</option>
+                                <option value="hodl_vault">HODL Vault - Time-locked vault</option>
+                                <option value="mecenas">Mecenas - Recurring payments</option>
+                                <option value="bar">Bar - Tokenized bar</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Step 3: Contract Parameters -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">3. CONTRACT PARAMETERS</div>
+                            <div id="silverContractParams"></div>
+                        </div>
+                        
+                        <!-- Step 4: Funding -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">4. FUNDING (KAS)</div>
+                            <input type="number" id="silverFundingAmount" class="wallet-input" placeholder="Amount to fund contract with" value="10" min="0.0001" step="0.01" style="width:200px;">
+                        </div>
+                        
+                        <!-- Step 5: Compile & Deploy -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" onclick="compileSilverContract()" style="flex:1;">5. COMPILE</button>
+                                <button class="btn" onclick="deploySilverContract()" style="flex:1;">6. DEPLOY</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT: Output Monitor -->
+                    <div>
+                        <!-- Step 7: Contract Status -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">7. CONTRACT STATUS</div>
+                            <div style="background: var(--bg-input); padding: 12px; border-radius: 4px; margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">CONTRACT ADDRESS</span>
+                                </div>
+                                <div id="silverContractAddress" style="color: var(--accent); font-size: 11px; word-break: break-all;">-</div>
+                                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                                    <input type="text" id="silverManualAddress" placeholder="kaspatest:..." style="flex:1; font-size:10px; padding:4px;">
+                                    <button class="btn" onclick="useManualSilverAddress()" style="font-size:9px; padding:4px 8px;">Use</button>
+                                </div>
+                                <button class="btn" onclick="copySilverAddress()" style="margin-top:4px; font-size:9px; padding:4px 8px;">Copy Address</button>
+                                <div style="display: flex; justify-content: space-between; margin-top: 10px; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">BALANCE</span>
+                                    <span id="silverContractBalance" style="color: var(--accent); font-size: 12px;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-top: 6px; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">CONTRACT AGE</span>
+                                    <span id="silverContractAge" style="color: var(--text); font-size: 12px;">-</span>
+                                </div>
+                                <button class="btn" onclick="refreshSilverStatus()" style="width:100%; margin-top:8px; font-size:10px;">Refresh Status</button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 8: Contract Actions -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">8. CONTRACT ACTIONS</div>
+                            <div id="silverContractActions" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;"></div>
+                        </div>
+                        
+                        <!-- Output Monitor -->
+                        <div style="padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px; max-height: 300px; overflow-y: auto;">
+                            <div id="silverOutput" style="color: var(--text-muted); white-space: pre-wrap; word-break: break-all;">Output will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Guardian Panel -->
+        <div class="silver-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title">
+                    <span>🛡️ Guardian Estate Protector</span>
+                    <button class="btn" onclick="checkGuardianStatus()" style="padding: 4px 12px; font-size: 11px;">Refresh</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">TIMEOUT SETTINGS</div>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <div style="flex:1;">
+                                <div style="font-size: 10px; color: var(--text-muted);">Timeout (seconds)</div>
+                                <input type="number" id="guardianTimeout" class="wallet-input" value="600" min="60" style="width:100%;">
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-size: 10px; color: var(--text-muted);">Grace Period (seconds)</div>
+                                <input type="number" id="guardianGrace" class="wallet-input" value="60" min="10" style="width:100%;">
+                            </div>
+                        </div>
+                        <div style="font-size: 10px; color: #888; margin-bottom: 12px;">
+                            After timeout + grace with no heartbeat → auto-execute claim
+                        </div>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">⏱️ COUNTDOWN</div>
+                        <div id="guardianStatus" style="padding: 16px; background: var(--bg-input); border-radius: 4px; font-size: 14px; text-align: center;">
+                            Loading...
+                        </div>
+                        
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-primary" onclick="sendGuardianHeartbeat()" style="width:100%; padding: 12px; font-size: 14px;">❤️ SEND HEARTBEAT</button>
+                        </div>
+                        
+                        <div style="margin-top: 12px;">
+                            <button class="btn" onclick="testGuardianExecute()" style="width:100%; padding: 8px; font-size: 11px;">Test Execute (Dry Run)</button>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">CONTRACT</div>
+                        <div id="guardianContract" style="padding: 12px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                            No contract linked
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">BENEFICIARY</div>
+                            <div id="guardianBeneficiary" style="padding: 12px; background: var(--bg-input); border-radius: 4px; font-size: 11px;">
+                                No beneficiary configured
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">HEARTBEAT KEY</div>
+                            <input type="text" id="guardianKey" class="wallet-input" value="guardian_heartbeat_key" style="width:100%;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panel 12: RPC API Tester -->
+        <div class="silver-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>RPC API Tester</span>
+                    <span style="font-size: 10px; color: #00ff88;">wRPC</span>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 16px; margin-top: 12px;">
+                    <!-- LEFT: Method Selection -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">QUERY METHODS</div>
+                        <select id="rpcMethod" onchange="updateRpcParams()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-size:11px;width:100%;margin-bottom:12px;">
+                            <option value="get_info">get_info - Node info</option>
+                            <option value="get_block_dag_info">get_block_dag_info - DAG info</option>
+                            <option value="get_block_count">get_block_count - Block count</option>
+                            <option value="get_balance_by_address">get_balance_by_address - Single address</option>
+                            <option value="get_balances_by_addresses">get_balances_by_addresses - Multiple</option>
+                            <option value="get_utxos_by_addresses">get_utxos_by_addresses - UTXOs</option>
+                            <option value="get_peer_addresses">get_peer_addresses - Known peers</option>
+                            <option value="get_connected_peer_info">get_connected_peer_info - Connected</option>
+                            <option value="get_fee_estimate">get_fee_estimate - Fee estimate</option>
+                            <option value="get_sink">get_sink - Current sink</option>
+                            <option value="get_sink_blue_score">get_sink_blue_score - Sink score</option>
+                            <option value="get_mempool_entries">get_mempool_entries - Mempool</option>
+                            <option value="get_metrics">get_metrics - Node metrics</option>
+                        </select>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">ACTIONS</div>
+                        <select id="rpcAction" onchange="updateRpcParams()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-size:11px;width:100%;margin-bottom:12px;">
+                            <option value="">-- Select Action --</option>
+                            <option value="ping">ping - Ping node</option>
+                            <option value="submit_transaction">submit_transaction - Submit TX</option>
+                        </select>
+                        
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">RPC ENDPOINT</div>
+                        <select id="rpcEndpoint" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:4px;font-size:11px;width:100%;" onchange="updateRpcEndpoint()">
+                            <option value="local-borsh">Local wRPC-Borsh: ws://127.0.0.1:17210</option>
+                            <option value="local-json">Local wRPC-JSON: ws://127.0.0.1:18210</option>
+                            <option value="public">Public: wss://api-tn12.kaspa.org</option>
+                        </select>
+                        
+                        <div id="rpcParams" style="margin-top: 12px;"></div>
+                        
+                        <button class="btn btn-primary" onclick="testRpc()" style="width: 100%; margin-top: 12px;">Run RPC</button>
+                    </div>
+                    
+                    <!-- RIGHT: Output -->
+                    <div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">RESPONSE</div>
+                        <div id="rpcOutput" style="background: var(--bg-input); border: 1px solid var(--border); border-radius: 4px; padding: 12px; font-size: 11px; color: var(--accent); height: 350px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;">
+                            Click "Run RPC" to test...
+                        </div>
+                        
+                        <!-- API Reference -->
+                        <div style="margin-top: 16px; padding: 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 4px;">
+                            <div style="font-size: 11px; color: #00ff88; margin-bottom: 8px;">📡 Ports (Testnet-12)</div>
+                            <div style="font-size: 10px; color: var(--text-muted);">
+                                gRPC: 16210 | wRPC-Borsh: 17210 | wRPC-JSON: 18210
+                            </div>
+                            <div style="font-size: 9px; color: #ffaa00; margin-top: 8px;">
+                                ⚠️ Uses WebSocket now. If fails, ensure kaspad has --rpclisten-borsh enabled.
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 8px; padding: 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 4px;">
+                            <div style="font-size: 11px; color: #00ff88; margin-bottom: 8px;">📝 Using New RpcClient API</div>
+                            <div style="font-size: 10px; color: var(--text-muted); line-height: 1.6;">
+                                <code style="color:#ff6b6b;">const { RpcClient } = require('kaspa');</code><br>
+                                <code style="color:#00ff88;">const rpc = new RpcClient({</code><br>
+                                <code style="color:#00ff88;">&nbsp;&nbsp;url: 'ws://localhost:17210',</code><br>
+                                <code style="color:#00ff88;">&nbsp;&nbsp;networkId: 'testnet-12'</code><br>
+                                <code style="color:#00ff88;">});</code><br>
+                                <code style="color:#00ff88;">await rpc.connect();</code><br>
+                                <code style="color:#00ff88;">await rpc.get_info();</code><br>
+                                <code style="color:#00ff88;">await rpc.disconnect();</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toast" id="toast">Copied!</div>
+
+    <script>
+        const API_BASE = 'https://api-tn12.kaspa.org';
+        
+        let minerRunning = false;
+        let rothschildRunning = false;
+        
+        const CATEGORIES = {
+            'WALLET': ['generate', 'load', 'send'],
+            'MINING': ['kaspad-log', 'miner-status', 'miner-start', 'rothschild-start', 'rothschild-stop'],
+            'SILVERSCRIPT': ['silver-compile', 'silver-list'],
+            'CONTRACTS': ['p2pkh', 'multisig', 'escrow', 'hodl', 'mecenas'],
+            'COMPILER': ['compile', 'deploy']
+        };
+        
+        const COMMANDS = {
+            'generate': { 
+                desc: 'Generate new wallet', 
+                params: [],
+                action: () => runCLI('generate')
+            },
+            'load': { 
+                desc: 'Load from private key', 
+                params: [{name: 'private_key', placeholder: 'Private key hex'}],
+                action: (args) => runCLI('load ' + args[0])
+            },
+            'balance': { 
+                desc: 'Check balance', 
+                params: [{name: 'address', placeholder: 'Address', id: 'balanceAddr'}],
+                action: (args) => {
+                    const addr = args[0] || document.getElementById('walletB').value || document.getElementById('walletA').value;
+                    checkBalance(addr);
+                }
+            },
+            'utxos': { 
+                desc: 'List UTXOs', 
+                params: [{name: 'address', placeholder: 'Address'}],
+                action: (args) => checkUTXOs(args[0])
+            },
+            'send': { 
+                desc: 'Send KAS', 
+                params: [
+                    {name: 'private_key', placeholder: 'Private key', id: 'sendKey'},
+                    {name: 'recipient', placeholder: 'Recipient address', id: 'sendTo'},
+                    {name: 'amount', placeholder: 'Amount (KAS)', id: 'sendAmount'}
+                ],
+                action: (args) => sendKAS(args[0], args[1], args[2])
+            },
+            'miner-status': { 
+                desc: 'Get miner status', 
+                params: [],
+                action: () => checkMinerStatus()
+            },
+            'kaspad-log': { 
+                desc: 'Show kaspad log', 
+                params: [],
+                action: () => showKaspadLog()
+            },
+            'miner-start': { 
+                desc: 'Toggle CPU miner', 
+                params: [
+                    {name: 'address', placeholder: 'Mining address', id: 'minerAddr'}, 
+                    {name: 'threads', placeholder: 'Threads', default: '8', id: 'minerThreads'},
+                    {name: 'mine-when-not-synced', type: 'checkbox', label: 'Mine even when not synced', id: 'minerNoSync', default: false}
+                ],
+                action: (args) => toggleMiner(args[0], args[1], args[2])
+            },
+            'rothschild-start': { 
+                desc: 'Toggle TX generator', 
+                params: [
+                    {name: 'version', placeholder: 'rusty-kaspa or smartgoo', default: 'rusty-kaspa', id: 'rothschildVersion'},
+                    {name: 'private_key', placeholder: 'Private key hex', id: 'rothschildKey'},
+                    {name: 'recipient', placeholder: 'Recipient address', id: 'rothschildTo'},
+                    {name: 'tps', placeholder: 'TPS (tx/sec)', default: '1', id: 'rothschildTps'},
+                    {name: 'threads', placeholder: 'Threads (0=auto)', default: '2', id: 'rothschildThreads'},
+                    {name: 'priority_fee', placeholder: 'Priority fee', default: '0', id: 'rothschildFee'},
+                    {name: 'send_amount', placeholder: 'Send amount (KAS)', default: '', id: 'rothschildAmount'},
+                    {name: 'randomize_fee', placeholder: 'yes/no', default: 'no', id: 'rothschildRandFee'},
+                    {name: 'randomize_tx_version', placeholder: 'yes/no', default: 'no', id: 'rothschildRandTx'},
+                    {name: 'timeout', placeholder: 'Timeout (seconds, 0=forever)', default: '0', id: 'rothschildTimeout'},
+                    {name: 'custom_args', placeholder: 'Custom args (e.g., --flag)', default: '', id: 'rothschildArgs'}
+                ],
+                action: (args) => startRothschild(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10])
+            },
+            'rothschild-stop': { 
+                desc: 'Stop TX generator', 
+                params: [],
+                action: () => stopRothschild()
+            },
+            'silver-compile': { 
+                desc: 'Compile SilverScript', 
+                params: [
+                    {name: 'source', placeholder: 'Source .sil file', id: 'silverSource'},
+                    {name: 'args', placeholder: 'Constructor args (optional)', id: 'silverArgs'},
+                    {name: 'output', placeholder: 'Output JSON file', id: 'silverOutput'}
+                ],
+                action: (args) => compileSilverScript(args[0], args[1], args[2])
+            },
+            'silver-list': { 
+                desc: 'List Examples', 
+                params: [],
+                action: () => listSilverExamples()
+            },
+            'p2pkh': { 
+                desc: 'P2PKH Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('p2pkh', args[0])
+            },
+            'multisig': { 
+                desc: 'Multisig Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('multisig', args[0])
+            },
+            'escrow': { 
+                desc: 'Escrow Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('escrow', args[0])
+            },
+            'hodl': { 
+                desc: 'HODL Vault', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('hodl_vault', args[0])
+            },
+            'mecenas': { 
+                desc: 'Mecenas Contract', 
+                params: [{name: 'args', placeholder: 'Arguments JSON'}],
+                action: (args) => compileContract('mecenas', args[0])
+            },
+            'compile': { 
+                desc: 'Compile SilverScript', 
+                params: [{name: 'file', placeholder: 'Contract file'}],
+                action: (args) => compileContract(args[0], '')
+            },
+            'deploy': { 
+                desc: 'Deploy Contract', 
+                params: [{name: 'contract', placeholder: 'Contract JSON'}, {name: 'private_key', placeholder: 'Private key'}],
+                action: (args) => deployContract(args[0], args[1])
+            }
+        };
+        let currentCmd = null;
+        
+        function init() {
+            renderCommands();
+            refreshWallet('A');
+            refreshWallet('B');
+            updateStats();
+            renderKaspadToggles();
+            refreshDebug();
+            setInterval(updateStats, 5000);
+            setInterval(refreshDebug, 5000);
+            log('Console ready. Type commands or use buttons.');
+        }
+        
+        // Kaspad Parameters
+        const KASPAD_FLAGS = [
+            { id: 'testnet', name: '--testnet', type: 'flag', default: true, checked: true },
+            { id: 'netsuffix', name: '--netsuffix', type: 'value', default: '12', placeholder: '12', note: 'net suffix', checked: true },
+            { id: 'utxoindex', name: '--utxoindex', type: 'flag', default: true, checked: true, note: 'REQUIRED for wallet' },
+            { id: 'rpclisten', name: '--rpclisten', type: 'value', default: '127.0.0.1:16210', placeholder: 'ip:port', note: 'gRPC', checked: true },
+            { id: 'rpclisten-json', name: '--rpclisten-json', type: 'value', default: '127.0.0.1:18210', placeholder: 'ip:port', note: 'WS-JSON (broken)', checked: false },
+            { id: 'rpclisten-borsh', name: '--rpclisten-borsh', type: 'value', default: '127.0.0.1:17210', placeholder: 'ip:port', note: 'wRPC (works)', checked: true },
+            { id: 'unsaferpc', name: '--unsaferpc', type: 'flag', default: true, checked: true },
+            { id: 'enable-unsynced-mining', name: '--enable-unsynced-mining', type: 'flag', default: true, checked: true, note: 'Mine while syncing' },
+            { id: 'listen', name: '--listen', type: 'value', default: '0.0.0.0:16311', placeholder: 'ip:port', note: 'P2P', checked: true },
+            { id: 'addpeer', name: '--addpeer', type: 'value', default: '23.118.8.168', placeholder: 'ip:port', note: 'peer IP', checked: false },
+            { id: 'archival', name: '--archival', type: 'flag', default: false },
+            { id: 'perf-metrics', name: '--perf-metrics', type: 'flag', default: false },
+            { id: 'reset-db', name: '--reset-db', type: 'flag', default: false },
+            { id: 'async-threads', name: '--async-threads', type: 'value', default: '12', placeholder: '2-24', note: '2-24 (default: 12)', checked: true },
+            { id: 'ram-scale', name: '--ram-scale', type: 'value', default: '2', placeholder: '0.5-4', note: '0.5-4', checked: true }
+        ];
+        
+        function renderKaspadToggles() {
+            const container = document.getElementById('kaspadToggles');
+            if (!container) return;
+            
+            let html = '';
+            KASPAD_FLAGS.forEach(flag => {
+                const isChecked = flag.checked ? 'checked' : '';
+                if (flag.type === 'flag') {
+                    html += `<label style="display:flex;align-items:center;gap:6px;padding:4px;background:var(--bg-card);border-radius:3px;cursor:pointer;">
+                        <input type="checkbox" id="kaspad_${flag.id}" ${isChecked} onchange="updateKaspadCmd()">
+                        <span style="color:var(--text);font-size:10px;">${flag.name}</span>
+                    </label>`;
+                } else {
+                    const placeholder = flag.placeholder || '';
+                    const note = flag.note ? `<span style="color:#666;font-size:8px;margin-left:2px;">(${flag.note})</span>` : '';
+                    html += `<label style="display:flex;align-items:center;gap:2px;padding:4px;background:var(--bg-card);border-radius:3px;cursor:pointer;flex-wrap:wrap;">
+                        <input type="checkbox" id="kaspad_${flag.id}" ${isChecked} onchange="updateKaspadCmd()">
+                        <span style="color:var(--text);font-size:10px;white-space:nowrap;">${flag.name}=</span>
+                        <input type="text" id="kaspad_${flag.id}_val" value="${flag.default}" placeholder="${placeholder}" style="width:120px;background:var(--bg-input);border:1px solid var(--border);color:var(--accent);padding:2px 4px;border-radius:2px;font-size:9px;" onchange="updateKaspadCmd()">${note}
+                    </label>`;
+                }
+            });
+            container.innerHTML = html;
+            updateKaspadCmd();
+        }
+        
+        function updateKaspadCmd() {
+            let cmd = './kaspad';
+            
+            KASPAD_FLAGS.forEach(flag => {
+                const checkbox = document.getElementById('kaspad_' + flag.id);
+                if (!checkbox) return;
+                
+                if (checkbox.checked) {
+                    if (flag.type === 'flag') {
+                        cmd += ' ' + flag.name;
+                    } else {
+                        const valInput = document.getElementById('kaspad_' + flag.id + '_val');
+                        const val = valInput ? valInput.value : flag.default;
+                        cmd += ' ' + flag.name + '=' + val;
+                    }
+                }
+            });
+            
+            // Add appdir
+            cmd += ' --appdir=/Users/4dsto/.kaspa-testnet12';
+            
+            // Add custom args
+            const customArgs = document.getElementById('kaspadCustomArgs');
+            if (customArgs && customArgs.value) {
+                cmd += ' ' + customArgs.value;
+            }
+            
+            const preview = document.getElementById('kaspadCmdPreview');
+            if (preview) preview.textContent = cmd;
+        }
+        
+        async function stopKaspad() {
+            log('=== Stopping Kaspad ===');
+            
+            try {
+                const killResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pkill -f "kaspad"' })
+                });
+                const killData = await killResp.json();
+                log('Kaspad stopped', 'success');
+            } catch(e) {
+                log('Error stopping kaspad: ' + e.message, 'error');
+            }
+        }
+        
+        async function restartKaspad() {
+            const cmd = document.getElementById('kaspadCmdPreview').textContent;
+            log('=== Kaspad Restart ===');
+            
+            // Check if miner was running and get its settings
+            let minerWasRunning = false;
+            let minerAddress = '';
+            let minerThreads = '8';
+            
+            try {
+                const minerStatus = await fetch('/api/miner-status').then(r => r.json());
+                if (minerStatus.running) {
+                    minerWasRunning = true;
+                    // Get miner settings from input fields
+                    const addrInput = document.getElementById('minerAddr');
+                    const threadsInput = document.getElementById('minerThreads');
+                    minerAddress = addrInput ? addrInput.value : '';
+                    minerThreads = threadsInput ? threadsInput.value : '8';
+                    log('Miner was running - will auto-restart after kaspad');
+                }
+            } catch(e) {
+                log('Could not check miner status: ' + e.message);
+            }
+            
+            log('Stopping kaspad...');
+            
+            try {
+                // Kill existing kaspad
+                const killResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pkill -f "kaspad"' })
+                });
+                const killData = await killResp.json();
+                log('Kill: ' + (killData.stdout || killData.stderr || 'OK'));
+                
+                await new Promise(r => setTimeout(r, 2000));
+                
+                // Build full command with cd to ktn12 dir
+                const ktn12Dir = '/Users/4dsto/ktn12';
+                const fullCmd = 'cd ' + ktn12Dir + ' && nohup ' + cmd + ' > kaspad.log 2>&1 &';
+                
+                log('Command: ' + fullCmd);
+                
+                const startResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: fullCmd })
+                });
+                const startData = await startResp.json();
+                
+                log('Start: ' + (startData.stdout || startData.stderr || 'OK'), 'success');
+                
+                // Wait and check status
+                await new Promise(r => setTimeout(r, 3000));
+                
+                const checkResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: 'pgrep -a kaspad' })
+                });
+                const checkData = await checkResp.json();
+                
+                if (checkData.stdout) {
+                    log('SUCCESS: Kaspad running - PID: ' + checkData.stdout.trim().split(' ')[0], 'success');
+                    
+                    // Auto-restart miner if it was running before
+                    if (minerWasRunning && minerAddress) {
+                        log('Waiting for kaspad to be ready...');
+                        await new Promise(r => setTimeout(r, 5000));
+                        
+                        log('Auto-restarting miner...');
+                        try {
+                            const minerResp = await fetch('/api/miner-start', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({ address: minerAddress, threads: parseInt(minerThreads) || 8 })
+                            });
+                            const minerData = await minerResp.json();
+                            if (minerData.started || minerData.pid) {
+                                log('SUCCESS: Miner restarted - PID: ' + (minerData.pid || 'unknown'), 'success');
+                            } else {
+                                log('WARNING: Miner restart failed', 'error');
+                            }
+                        } catch(mErr) {
+                            log('ERROR: Miner restart failed: ' + mErr.message, 'error');
+                        }
+                    }
+                } else {
+                    log('FAILED: Kaspad not running', 'error');
+                }
+                
+                refreshDebug();
+                
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        // Debug Console
+        async function refreshDebug() {
+            try {
+                const resp = await fetch('/api/debug');
+                const data = await resp.json();
+                
+                // Sync status
+                const syncEl = document.getElementById('debugSync');
+                if (syncEl) {
+                    syncEl.innerHTML = `Blocks: ${data.sync.blocks || 'N/A'}<br>Headers: ${data.sync.headers || 'N/A'}<br>DAA: ${data.sync.daaScore || 'N/A'}<br>Peers: ${data.sync.peers || 0}`;
+                }
+                
+                // Miner status
+                const minerEl = document.getElementById('debugMiner');
+                if (minerEl) {
+                    const m = data.miner || {};
+                    minerEl.innerHTML = `Hashrate: ${m.hashrate || '0 H/s'}<br>Accepted: ${m.accepted || 0}<br>Rejected: ${m.rejected || 0}<br>Status: ${m.running ? '● Running' : '○ Stopped'}`;
+                }
+                
+                // Network
+                const netEl = document.getElementById('debugNetwork');
+                if (netEl) {
+                    const n = data.network || {};
+                    netEl.innerHTML = `RPC (16210): ${n.rpc ? '● Online' : '○ Offline'}<br>JSON (18210): ${n.json ? '● Online' : '○ Offline'}<br>P2P (16311): ${n.p2p ? '● Online' : '○ Offline'}`;
+                }
+                
+                // System
+                const sysEl = document.getElementById('debugSystem');
+                if (sysEl) {
+                    const s = data.system || {};
+                    sysEl.innerHTML = `CPU: ${s.cpu || '0%'}<br>Memory: ${s.memory || '0 MB'}<br>Disk: ${s.disk || '0 GB'}`;
+                }
+                
+            } catch(e) {
+                console.log('Debug refresh error:', e);
+            }
+        }
+        
+        async function checkKaspadStatus() {
+            try {
+                const resp = await fetch('/api/rpc', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ method: 'get_block_dag_info', params: [] })
+                });
+                const data = await resp.json();
+                const logEl = document.getElementById('debugLogs');
+                if (logEl) {
+                    logEl.textContent = 'KASPAD STATUS\n' +
+                        'Blocks: ' + data.blockCount + '\n' +
+                        'Headers: ' + data.headerCount + '\n' +
+                        'DAA Score: ' + data.virtualDaaScore + '\n' +
+                        'Difficulty: ' + Math.round(data.difficulty) + '\n' +
+                        'Network: ' + data.networkName + '\n' +
+                        'Synced: ' + (data.blockCount === data.headerCount ? 'YES' : 'NO (' + Math.round(data.blockCount/data.headerCount*100) + '%)');
+                }
+            } catch(e) {
+                const logEl = document.getElementById('debugLogs');
+                if (logEl) logEl.textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function checkMinerStatus() {
+            try {
+                const resp = await fetch('/api/miner-status');
+                const data = await resp.json();
+                const logEl = document.getElementById('debugLogs');
+                if (logEl) {
+                    logEl.textContent = 'MINER STATUS\n' +
+                        'Running: ' + (data.running ? 'YES' : 'NO') + '\n' +
+                        'Hashrate: ' + data.hashrate + '\n' +
+                        'Accepted: ' + data.accepted + '\n' +
+                        'Rejected: ' + data.rejected + '\n' +
+                        'UTXO Sync: ' + data.utxoSync;
+                }
+            } catch(e) {
+                const logEl = document.getElementById('debugLogs');
+                if (logEl) logEl.textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function showKaspadLog() {
+            const output = document.getElementById('consoleOutput');
+            if (!output) {
+                // If no console output element, show in debugLogs
+                const logEl = document.getElementById('debugLogs');
+                if (logEl) {
+                    logEl.textContent = 'Loading kaspad log...';
+                    try {
+                        const resp = await fetch('/api/kaspad/log');
+                        const data = await resp.json();
+                        if (data.error) {
+                            logEl.textContent = 'Error: ' + data.error;
+                        } else {
+                            logEl.textContent = data.log || 'No log data';
+                        }
+                    } catch(e) {
+                        logEl.textContent = 'Error: ' + e.message;
+                    }
+                }
+                return;
+            }
+            
+            log('Fetching kaspad log...', 'info');
+            try {
+                const resp = await fetch('/api/kaspad/log');
+                const data = await resp.json();
+                if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else {
+                    log('=== KASPAD LOG (last 30 lines) ===', 'info');
+                    log(data.log || 'No log data', '');
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkUTXO() {
+            const addr = document.getElementById('utxoAddress').value.trim();
+            const el = document.getElementById('debugUTXO');
+            if (!addr) {
+                if (el) el.textContent = 'Enter address to check';
+                return;
+            }
+            
+            if (el) el.textContent = 'Checking...';
+            
+            try {
+                const resp = await fetch('/api/debug/utxo?address=' + encodeURIComponent(addr));
+                const data = await resp.json();
+                
+                if (data.error) {
+                    if (el) el.innerHTML = `Error: ${data.error}`;
+                } else {
+                    const balance = (data.balance || 0) / 1e8;
+                    const utxos = data.utxos || 0;
+                    if (el) el.innerHTML = `Balance: ${balance.toFixed(4)} ${getCurrencyUnit(addr)}<br>UTXOs: ${utxos}`;
+                }
+            } catch(e) {
+                if (el) el.textContent = 'Error: ' + e.message;
+            }
+        }
+        
+        async function updateStats() {
+            try {
+                const [serviceRes, sysRes, minerRes, nodeRes, txRes] = await Promise.all([
+                    fetch('/api/service-status'),
+                    fetch('/api/system-info'),
+                    fetch('/api/miner-status'),
+                    fetch('/api/node-status'),
+                    fetch('/api/tx-status')
+                ]);
+                const services = await serviceRes.json();
+                const sys = await sysRes.json();
+                const miner = await minerRes.json();
+                const node = await nodeRes.json();
+                const tx = await txRes.json();
+                
+                // Update service status indicators
+                const kaspadEl = document.getElementById('serviceKaspad');
+                const minerEl = document.getElementById('serviceMiner');
+                const rothschildEl = document.getElementById('serviceRothschild');
+                
+                kaspadEl.textContent = 'Kaspad: ' + (services.kaspad === 'running' ? '✓' : '✗');
+                kaspadEl.style.color = services.kaspad === 'running' ? '#4ade80' : '#f87171';
+                
+                minerEl.textContent = 'Miner: ' + (services.miner === 'running' ? '✓' : '✗');
+                minerEl.style.color = services.miner === 'running' ? '#4ade80' : '#f87171';
+                
+                rothschildEl.textContent = 'Rothschild: ' + (services.rothschild === 'running' ? '✓' : '✗');
+                rothschildEl.style.color = services.rothschild === 'running' ? '#4ade80' : '#f87171';
+                
+                // Update system info
+                document.getElementById('sysIP').textContent = sys.ip;
+                document.getElementById('sysHD').textContent = sys.hd;
+                document.getElementById('ktn12Size').textContent = sys.ktn12Size;
+                document.getElementById('chainSize').textContent = sys.chainSize;
+                
+                // Show UTXO sync % while syncing, show hashrate (m/s) when 100% synced
+                const isNodeSynced = !node.syncing && !node.syncPercent;
+                document.getElementById('minerHashrate').textContent = isNodeSynced 
+                    ? (miner.running ? (miner.hashrate || '0.00 M/s') : 'OFF')
+                    : (miner.utxoSync || (miner.running ? 'Syncing...' : 'OFF'));
+                
+                // Show OFF when kaspad not running, otherwise show sync status or TPS
+                const isKaspadRunning = services.kaspad === 'running';
+                document.getElementById('nodeTps').textContent = !isKaspadRunning ? 'OFF' 
+                    : (node.syncPercent ? ('Syncing ' + node.syncPercent) 
+                    : (node.syncing ? 'Syncing...' : (node.tps || 'N/A')));
+                document.getElementById('txTps').textContent = tx.running ? (tx.tps || '0') : 'OFF';
+            } catch(e) {
+                console.log('Stats update error:', e);
+            }
+        }
+        
+        function renderCommands() {
+            const sidebar = document.getElementById('cmdSidebar');
+            Object.entries(CATEGORIES).forEach(([cat, cmds]) => {
+                const header = document.createElement('div');
+                header.className = 'cat-header';
+                header.textContent = cat;
+                sidebar.appendChild(header);
+                
+                const div = document.createElement('div');
+                div.className = 'cmd-btns';
+                cmds.forEach(cmd => {
+                    const btn = document.createElement('button');
+                    btn.className = 'chip-btn';
+                    btn.textContent = cmd;
+                    btn.onclick = () => showParams(cmd);
+                    div.appendChild(btn);
+                });
+                sidebar.appendChild(div);
+            });
+        }
+        
+        function showParams(cmdName) {
+            currentCmd = cmdName;
+            const cmd = COMMANDS[cmdName];
+            document.getElementById('paramsTitle').textContent = cmdName.toUpperCase();
+            
+            let html = '<div class="info-box">' + cmd.desc + '</div>';
+            
+            // For miner-start, check if running and show/hide params accordingly
+            if (cmdName === 'miner-start') {
+                fetch('/api/miner-status').then(r => r.json()).then(stats => {
+                    minerRunning = stats.running;
+                    renderMinerParams(minerRunning);
+                }).catch(() => {
+                    minerRunning = false;
+                    renderMinerParams(false);
+                });
+                return;
+            }
+            
+            // For rothschild-start, check if running and show/hide params accordingly
+            if (cmdName === 'rothschild-start') {
+                fetch('/api/tx-status').then(r => r.json()).then(stats => {
+                    rothschildRunning = stats.running;
+                    renderRothschildParams(rothschildRunning);
+                }).catch(() => {
+                    rothschildRunning = false;
+                    renderRothschildParams(false);
+                });
+                return;
+            }
+            
+            if (cmd.params.length === 0) {
+                html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
+            } else {
+                cmd.params.forEach((p, i) => {
+                    const defaultVal = p.default || '';
+                    const placeholder = p.placeholder || p.name;
+                    const id = p.id || 'param-' + i;
+                    let value = defaultVal;
+                    let extra = '';
+                    
+                    // Special handling for send command
+                    if (cmdName === 'send') {
+                        if (p.id === 'sendKey') {
+                            value = document.getElementById('walletCKey').value || '';
+                        } else if (p.id === 'sendTo') {
+                            value = ''; // Clear recipient for send
+                        } else {
+                            value = defaultVal;
+                        }
+                    } else if (p.name === 'private_key' || p.id === 'sendKey' || p.id === 'rothschildKey') {
+                        if (document.getElementById('walletAKey').value) extra += '<button type="button" class="chip-btn" onclick="document.getElementById(\'' + id + '\').value=document.getElementById(\'walletAKey\').value">From A</button>';
+                    } else if (p.name === 'recipient' || p.id === 'sendTo' || p.id === 'rothschildTo') {
+                        value = document.getElementById('walletB').value || defaultVal;
+                    } else if (p.name === 'address' || p.id === 'balanceAddr' || p.id === 'minerAddr') {
+                        value = document.getElementById('walletA').value || document.getElementById('walletB').value || defaultVal;
+                    }
+                    html += '<div class="param-group"><div class="param-label">' + p.name + '</div><input type="text" class="param-input" id="' + id + '" placeholder="' + placeholder + '" value="' + value + '">' + extra + '</div>';
+                });
+                html += '<button class="run-btn" onclick="executeCommand()">▶ RUN</button>';
+            }
+            
+            document.getElementById('paramsForm').innerHTML = html;
+        }
+        
+        function renderMinerParams(isRunning) {
+            minerRunning = isRunning;
+            const addrValue = document.getElementById('walletA').value || document.getElementById('walletB').value || '';
+            let html = '<div class="info-box">' + (isRunning ? 'Miner is running' : 'Start CPU miner') + '</div>';
+            
+            html += '<div class="param-group"><div class="param-label">address</div><input type="text" class="param-input" id="minerAddr" placeholder="Mining address" value="' + addrValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">threads (2-8)</div><input type="text" class="param-input" id="minerThreads" placeholder="Threads" value="8"></div>';
+            html += '<div class="param-group"><div style="display:flex;align-items:center;gap:8px;margin:8px 0;"><input type="checkbox" id="minerNoSync" style="width:16px;height:16px;"><span style="font-size:11px;color:var(--text-muted);">Mine even when not synced</span></div></div>';
+            
+            if (isRunning) {
+                html += '<button class="run-btn" onclick="stopMiner()">■ MINER-STOP</button>';
+            } else {
+                html += '<button class="run-btn" onclick="executeCommand()">▶ MINER-START</button>';
+            }
+            
+            document.getElementById('paramsForm').innerHTML = html;
+        }
+        
+        function renderRothschildParams(isRunning) {
+            rothschildRunning = isRunning;
+            const keyValue = '';
+            const toValue = '';
+            
+            // Fetch and display current status
+            fetch('/api/tx-status').then(r => r.json()).then(status => {
+                // Get current parameter values from inputs
+                const params = {
+                    version: document.getElementById('rothschildVersion') ? document.getElementById('rothschildVersion').value : 'rusty-kaspa',
+                    private_key: document.getElementById('rothschildKey') ? document.getElementById('rothschildKey').value : '',
+                    recipient: document.getElementById('rothschildTo') ? document.getElementById('rothschildTo').value : '',
+                    tps: document.getElementById('rothschildTps') ? document.getElementById('rothschildTps').value : '1',
+                    threads: document.getElementById('rothschildThreads') ? document.getElementById('rothschildThreads').value : '2',
+                    priority_fee: document.getElementById('rothschildFee') ? document.getElementById('rothschildFee').value : '0',
+                    send_amount: document.getElementById('rothschildAmount') ? document.getElementById('rothschildAmount').value : '',
+                    randomize_fee: document.getElementById('rothschildRandFee') ? document.getElementById('rothschildRandFee').value : 'no',
+                    randomize_tx_version: document.getElementById('rothschildRandTx') ? document.getElementById('rothschildRandTx').value : 'no',
+                    timeout: document.getElementById('rothschildTimeout') ? document.getElementById('rothschildTimeout').value : '0',
+                    customArgs: document.getElementById('rothschildArgs') ? document.getElementById('rothschildArgs').value : ''
+                };
+                
+                // Log current parameters
+                log('Rothschild Status: ' + (isRunning ? 'RUNNING' : 'STOPPED') + ' | TPS: ' + status.tps, isRunning ? 'success' : 'error');
+                log('Params: version=' + params.version + ', private_key=' + params.private_key.substring(0, 8) + '..., recipient=' + params.recipient.substring(0, 16) + '..., tps=' + params.tps + ', threads=' + params.threads + ', priority_fee=' + params.priority_fee + ', send_amount=' + params.send_amount + ', randomize_fee=' + params.randomize_fee + ', randomize_tx_version=' + params.randomize_tx_version + ', timeout=' + params.timeout + ', custom_args=' + params.customArgs, 'success');
+            }).catch(() => {});
+            
+            let html = '<div class="info-box">Start TX Generator</div>';
+            
+            html += '<div class="param-group"><div class="param-label">version</div><input type="text" class="param-input" id="rothschildVersion" placeholder="rusty-kaspa or smartgoo" value="rusty-kaspa"></div>';
+            html += '<div class="param-group"><div class="param-label">private_key</div><input type="text" class="param-input" id="rothschildKey" placeholder="Private key hex" value="' + keyValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">recipient</div><input type="text" class="param-input" id="rothschildTo" placeholder="Recipient address" value="' + toValue + '"></div>';
+            html += '<div class="param-group"><div class="param-label">tps (tx/sec)</div><input type="text" class="param-input" id="rothschildTps" placeholder="Transactions per second" value="1"></div>';
+            html += '<div class="param-group"><div class="param-label">threads</div><input type="text" class="param-input" id="rothschildThreads" placeholder="Threads (0=auto)" value="2"></div>';
+            html += '<div class="param-group"><div class="param-label">priority_fee</div><input type="text" class="param-input" id="rothschildFee" placeholder="Priority fee" value="0"></div>';
+            html += '<div class="param-group"><div class="param-label">send_amount</div><input type="text" class="param-input" id="rothschildAmount" placeholder="Send amount (KAS)" value=""></div>';
+            html += '<div class="param-group"><div class="param-label">randomize_fee</div><input type="text" class="param-input" id="rothschildRandFee" placeholder="yes/no" value="no"></div>';
+            html += '<div class="param-group"><div class="param-label">randomize_tx_version</div><input type="text" class="param-input" id="rothschildRandTx" placeholder="yes/no" value="no"></div>';
+            html += '<div class="param-group"><div class="param-label">timeout (seconds, 0=forever)</div><input type="text" class="param-input" id="rothschildTimeout" placeholder="0" value="0"></div>';
+            html += '<div class="param-group"><div class="param-label">custom_args (e.g., --flag)</div><input type="text" class="param-input" id="rothschildArgs" placeholder="" value=""></div>';
+            
+            // Always show SEND button
+            html += '<button class="run-btn" onclick="executeCommand()">▶ SEND</button>';
+            
+            document.getElementById('paramsForm').innerHTML = html;
+        }
+        
+        function executeCommand() {
+            if (!currentCmd) return;
+            const cmd = COMMANDS[currentCmd];
+            const args = cmd.params.map((p, i) => {
+                const id = p.id || 'param-' + i;
+                const el = document.getElementById(id);
+                if (p.type === 'checkbox') {
+                    return el ? el.checked : (p.default || false);
+                }
+                return el ? el.value : (p.default || '');
+            });
+            log('$ ' + cmd.desc);
+            cmd.action(args);
+        }
+        
+        async function refreshWallet(which) {
+            console.log('refreshWallet called for:', which);
+            const input = document.getElementById('wallet' + which);
+            const addrEl = document.getElementById('addr' + which);
+            const balEl = document.getElementById('bal' + which);
+            console.log('Elements found - input:', !!input, 'addrEl:', !!addrEl, 'balEl:', !!balEl);
+            
+            let value = input.value.trim();
+            console.log('Input value:', value);
+            if (!value) {
+                balEl.textContent = 'No input';
+                return;
+            }
+            
+            let address = value;
+            
+            // Check if it's a private key (64 hex chars)
+            if (value.length === 64 && !value.startsWith('kaspatest:')) {
+                // It's a private key - use wallet-load to get address
+                try {
+                    const resp = await fetch('/api/wallet-load', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({privateKey: value})
+                    });
+                    const data = await resp.json();
+                    console.log('Wallet load response:', data);
+                    if (data.address) {
+                        address = data.address;
+                        // Store private key for sending later
+                        if (which === 'A') {
+                            document.getElementById('walletAKey').value = value;
+                        }
+                        if (which === 'B') {
+                            document.getElementById('walletBKey').value = value;
+                        }
+                        if (which === 'C') {
+                            document.getElementById('walletCKey').value = value;
+                        }
+                    }
+                    if (data.balance !== undefined) {
+                        balEl.textContent = data.balance.toFixed(4) + ' ' + getCurrencyUnit(address);
+                        addrEl.textContent = address.substring(0, 20) + '...';
+                        return;
+                    }
+                } catch(e) {
+                    log('Error loading wallet: ' + e.message, 'error');
+                }
+            }
+            
+            // It's an address - use public API to get balance
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            
+            // Validate address length
+            if (address.length < 70 || address.length > 74) {
+                addrEl.textContent = 'Invalid address';
+                balEl.textContent = 'Error';
+                return;
+            }
+            
+            addrEl.textContent = address.substring(0, 20) + '...';
+            
+            // Get balance from public API
+            try {
+                const resp = await fetch('/api/wallet/balance?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                console.log('Balance response:', data);
+                if (data.error) {
+                    balEl.textContent = 'Error';
+                } else {
+                    balEl.textContent = data.balance.toFixed(4) + ' ' + getCurrencyUnit(address);
+                }
+            } catch(e) {
+                balEl.textContent = 'Error';
+            }
+        }
+        
+        async function checkBalance(address) {
+            if (!address) {
+                log('Error: No address provided', 'error');
+                return;
+            }
+            // Ensure proper format
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            // Validate address length
+            if (address.length < 70 || address.length > 74) {
+                log('Error: Invalid address length. Must be 61-63 chars after kaspatest:', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/balance?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                if (data.balance) {
+                    const bal = Number(data.balance) / 1e8;
+                    log('Balance: ' + bal.toFixed(2) + ' ' + getCurrencyUnit(address), 'success');
+                } else {
+                    log('Error: ' + JSON.stringify(data), 'error');
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkUTXOs(address) {
+            if (!address) {
+                log('Error: No address provided', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/utxos?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                log('UTXOs: ' + JSON.stringify(data, null, 2));
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function sendKAS(privateKey, recipient, amount) {
+            if (!privateKey || !recipient || !amount) {
+                log('Error: Missing parameters', 'error');
+                return;
+            }
+            
+            // Validate address format
+            let address = recipient;
+            if (!address.startsWith('kaspatest:')) {
+                address = 'kaspatest:' + address;
+            }
+            // Must be 61-63 chars after prefix (total 70-74)
+            const addrPart = address.replace('kaspatest:', '');
+            if (addrPart.length < 61 || addrPart.length > 63) {
+                log('Error: Invalid address. Must be 61-63 chars after kaspatest: (got ' + addrPart.length + ')', 'error');
+                return;
+            }
+            
+            log('Sending ' + amount + ' ' + getCurrencyUnit(address) + ' to ' + address + '...');
+            
+            // Use the new wallet/send endpoint
+            try {
+                const resp = await fetch('/api/wallet/send', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        privateKey: privateKey,
+                        recipient: address,
+                        amount: parseFloat(amount)
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else if (data.txId && data.txId !== 'check explorer') {
+                    log('Sent! TX: ' + data.txId, 'success');
+                } else if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else {
+                    log('Transaction sent! Check explorer for details.', 'success');
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function checkMinerStatus() {
+            try {
+                const stats = await fetch('/api/miner-status').then(r => r.json());
+                let status = '=== MINER STATUS ===\n';
+                status += 'Running: ' + (stats.running ? '✓ YES' : '✗ NO') + '\n';
+                status += 'Hashrate: ' + (stats.hashrate || '0 M/s') + '\n';
+                status += 'UTXO Sync: ' + (stats.utxoSync || 'N/A') + '\n';
+                status += 'Accepted: ' + (stats.accepted || '0') + '\n';
+                status += 'Rejected: ' + (stats.rejected || '0');
+                
+                log(status, stats.running ? 'success' : 'error');
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function startMiner(address, threads, noSync) {
+            if (!address) {
+                address = document.getElementById('walletA').value;
+            }
+            if (!address) {
+                log('Error: Mining address required', 'error');
+                return;
+            }
+            try {
+                const resp = await fetch('/api/miner-start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ address: address, threads: threads || 8, noSync: noSync })
+                });
+                const data = await resp.json();
+                log('Miner started: ' + (data.pid ? 'PID ' + data.pid : 'OK'), 'success');
+                minerRunning = true;
+                // Show miner stats
+                setTimeout(async () => {
+                    try {
+                        const stats = await fetch('/api/miner-status').then(r => r.json());
+                        const hr = stats.running ? stats.hashrate : '0.00 M/s';
+                        log('Hashrate: ' + hr + ', Running: ' + stats.running, 'success');
+                        // Show miner log
+                        fetch('/api/shell', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ cmd: 'tail -5 miner.log' })
+                        }).then(r => r.json()).then(logData => {
+                            if (logData.stdout) {
+                                log('--- Miner Log ---', 'success');
+                                logData.stdout.split('\n').forEach(line => log(line));
+                            }
+                        });
+                    } catch(e) {}
+                }, 3000);
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function stopMiner() {
+            try {
+                await fetch('/api/miner-stop', { method: 'POST' });
+                log('Miner stopped', 'success');
+                minerRunning = false;
+                // Show miner stats
+                setTimeout(async () => {
+                    try {
+                        const stats = await fetch('/api/miner-status').then(r => r.json());
+                        const hr = stats.running ? stats.hashrate : '0.00 M/s';
+                        log('Hashrate: ' + hr + ', Running: ' + stats.running, 'success');
+                    } catch(e) {}
+                }, 1000);
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function toggleMiner(address, threads, noSync) {
+            try {
+                const stats = await fetch('/api/miner-status').then(r => r.json());
+                minerRunning = stats.running;
+            } catch(e) {
+                minerRunning = false;
+            }
+            
+            if (minerRunning) {
+                await stopMiner();
+            } else {
+                await startMiner(address, threads, noSync);
+            }
+        }
+        
+        async function startRothschild(version, privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, randomizeTxVersion, timeout, customArgs) {
+            if (!privateKey || !recipient) {
+                log('Error: Private key and recipient required', 'error');
+                return;
+            }
+            
+            // First, derive address from private key and check balance
+            try {
+                log('Checking balance...');
+                const addrResp = await fetch('/api/wallet/address?privateKey=' + encodeURIComponent(privateKey));
+                const addrData = await addrResp.json();
+                
+                if (addrData.error) {
+                    log('Error: Could not derive address - ' + addrData.error, 'error');
+                    return;
+                }
+                
+                const address = addrData.address;
+                log('Derived address: ' + address);
+                
+                // Get balance
+                const balResp = await fetch('/api/wallet/balance?address=' + encodeURIComponent(address));
+                const balData = await balResp.json();
+                
+                const balance = balData.balance || 0;
+                log('Balance: ' + balance.toFixed(4) + ' ' + getCurrencyUnit(address));
+                
+                if (balance <= 0) {
+                    log('Error: Not enough funds (balance: ' + balance.toFixed(4) + ' ' + getCurrencyUnit(address) + ')', 'error');
+                    return;
+                }
+            } catch(e) {
+                log('Warning: Could not check balance - ' + e.message + ', proceeding anyway');
+            }
+            
+            try {
+                const resp = await fetch('/api/rothschild', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        version: version || 'rusty-kaspa',
+                        privateKey: privateKey,
+                        recipient: recipient,
+                        tps: parseInt(tps) || 1,
+                        threads: parseInt(threads) || 2,
+                        priorityFee: parseInt(priorityFee) || 0,
+                        sendAmount: sendAmount ? parseFloat(sendAmount) : null,
+                        randomizeFee: randomizeFee === 'yes',
+                        randomizeTxVersion: randomizeTxVersion === 'yes',
+                        timeout: timeout || '0',
+                        customArgs: customArgs || ''
+                    })
+                });
+                const data = await resp.json();
+                
+                log('Rothschild started with version: ' + (data.version || version), 'success');
+                
+                // Check for insufficient funds error in stderr or stdout (but don't stop - UTXO might sync later)
+                const outputStr = (data.stderr || '') + (data.stdout || '');
+                if (outputStr.includes('not enough funds') || outputStr.includes('Has not enough funds')) {
+                    log('⚠️ UTXO NOT SYNCED locally - Rothschild will retry automatically', 'error');
+                    log('Your balance shows on public API but local node needs sync', 'error');
+                    // Don't stop - let it keep retrying
+                }
+                
+                // Also check rothschild log file after a short delay for fund errors
+                setTimeout(async () => {
+                    try {
+                        const logResp = await fetch('/api/shell', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ cmd: 'tail -10 rothschild.log' })
+                        });
+                        const logData = await logResp.json();
+                        if (logData.stdout && (logData.stdout.includes('not enough funds') || logData.stdout.includes('Has not enough funds'))) {
+                            log('⚠️ UTXO NOT SYNCED - Balance shows ' + balance.toFixed(4) + ' KAS on API but local node needs time to sync', 'error');
+                            // Don't stop - let it keep retrying
+                        }
+                    } catch(e) {}
+                }, 3000);
+                
+                log('Rothschild started: ' + JSON.stringify(data), 'success');
+                rothschildRunning = true;
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function stopRothschild() {
+            try {
+                await fetch('/api/rothschild-stop', {method: 'POST'});
+                log('Rothschild stopped', 'success');
+                rothschildRunning = false;
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function toggleRothschild(privateKey, recipient, tps, threads, priorityFee, randomizeFee) {
+            try {
+                const resp = await fetch('/api/tx-status').then(r => r.json());
+                rothschildRunning = resp.running;
+            } catch(e) {
+                rothschildRunning = false;
+            }
+            
+            if (rothschildRunning) {
+                await stopRothschild();
+            } else {
+                const sendAmount = document.getElementById('rothschildAmount') ? document.getElementById('rothschildAmount').value : '';
+                const timeout = document.getElementById('rothschildTimeout') ? document.getElementById('rothschildTimeout').value : '0';
+                const customArgs = document.getElementById('rothschildArgs') ? document.getElementById('rothschildArgs').value : '';
+                await startRothschild('rusty-kaspa', privateKey, recipient, tps, threads, priorityFee, sendAmount, randomizeFee, 'no', timeout, customArgs);
+            }
+        }
+        
+        async function compileSilverScript(source, args, output) {
+            if (!source) {
+                log('Error: Source file required', 'error');
+                return;
+            }
+            try {
+                log('Compiling ' + source + '...');
+                const resp = await fetch('/api/silverscript-compile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        sourceFile: source,
+                        constructorArgs: args || null,
+                        outputFile: output || null
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) {
+                    log('Error: ' + data.error, 'error');
+                } else {
+                    log('Compiled successfully!', 'success');
+                    if (data.output) {
+                        log('Contract: ' + (data.output.contract_name || 'unknown'), 'success');
+                        log('Script size: ' + (data.output.script ? data.output.script.length : 'N/A') + ' bytes', 'success');
+                        log('Output: ' + (output || source.replace('.sil', '.json')), 'success');
+                    }
+                }
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function listSilverExamples() {
+            try {
+                const resp = await fetch('/api/silverscript-examples');
+                const examples = await resp.json();
+                log('SilverScript Examples:', 'success');
+                examples.forEach(ex => {
+                    log('  ' + ex.name + ' -> ' + ex.file, 'success');
+                });
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        function compileContract(name, args) {
+            log('Compiling ' + name + '... (demo)');
+            log('Contract: ' + name + ' compiled successfully', 'success');
+        }
+        
+        function deployContract(contractJson, privateKey) {
+            log('Deploying ' + contractJson + '... (demo)');
+            log('Contract deployed successfully', 'success');
+        }
+        
+        async function runCLI(cmd) {
+            log('Running: ' + cmd);
+            try {
+                const resp = await fetch('/api/run-cmd', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cmd: cmd})
+                });
+                const data = await resp.json();
+                
+                // Check if generated address is valid (61-63 chars after prefix)
+                if (cmd === 'generate' && data.address) {
+                    const addrLen = data.address.replace('kaspatest:', '').length;
+                    if (addrLen < 61 || addrLen > 63) {
+                        log('WARNING: Generated address has ' + addrLen + ' chars (need 61-63). Use pre-funded wallets instead.', 'error');
+                    } else {
+                        log('Generated address is VALID (' + addrLen + ' chars)', 'success');
+                    }
+                    // Auto-fill wallet C with generated wallet (Wallet A is for miner only)
+                    document.getElementById('walletC').value = data.address;
+                    document.getElementById('walletCKey').value = data.privateKey || data.private_key || '';
+                    refreshWallet('C');
+                    log('Wallet C auto-filled with new wallet', 'success');
+                }
+                
+                // Handle load command - fill Wallet C
+                if (cmd.startsWith('load ') && data.address) {
+                    const privKey = cmd.replace('load ', '').trim();
+                    document.getElementById('walletC').value = data.address;
+                    document.getElementById('walletCKey').value = privKey;
+                    refreshWallet('C');
+                    log('Loaded to Wallet C: ' + data.address.substring(0, 20) + '...', 'success');
+                }
+                
+                log(JSON.stringify(data, null, 2), 'success');
+            } catch(e) {
+                log('Error: ' + e.message, 'error');
+            }
+        }
+        
+        function log(msg, type = '') {
+            const output = document.getElementById('consoleOutput');
+            const line = document.createElement('div');
+            line.className = type === 'error' ? 'error-line' : type === 'success' ? 'success-line' : 'output-line';
+            line.textContent = msg;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearConsole() {
+            document.getElementById('consoleOutput').innerHTML = '';
+        }
+
+        // ========== RPC API Tester Functions ==========
+        function updateRpcParams() {
+            const method = document.getElementById('rpcMethod').value;
+            const paramsDiv = document.getElementById('rpcParams');
+            
+            let html = '';
+            if (method === 'get_balance_by_address' || method === 'get_utxos_by_addresses') {
+                html = '<input type="text" id="rpcAddress" class="wallet-input" placeholder="kaspatest:..." style="width:100%;margin-bottom:8px;">';
+            } else if (method === 'get_balances_by_addresses') {
+                html = '<textarea id="rpcAddresses" class="wallet-input" placeholder="kaspatest:addr1&#10;kaspatest:addr2" style="width:100%;height:60px;margin-bottom:8px;"></textarea>';
+            } else if (method === 'get_block') {
+                html = '<input type="text" id="rpcHash" class="wallet-input" placeholder="Block hash (hex)" style="width:100%;margin-bottom:8px;">';
+            }
+            paramsDiv.innerHTML = html;
+        }
+        
+        function testRpc() {
+            const method = document.getElementById('rpcMethod').value;
+            const output = document.getElementById('rpcOutput');
+            
+            output.textContent = 'Calling server API...\n';
+            
+            // Build params based on method
+            const params = [];
+            
+            const addressEl = document.getElementById('rpcAddress');
+            const addressesEl = document.getElementById('rpcAddresses');
+            const hashEl = document.getElementById('rpcHash');
+            
+            if (addressEl && addressEl.value) {
+                params.push(addressEl.value);
+            } else if (addressesEl && addressesEl.value) {
+                const addrs = addressesEl.value.split('\n').map(a => a.trim()).filter(a => a);
+                params.push(addrs);
+            } else if (hashEl && hashEl.value) {
+                params.push(hashEl.value, false);
+            }
+            
+            const request = { method: method, params: params };
+            
+            output.textContent += 'Request: ' + JSON.stringify(request, null, 2) + '\n\n';
+            
+            fetch('/api/rpc', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request)
+            })
+            .then(res => res.json())
+            .then(data => {
+                output.textContent += 'Response:\n' + JSON.stringify(data, null, 2);
+            })
+            .catch(e => {
+                output.textContent += 'Error: ' + e.message;
+            });
+        }
+
+        function getCurrencyUnit(address) {
+            return (address && address.startsWith('kaspatest:')) ? 'TKAS' : 'KAS';
+        }
+
+        // ========== Wallet CLI Panel Functions ==========
+        async function loadWalletCLI() {
+            const privateKey = document.getElementById('walletCLIPrivateKey').value.trim();
+            if (!privateKey) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Private key required</span>';
+                return;
+            }
+
+            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Loading wallet...</span>';
+
+            try {
+                // First derive address from private key
+                const loadResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: './wallet-cli.sh load ' + privateKey })
+                });
+                const loadData = await loadResp.json();
+                const loadOutput = loadData.stdout || '';
+
+                // Extract address from output
+                let address = '';
+                const addrMatch = loadOutput.match(/"address"\s*:\s*"(kaspatest:[^"]+)"/);
+                if (addrMatch) {
+                    address = addrMatch[1];
+                }
+
+                if (!address) {
+                    document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Could not derive address</span><br>' + loadOutput;
+                    return;
+                }
+
+                document.getElementById('walletCLIAddress').innerText = address;
+
+                // Now get balance
+                const balResp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: './wallet-cli.sh balance ' + address })
+                });
+                const balData = await balResp.json();
+                const balOutput = balData.stdout || '';
+
+                // Extract balance
+                let balance = '-';
+                const balMatch = balOutput.match(/"kas"\s*:\s*([0-9.]+)/);
+                if (balMatch) {
+                    balance = parseFloat(balMatch[1]).toFixed(8) + ' ' + getCurrencyUnit(address);
+                }
+
+                document.getElementById('walletCLIBalance').innerText = balance;
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Wallet loaded successfully!</span><br>' + loadOutput.replace(/\n/g, '<br>');
+
+            } catch(e) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        function updateWalletCLIRPC() {
+            const method = document.querySelector('input[name="walletCLIMethod"]:checked').value;
+            // Just for visual feedback - no label to update now
+        }
+
+        function getWalletCLIMethod() {
+            return document.querySelector('input[name="walletCLIMethod"]:checked').value;
+        }
+
+        async function sendViaWalletCLI() {
+            const privateKey = document.getElementById('walletCLIPrivateKey').value.trim();
+            const recipient = document.getElementById('walletCLIRecipient').value.trim();
+            const amount = document.getElementById('walletCLIAmount').value.trim();
+            const method = getWalletCLIMethod();
+
+            if (!privateKey) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Private key required</span>';
+                return;
+            }
+            if (!recipient) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Recipient address required</span>';
+                return;
+            }
+            if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: Valid amount required</span>';
+                return;
+            }
+
+            let cmd = '';
+            let methodLabel = '';
+            
+            if (method === 'public') {
+                cmd = './wallet-cli.sh transfer ' + privateKey + ' ' + recipient + ' ' + amount;
+                methodLabel = 'Public API';
+            } else if (method === 'local') {
+                cmd = './wallet-cli.sh transfer ' + privateKey + ' ' + recipient + ' ' + amount + ' --rpc http://localhost:16210';
+                methodLabel = 'Local RPC';
+            } else if (method === 'rothschild') {
+                cmd = 'timeout 10s /Users/4dsto/rusty-kaspa-tn12/target/release/rothschild -k "' + privateKey + '" -a "' + recipient + '" --send-amount ' + amount + ' -s localhost:16210 -t 1';
+                methodLabel = 'Rothschild';
+            } else if (method === 'kaspa-send') {
+                cmd = '/Users/4dsto/ktn12/target/debug/kaspa-send --rpc 127.0.0.1:17110 --network testnet-12 send --private-key ' + privateKey + ' --recipient ' + recipient + ' --amount ' + amount;
+                methodLabel = 'kaspa-send (wRPC)';
+            }
+
+            let recipientAddr = recipient;
+            if (!recipientAddr.startsWith('kaspatest:')) {
+                recipientAddr = 'kaspatest:' + recipientAddr;
+            }
+
+            document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #00ff88;">Sending ' + amount + ' ' + getCurrencyUnit(recipientAddr) + ' to ' + recipient + ' via ' + methodLabel + '...</span>';
+
+            try {
+                const resp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: cmd })
+                });
+                const data = await resp.json();
+                const output = (data.stdout || '') + (data.stderr || '');
+
+                if (output.includes('Transfer successful') || output.includes('txid') || output.includes('Transaction') || output.includes('sent')) {
+                    // Extract TXID - try multiple formats
+                    const txidMatch = output.match(/"txid"\s*:\s*"([a-f0-9]+)"/i) 
+                        || output.match(/TX ID:? ([a-f0-9]+)/i)
+                        || output.match(/transaction:? ([a-f0-9]{64})/i)
+                        || output.match(/txid:? ([a-f0-9]{64})/i)
+                        || output.match(/Transaction ID:? ([a-f0-9]{64})/i);
+                    const txid = txidMatch ? txidMatch[1] : 'unknown';
+
+                    document.getElementById('walletCLIOutput').innerHTML = 
+                        '<span style="color: #00ff88;">✓ Transfer successful!</span><br>' +
+                        'TXID: <span style="color: #00ff88;">' + txid + '</span>';
+
+                    // Refresh balance after short delay
+                    setTimeout(loadWalletCLI, 3000);
+                } else if (output.includes('Error') || output.includes('error')) {
+                    document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Transfer failed:</span><br>' + output.replace(/\n/g, '<br>');
+                } else {
+                    document.getElementById('walletCLIOutput').innerHTML = output.replace(/\n/g, '<br>');
+                }
+
+            } catch(e) {
+                document.getElementById('walletCLIOutput').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        async function startMinerFromPanel10() {
+            const address = document.getElementById('walletCLIAddress').innerText;
+            if (!address || address === '-' || !address.startsWith('kaspatest:')) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Load a wallet first to get an address</span>';
+                return;
+            }
+
+            document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #00ff88;">Starting miner to ' + address + '...</span>';
+
+            try {
+                const resp = await fetch('/api/miner-start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ address: address, threads: 4 })
+                });
+                const data = await resp.json();
+                
+                if (data.started || data.pid) {
+                    document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #00ff88;">Miner started! PID: ' + data.pid + '</span>';
+                    document.getElementById('walletCLIMinerBtn').innerText = 'Miner Running (Click to Stop)';
+                    document.getElementById('walletCLIMinerBtn').onclick = stopMinerFromPanel10;
+                } else {
+                    document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Failed to start miner</span>';
+                }
+            } catch(e) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        async function stopMinerFromPanel10() {
+            try {
+                await fetch('/api/miner-stop', { method: 'POST' });
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ffaa00;">Miner stopped</span>';
+                document.getElementById('walletCLIMinerBtn').innerText = 'Start Miner to This Address';
+                document.getElementById('walletCLIMinerBtn').onclick = startMinerFromPanel10;
+            } catch(e) {
+                document.getElementById('walletCLIMinerStatus').innerHTML = '<span style="color: #ff4444;">Error: ' + e.message + '</span>';
+            }
+        }
+
+        // ======== @kaspa/wallet-cli Functions ==========
+        async function runKaspaWallet(command, extraArgs = []) {
+            const output = document.getElementById('kaspaWalletOutput');
+            const addressEl = document.getElementById('kaspaWalletAddress');
+            const noSync = document.getElementById('walletNoSync')?.checked ?? true;
+            
+            output.textContent = 'Running: ' + command + (noSync ? ' (--no-sync)' : ' (sync)') + '...\n\n';
+            
+            let args = [...extraArgs];
+            if (command === 'send') {
+                const recipient = document.getElementById('walletSendTo').value.trim();
+                const amount = document.getElementById('walletSendAmount').value.trim();
+                if (!recipient) {
+                    output.textContent += 'Error: Recipient address required';
+                    return;
+                }
+                if (!amount || isNaN(parseFloat(amount))) {
+                    output.textContent += 'Error: Valid amount required';
+                    return;
+                }
+                args = [recipient, amount, '1000'];  // recipient, amount, fee
+                command = 'send';
+            }
+            
+            try {
+                const resp = await fetch('/api/kaspa-wallet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ command: command, args: args, noSync: noSync })
+                });
+                const data = await resp.json();
+                
+                if (data.stdout) {
+                    output.textContent += data.stdout;
+                }
+                if (data.stderr) {
+                    output.textContent += '\nError: ' + data.stderr;
+                }
+                if (data.error) {
+                    output.textContent += '\nError: ' + data.error;
+                }
+                
+                // Extract address if present
+                if (data.stdout && data.stdout.includes('kaspatest:')) {
+                    const addrMatch = data.stdout.match(/kaspatest:[a-z0-9]+/);
+                    if (addrMatch) {
+                        addressEl.textContent = addrMatch[0];
+                    }
+                }
+            } catch(e) {
+                output.textContent += 'Error: ' + e.message;
+            }
+        }
+        
+        async function loadKaspaWalletFromKey() {
+            const output = document.getElementById('kaspaWalletOutput');
+            const addressEl = document.getElementById('kaspaWalletAddress');
+            const privateKey = document.getElementById('kaspaWalletPrivateKey').value.trim();
+            const noSync = document.getElementById('walletNoSync')?.checked ?? true;
+            
+            if (!privateKey) {
+                output.textContent = 'Error: Private key required';
+                return;
+            }
+            
+            output.textContent = 'Deriving address from private key (kaspa-igra)...\n\n';
+            
+            // Use @kaspa/wallet-cli create with private key if supported, otherwise use kgraf3
+            // @kaspa/wallet-cli doesn't support importing private keys directly
+            // Use kaspa-send or kaspa-igra as fallback
+            const cmd = `/Users/4dsto/ktn12/kaspa-igra-cli/target/release/kaspa-igra-cli load "${privateKey}" --rpc localhost:16210`;
+            
+            try {
+                const resp = await fetch('/api/shell', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ cmd: cmd })
+                });
+                const data = await resp.json();
+                
+                if (data.stdout) {
+                    output.textContent += data.stdout;
+                    // Extract address
+                    const addrMatch = data.stdout.match(/address["\s:]+([kaspatest:][a-z0-9]+)/);
+                    if (addrMatch) {
+                        addressEl.textContent = addrMatch[1] || addrMatch[0];
+                    } else if (data.stdout.includes('kaspatest:')) {
+                        const simpleMatch = data.stdout.match(/kaspatest:[a-z0-9]+/);
+                        if (simpleMatch) {
+                            addressEl.textContent = simpleMatch[0];
+                        }
+                    }
+                }
+                if (data.stderr) {
+                    output.textContent += '\nStderr: ' + data.stderr;
+                }
+                if (data.error) {
+                    output.textContent += '\nError: ' + data.error;
+                }
+            } catch(e) {
+                output.textContent += 'Error: ' + e.message;
+            }
+        }
+
+        function handleConsoleEnter(e) {
+            if (e.key === 'Enter') {
+                const input = document.getElementById('consoleInput');
+                const cmd = input.value.trim();
+                if (cmd) {
+                    log('$ ' + cmd, 'cmd-line');
+                    
+                    // Execute shell command directly
+                    fetch('/api/shell', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ cmd: cmd })
+                    })
+                    .then(resp => resp.json())
+                    .then(data => {
+                        if (data.stderr) {
+                            log(data.stderr, 'error');
+                        }
+                        if (data.stdout) {
+                            log(data.stdout, 'success');
+                        }
+                        if (data.error && !data.stdout && !data.stderr) {
+                            log('Error: ' + data.error, 'error');
+                        }
+                    })
+                    .catch(e => {
+                        log('Error: ' + e.message, 'error');
+                    });
+                    
+                    input.value = '';
+                }
+            }
+        }
+        
+        // SilverScript Panel
+        const SILVER_CONTRACTS = {
+            'deadman': {
+                name: 'Deadman Switch',
+                params: [
+                    {id: 'ownerPubkey', label: 'Owner Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'beneficiaryPubkey', label: 'Beneficiary Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'timeoutNum', label: 'Timeout', type: 'number', default: '1', min: '1'},
+                    {id: 'timeoutUnit', label: 'Unit', type: 'select', options: [
+                        {value: '60', label: 'Minutes'},
+                        {value: '3600', label: 'Hours'},
+                        {value: '86400', label: 'Days'},
+                        {value: '31536000', label: 'Years'}
+                    ]}
+                ],
+                entrypoints: ['heartbeat', 'claim', 'cancel'],
+                desc: 'Funds transfer to beneficiary after timeout if owner does not reset'
+            },
+            'p2pkh': {
+                name: 'P2PKH',
+                params: [
+                    {id: 'pubkeyHash', label: 'Public Key Hash (bytes32)', placeholder: 'Hex encoded pubkey hash'}
+                ],
+                entrypoints: ['spend'],
+                desc: 'Pay to Public Key Hash - simple signature verification'
+            },
+            'multisig': {
+                name: 'Multisig',
+                params: [
+                    {id: 'pubkey1', label: 'Public Key 1 (hex)', placeholder: '02... or 03...'},
+                    {id: 'pubkey2', label: 'Public Key 2 (hex)', placeholder: '02... or 03...'},
+                    {id: 'pubkey3', label: 'Public Key 3 (hex)', placeholder: '02... or 03...'}
+                ],
+                entrypoints: ['spend'],
+                desc: '2-of-3 multisig - requires 2 of 3 signatures'
+            },
+            'escrow': {
+                name: 'Escrow',
+                params: [
+                    {id: 'arbiterHash', label: 'Arbiter PKH (bytes32)', placeholder: 'Arbiter public key hash'},
+                    {id: 'buyerPubkey', label: 'Buyer Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'sellerPubkey', label: 'Seller Public Key (hex)', placeholder: '02... or 03...'}
+                ],
+                entrypoints: ['spend'],
+                desc: 'Arbiter-controlled escrow - buyer/seller with arbiter approval'
+            },
+            'hodl_vault': {
+                name: 'HODL Vault',
+                params: [
+                    {id: 'ownerPk', label: 'Owner Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'oraclePk', label: 'Oracle Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'minBlock', label: 'Min Block', type: 'number', placeholder: 'Block number'},
+                    {id: 'priceTarget', label: 'Price Target (sompi)', type: 'number', placeholder: 'e.g., 5000000000'}
+                ],
+                entrypoints: ['spend'],
+                desc: 'Time-locked vault with oracle price verification'
+            },
+            'mecenas': {
+                name: 'Mecenas',
+                params: [
+                    {id: 'recipientPk', label: 'Recipient Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'funderHash', label: 'Funder PKH (bytes32)', placeholder: 'Funder public key hash'},
+                    {id: 'pledge', label: 'Pledge Amount (sompi)', type: 'number', placeholder: 'e.g., 100000000 = 1 KAS'}
+                ],
+                entrypoints: ['receive', 'reclaim'],
+                desc: 'Recurring payment contract - recipient can withdraw pledge periodically'
+            },
+            'bar': {
+                name: 'Bar',
+                params: [
+                    {id: 'pkhBar', label: 'Public Key Hash (bytes32)', placeholder: 'Hex encoded pubkey hash'}
+                ],
+                entrypoints: ['execute'],
+                desc: 'Simple covenant example'
+            }
+        };
+
+        let currentSilverContract = 'deadman';
+        let compiledContract = null;
+
+        function updateSilverForm() {
+            const contractType = document.getElementById('silverContractSelect').value;
+            currentSilverContract = contractType;
+            const contract = SILVER_CONTRACTS[contractType];
+            
+            const container = document.getElementById('silverContractParams');
+            let html = '<div style="margin-bottom: 12px; color: #aaa; font-size: 11px;">' + contract.desc + '</div>';
+            
+            contract.params.forEach(param => {
+                if (param.type === 'select') {
+                    html += '<div style="margin-bottom: 8px;">';
+                    html += '<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">' + param.label + '</div>';
+                    html += '<select id="silver_' + param.id + '" class="wallet-input" style="font-size: 11px;">';
+                    html += '<option value="" disabled selected>Select...</option>';
+                    param.options.forEach(opt => {
+                        html += '<option value="' + opt.value + '">' + opt.label + '</option>';
+                    });
+                    html += '</select>';
+                    html += '</div>';
+                } else if (param.type === 'number') {
+                    html += '<div style="margin-bottom: 8px;">';
+                    html += '<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">' + param.label + '</div>';
+                    html += '<input type="number" id="silver_' + param.id + '" class="wallet-input" placeholder="' + (param.placeholder || '') + '" value="' + (param.default || '') + '" ' + (param.min ? 'min="' + param.min + '"' : '') + '>';
+                    html += '</div>';
+                } else {
+                    html += '<div style="margin-bottom: 8px;">';
+                    html += '<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px;">' + param.label + '</div>';
+                    html += '<input type="text" id="silver_' + param.id + '" class="wallet-input" placeholder="' + (param.placeholder || '') + '">';
+                    html += '</div>';
+                }
+            });
+            
+            container.innerHTML = html;
+            
+            // Update actions
+            const actionsContainer = document.getElementById('silverContractActions');
+            let actionsHtml = '';
+            contract.entrypoints.forEach(entrypoint => {
+                actionsHtml += '<button class="btn" onclick="callSilverEntrypoint(\'' + entrypoint + '\')" style="font-size: 10px;">' + entrypoint + '</button>';
+            });
+            actionsContainer.innerHTML = actionsHtml;
+        }
+
+        function silverLog(msg, type = '') {
+            const output = document.getElementById('silverOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff4444' : type === 'success' ? '#00ff88' : '#888';
+            output.innerHTML = '<span style="color:' + color + ';">[' + timestamp + '] ' + msg + '</span><br>' + output.innerHTML;
+        }
+
+        async function loadSilverWallet() {
+            const ownerKey = document.getElementById('silverOwnerKey').value.trim();
+            if (!ownerKey) {
+                silverLog('Error: Enter private key first', 'error');
+                return;
+            }
+            
+            // Validate key format (should be 64 hex characters)
+            if (!/^[a-fA-F0-9]{64}$/.test(ownerKey)) {
+                silverLog('Error: Invalid private key format. Must be 64 hex characters.', 'error');
+                return;
+            }
+            
+            silverLog('Loading wallet from key...');
+            
+            try {
+                const resp = await fetch('/api/wallet-load', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ privateKey: ownerKey })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    silverLog('Error: ' + data.error, 'error');
+                    document.getElementById('silverWalletInfo').textContent = '';
+                } else {
+                    silverLog('Wallet loaded! Address: ' + data.address, 'success');
+                    silverLog('Balance: ' + (data.balance || 0).toFixed(4) + ' KAS (' + (data.utxos || 0) + ' UTXOs)', 'success');
+                    document.getElementById('silverWalletInfo').textContent = 'Address: ' + data.address + ' | Balance: ' + (data.balance || 0).toFixed(4) + ' KAS';
+                    
+                    // Populate Owner Public Key field if exists
+                    if (data.publicKey) {
+                        const pubkeyInput = document.getElementById('silver_ownerPubkey');
+                        if (pubkeyInput) {
+                            pubkeyInput.value = data.publicKey;
+                            silverLog('Owner Public Key: ' + data.publicKey, 'success');
+                        }
+                    }
+                }
+            } catch(e) {
+                silverLog('Error: ' + e.message, 'error');
+                document.getElementById('silverWalletInfo').textContent = '';
+            }
+        }
+
+        async function compileSilverContract() {
+            const contractType = document.getElementById('silverContractSelect').value;
+            const ownerKey = document.getElementById('silverOwnerKey').value.trim();
+            
+            silverLog('Compiling ' + contractType + '...');
+            
+            try {
+                // Build args based on contract type
+                let args = [];
+                const contract = SILVER_CONTRACTS[contractType];
+                
+                if (contractType === 'deadman') {
+                    const timeoutNum = document.getElementById('silver_timeoutNum').value || '1';
+                    const timeoutUnit = document.getElementById('silver_timeoutUnit').value;
+                    const timeoutSeconds = parseInt(timeoutNum) * parseInt(timeoutUnit);
+                    
+                    silverLog('Timeout: ' + timeoutNum + ' ' + (timeoutUnit === '60' ? 'min' : timeoutUnit === '3600' ? 'hours' : timeoutUnit === '86400' ? 'days' : 'years') + ' = ' + timeoutSeconds + ' seconds');
+                    
+                    // For deadman, we need pubkeys - convert from private key if provided
+                    if (ownerKey) {
+                        const addrResp = await fetch('/api/wallet-load', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ privateKey: ownerKey })
+                        });
+                        const addrData = await addrResp.json();
+                        // Use the derived address/public key
+                        args.push({kind: 'pubkey', data: [0]}); // Placeholder - will need proper pubkey derivation
+                    }
+                    args.push({kind: 'pubkey', data: [0]}); // beneficiary
+                    args.push({kind: 'int', data: timeoutSeconds});
+                } else if (contractType === 'p2pkh' || contractType === 'bar') {
+                    const pkh = document.getElementById('silver_pubkeyHash').value.trim() || document.getElementById('silver_pkhBar').value.trim();
+                    args.push({kind: 'bytes', data: Array(32).fill(0).map((_,i) => parseInt(pkh.substr(i*2, 2) || '00', 16) || 0)});
+                } else if (contractType === 'multisig') {
+                    for (let i = 1; i <= 3; i++) {
+                        args.push({kind: 'pubkey', data: [i]}); // Placeholder
+                    }
+                } else if (contractType === 'escrow') {
+                    args.push({kind: 'bytes', data: Array(32).fill(0)}); // arbiter hash
+                    args.push({kind: 'pubkey', data: [1]}); // buyer
+                    args.push({kind: 'pubkey', data: [2]}); // seller
+                } else if (contractType === 'hodl_vault') {
+                    args.push({kind: 'pubkey', data: [0]});
+                    args.push({kind: 'pubkey', data: [0]});
+                    args.push({kind: 'int', data: parseInt(document.getElementById('silver_minBlock').value) || 0});
+                    args.push({kind: 'int', data: parseInt(document.getElementById('silver_priceTarget').value) || 0});
+                } else if (contractType === 'mecenas') {
+                    args.push({kind: 'pubkey', data: [0]});
+                    args.push({kind: 'bytes', data: Array(32).fill(0)});
+                    args.push({kind: 'int', data: parseInt(document.getElementById('silver_pledge').value) || 0});
+                }
+                
+                const resp = await fetch('/api/silver/compile', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contract: contractType,
+                        args: args
+                    })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.error) {
+                    silverLog('Error: ' + data.error, 'error');
+                } else {
+                    compiledContract = data;
+                    silverLog('Compiled successfully!', 'success');
+                    silverLog('Contract: ' + data.contract_name);
+                    silverLog('Script bytes: ' + data.script.length);
+                    
+                    // Show contract address or script hash
+                    if (data.scriptHash) {
+                        document.getElementById('silverContractAddress').textContent = 'Script Hash: ' + data.scriptHash;
+                        silverLog('Script Hash (for P2SH): ' + data.scriptHash);
+                        silverLog('Note: ' + data.note, 'warning');
+                    } else if (data.address && data.address !== 'pending_script_hash') {
+                        document.getElementById('silverContractAddress').textContent = data.address;
+                    }
+                }
+            } catch(e) {
+                silverLog('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function deploySilverContract() {
+            const ownerKey = document.getElementById('silverOwnerKey').value.trim();
+            const fundingAmount = document.getElementById('silverFundingAmount').value.trim() || '10';
+            
+            if (!ownerKey) {
+                silverLog('Error: Owner private key required for deployment', 'error');
+                return;
+            }
+            
+            if (!compiledContract) {
+                silverLog('Error: Compile contract first', 'error');
+                return;
+            }
+            
+            silverLog('Deploying contract with ' + fundingAmount + ' KAS...');
+            
+            // Get contract params for Guardian
+            const contractType = document.getElementById('silverContractSelect').value;
+            let beneficiaryAddress = '';
+            let timeoutPeriod = 600; // default 10 min
+            let gracePeriod = 60; // default 1 min
+            
+            // Extract beneficiary from params if available
+            const beneficiaryInput = document.getElementById('silver_beneficiaryPubkey');
+            if (beneficiaryInput) {
+                // Need to convert pubkey to address - for now use placeholder
+                beneficiaryAddress = 'kaspatest:qz6nksr6t4e5g2u6qwm9w24syw7f3g8x8y5z3u5u5u'; // TODO: derive from pubkey
+            }
+            
+            // Get timeout and grace from inputs if they exist
+            const timeoutNum = document.getElementById('silver_timeoutNum');
+            const timeoutUnit = document.getElementById('silver_timeoutUnit');
+            if (timeoutNum && timeoutUnit) {
+                timeoutPeriod = parseInt(timeoutNum.value) * parseInt(timeoutUnit.value);
+            }
+            
+            try {
+                const resp = await fetch('/api/silver/deploy', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contract: compiledContract,
+                        privateKey: ownerKey,
+                        amount: fundingAmount
+                    })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.error) {
+                    silverLog('Error: ' + data.error, 'error');
+                    if (data.address) {
+                        document.getElementById('silverContractAddress').textContent = data.address;
+                    }
+                } else if (data.txid) {
+                    silverLog('Deployed! TXID: ' + data.txid, 'success');
+                    silverLog('Contract Address: ' + data.address, 'success');
+                    document.getElementById('silverContractAddress').textContent = data.address;
+                    
+                    // Auto-link to Guardian
+                    silverLog('Linking to Guardian...', '');
+                    try {
+                        const ownerResp = await fetch('/api/wallet-load', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ privateKey: ownerKey })
+                        });
+                        const ownerData = await ownerResp.json();
+                        
+                        const guardianResp = await fetch('/api/guardian-update', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                privateKey: ownerKey,
+                                ownerAddress: ownerData.address,
+                                contractAddress: data.address,
+                                contractType: contractType,
+                                beneficiaryAddress: beneficiaryAddress,
+                                timeoutPeriod: timeoutPeriod,
+                                gracePeriod: gracePeriod
+                            })
+                        });
+                        const guardianData = await guardianResp.json();
+                        if (guardianData.success) {
+                            silverLog('Guardian linked! Timeout: ' + timeoutPeriod + 's, Grace: ' + gracePeriod + 's', 'success');
+                        }
+                    } catch(gErr) {
+                        silverLog('Guardian link failed: ' + gErr.message, 'error');
+                    }
+                    
+                    setTimeout(() => checkSilverStatus(data.address), 5000);
+                } else if (data.status === 'manual_funding_required') {
+                    // Show manual funding instructions
+                    silverLog('=== MANUAL FUNDING REQUIRED ===', 'error');
+                    if (data.address) {
+                        silverLog('Contract Address: ' + data.address, 'success');
+                        document.getElementById('silverContractAddress').textContent = data.address;
+                    }
+                    if (data.instructions) {
+                        data.instructions.forEach((inst, i) => {
+                            silverLog(inst, '');
+                        });
+                    }
+                } else {
+                    silverLog('Response: ' + JSON.stringify(data));
+                }
+            } catch(e) {
+                silverLog('Error: ' + e.message, 'error');
+            }
+        }
+
+        async function callSilverEntrypoint(entrypoint) {
+            const ownerKey = document.getElementById('silverOwnerKey').value.trim();
+            const contractAddr = document.getElementById('silverContractAddress').textContent;
+            
+            if (!ownerKey) {
+                silverLog('Error: Owner private key required', 'error');
+                return;
+            }
+            
+            if (!contractAddr || contractAddr === '-') {
+                silverLog('Error: Contract not deployed', 'error');
+                return;
+            }
+            
+            silverLog('Calling ' + entrypoint + '...');
+            
+            try {
+                const resp = await fetch('/api/silver/call', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contractAddress: contractAddr,
+                        entrypoint: entrypoint,
+                        privateKey: ownerKey
+                    })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.error) {
+                    silverLog('Error: ' + data.error, 'error');
+                } else if (data.txid) {
+                    silverLog(entrypoint + ' success! TXID: ' + data.txid, 'success');
+                } else {
+                    silverLog('Response: ' + JSON.stringify(data));
+                }
+            } catch(e) {
+                silverLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        // Guardian Functions
+        const GUARDIAN_API = 'http://localhost:3003';
+        
+        async function checkGuardianStatus() {
+            const statusEl = document.getElementById('guardianStatus');
+            const contractEl = document.getElementById('guardianContract');
+            const benefEl = document.getElementById('guardianBeneficiary');
+            
+            const key = document.getElementById('guardianKey').value.trim();
+            const timeout = document.getElementById('guardianTimeout').value;
+            const grace = document.getElementById('guardianGrace').value;
+            
+            // Save timeout/grace to config
+            try {
+                await fetch(GUARDIAN_API + '/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ timeoutPeriod: timeout, gracePeriod: grace })
+                });
+            } catch(e) {}
+            
+            try {
+                const resp = await fetch(GUARDIAN_API + '/heartbeat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key: key, action: 'status' })
+                });
+                const data = await resp.json();
+                
+                let statusColor = '#4ecdc4';
+                let statusText = 'OK';
+                if (data.status === 'expired') {
+                    statusColor = '#ff6b6b';
+                    statusText = '⚠️ EXPIRED - WILL EXECUTE';
+                } else if (data.status === 'grace') {
+                    statusColor = '#ffd93d';
+                    statusText = '⚠️ GRACE PERIOD';
+                } else if (data.remaining < 60) {
+                    statusColor = '#ffd93d';
+                }
+                
+                const minutes = Math.floor(data.remaining / 60);
+                const seconds = data.remaining % 60;
+                const graceMin = Math.floor(data.graceRemaining / 60);
+                const graceSec = data.graceRemaining % 60;
+                
+                statusEl.innerHTML = `
+                    <div style="color: ${statusColor}; font-weight: bold; font-size: 18px; margin-bottom: 8px;">${statusText}</div>
+                    <div style="font-size: 24px; font-weight: bold;">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+                    <div style="color: #888; font-size: 11px;">timeout</div>
+                    <div style="color: ${statusColor === '#ff6b6b' ? '#ff6b6b' : '#888'}; margin-top: 8px;">+ ${graceMin}:${graceSec.toString().padStart(2, '0')} grace</div>
+                    <div style="color: #666; font-size: 10px; margin-top: 8px;">Last: ${data.lastHeartbeat || 'never'}</div>
+                `;
+                
+                // Show contract info
+                if (data.contract) {
+                    contractEl.innerHTML = `
+                        <div style="color: #4ecdc4;">✓ Linked</div>
+                        <div style="word-break: break-all; margin-top: 4px;">${data.contract}</div>
+                    `;
+                } else {
+                    contractEl.innerHTML = '<span style="color: #ff6b6b;">No contract linked</span><br><small>Deploy a contract first</small>';
+                }
+                
+                // Try to load beneficiaries
+                try {
+                    const configResp = await fetch('/api/guardian-config');
+                    const config = await configResp.json();
+                    if (config.beneficiaries && config.beneficiaries.length) {
+                        benefEl.innerHTML = config.beneficiaries.map(b => 
+                            `<div>• ${b.name}</div><div style="color: #888; word-break: break-all;">${b.address}</div>`
+                        ).join('');
+                    }
+                } catch(e) {}
+                
+            } catch(e) {
+                statusEl.innerHTML = '<span style="color: #ff6b6b;">Guardian API not running</span><br><small>Run: node guardian/api.js</small>';
+            }
+        }
+        
+        async function sendGuardianHeartbeat() {
+            const key = document.getElementById('guardianKey').value.trim();
+            const timeout = document.getElementById('guardianTimeout').value;
+            const grace = document.getElementById('guardianGrace').value;
+            
+            // Update timeout/grace first
+            try {
+                await fetch(GUARDIAN_API + '/update', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ timeoutPeriod: timeout, gracePeriod: grace })
+                });
+            } catch(e) {}
+            
+            try {
+                const resp = await fetch(GUARDIAN_API + '/heartbeat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key: key })
+                });
+                const data = await resp.json();
+                
+                if (data.success) {
+                    alert('❤️ Heartbeat sent! Timer reset to ' + timeout + 's');
+                    checkGuardianStatus();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch(e) {
+                alert('Guardian API not running: ' + e.message);
+            }
+        }
+        
+        async function testGuardianExecute() {
+            const key = document.getElementById('guardianKey').value.trim();
+            
+            if (!confirm('This is a DRY RUN - no actual transactions will be made. Continue?')) return;
+            
+            try {
+                const resp = await fetch(GUARDIAN_API + '/execute', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ key: key, dryRun: true })
+                });
+                const data = await resp.json();
+                
+                alert('DRY RUN RESULT:\n' + JSON.stringify(data, null, 2));
+            } catch(e) {
+                alert('Error: ' + e.message);
+            }
+        }
+        
+        // Initialize silver form
+        updateSilverForm();
+        
+        // Auto-load wallet with default key
+        if (document.getElementById('silverOwnerKey').value) {
+            setTimeout(loadSilverWallet, 500);
+        }
+
+        // Check contract status (balance)
+        async function checkSilverStatus(address) {
+            if (!address || address === '-') return;
+            
+            try {
+                const resp = await fetch('/api/silver/status?address=' + encodeURIComponent(address));
+                const data = await resp.json();
+                
+                if (data.error) {
+                    silverLog('Status error: ' + data.error);
+                } else {
+                    silverLog('Contract Balance: ' + (data.balance || 0).toFixed(4) + ' KAS', 'success');
+                    document.getElementById('silverContractBalance').textContent = (data.balance || 0).toFixed(4) + ' KAS';
+                }
+            } catch(e) {
+                silverLog('Status check error: ' + e.message, 'error');
+            }
+        }
+
+        async function refreshSilverStatus() {
+            const addr = document.getElementById('silverContractAddress').textContent;
+            if (!addr || addr === '-') {
+                silverLog('No contract address set', 'error');
+                return;
+            }
+            silverLog('Refreshing contract status...');
+            await checkSilverStatus(addr);
+        }
+
+        function copySilverAddress() {
+            const addr = document.getElementById('silverContractAddress').textContent;
+            if (!addr || addr === '-') {
+                silverLog('No contract address to copy', 'error');
+                return;
+            }
+            navigator.clipboard.writeText(addr).then(() => {
+                silverLog('Address copied: ' + addr, 'success');
+                showToast('Address copied!');
+            }).catch(err => {
+                silverLog('Failed to copy: ' + err, 'error');
+            });
+        }
+
+        function useManualSilverAddress() {
+            const manualAddr = document.getElementById('silverManualAddress').value.trim();
+            if (!manualAddr) {
+                silverLog('Enter a contract address first', 'error');
+                return;
+            }
+            document.getElementById('silverContractAddress').textContent = manualAddr;
+            silverLog('Using manual address: ' + manualAddr);
+            refreshSilverStatus();
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

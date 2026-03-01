@@ -4,6 +4,9 @@
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/config.env"
 
+# Fix for fd_budget issue on macOS - set file descriptor limit
+ulimit -n 10240
+
 echo "Starting Kaspa Testnet 12 node..."
 echo ""
 
@@ -13,9 +16,16 @@ nohup "$RUSTY_KASPA_DIR/target/release/kaspad" \
     --testnet \
     --netsuffix=12 \
     --utxoindex \
-    --appdir "$KASPAD_DATA_DIR" \
-    --rpclisten-json \
+    --rpclisten=127.0.0.1:16210 \
+    --rpclisten-json=127.0.0.1:18210 \
+    --rpclisten-borsh=127.0.0.1:17210 \
     --unsaferpc \
+    --enable-unsynced-mining \
+    --listen=0.0.0.0:16311 \
+    --addpeer=23.118.8.168 \
+    --async-threads=12 \
+    --ram-scale=2 \
+    --appdir "$KASPAD_DATA_DIR" \
     > "$KASPAD_LOG" 2>&1 &
 
 PID=$!
