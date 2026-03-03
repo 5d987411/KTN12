@@ -2,14 +2,26 @@
 /**
  * Deadman Switch - Test Contract Entrypoint Call
  * Uses kaspa-wasm SDK
+ * 
+ * Usage:
+ *   node test_claim.js <contract_address> <owner_key> <beneficiary_key> <recipient>
+ *   Or set env variables: PRIVATE_KEY=... node test_claim.js
  */
 
 const kaspa = require('kaspa');
 
-const CONTRACT_ADDRESS = "kaspatest:pz627jycm49m2j54j9u7epkd7cydc7v46zq883peupqq24ejzlsfy2uw8txp3";
-const OWNER_KEY = "b23f42d4a5f9c2963f4b73403f7efcb12b28983f808f0092b43da55ee53317e7";
-const BENEFICIARY_KEY = "190dafc03c70b13cfab2c9d7760936e5f2b359f3efcbfc2a21edb14419d8ebdc";
-const RECIPIENT = "kaspatest:qpgwz2khk48z6037tecfmm96maykaqrsqtf5efej99tfk6c2phvkjl0vzzkjd";
+const args = process.argv.slice(2);
+const CONTRACT_ADDRESS = args[0] || process.env.CONTRACT_ADDRESS || '';
+const OWNER_KEY = args[1] || process.env.OWNER_KEY || process.env.PRIVATE_KEY || '';
+const BENEFICIARY_KEY = args[2] || process.env.BENEFICIARY_KEY || '';
+const RECIPIENT = args[3] || process.env.RECIPIENT || '';
+
+if (!CONTRACT_ADDRESS || !OWNER_KEY) {
+    console.log('Usage: node test_claim.js <contract_address> <owner_key> [beneficiary_key] [recipient]');
+    console.log('Or set environment variables:');
+    console.log('  CONTRACT_ADDRESS=kaspatest:... OWNER_KEY=... node test_claim.js');
+    process.exit(1);
+}
 
 async function main() {
     // Create keypairs

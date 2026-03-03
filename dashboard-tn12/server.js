@@ -1064,7 +1064,8 @@ const server = http.createServer(async (req, res) => {
                         'hodl_vault': '/Users/4dsto/ktn12/hodl_vault.json',
                         'mecenas': '/Users/4dsto/ktn12/mecenas.json',
                         'multisig': '/Users/4dsto/ktn12/multisig_args.json',
-                        'deadman': '/Users/4dsto/ktn12/deadman.json'
+                        'deadman': '/Users/4dsto/ktn12/deadman.json',
+                        'deadman2': '/Users/4dsto/ktn12/silverscript-lang/tests/examples/deadman2.json'
                     };
                     
                     const contractFile = contractFiles[contract];
@@ -1218,7 +1219,7 @@ const server = http.createServer(async (req, res) => {
             req.on('data', chunk => body += chunk);
             req.on('end', async () => {
                 try {
-                    const { contractAddress, entrypoint, privateKey } = JSON.parse(body);
+                    const { contractAddress, entrypoint, privateKey, contractType } = JSON.parse(body);
                     
                     if (!contractAddress || !contractAddress.includes('kaspatest:')) {
                         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1226,27 +1227,72 @@ const server = http.createServer(async (req, res) => {
                         return;
                     }
                     
-                    // Get contract balance and info
-                    let balance = 0;
+                    if (!privateKey) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Private key required' }));
+                        return;
+                    }
+                    
+                    // Get UTXOs for contract
                     let utxos = [];
                     try {
-                        const balanceData = await fetchUrl(`${KASPA_API}/addresses/${contractAddress}/balance`);
-                        balance = parseInt(balanceData.balance || 0) / SOMPI_PER_KAS;
                         utxos = await fetchUrl(`${KASPA_API}/addresses/${contractAddress}/utxos`);
                     } catch(e) {
-                        console.log('Error fetching contract info:', e.message);
+                        console.log('Error fetching UTXOs:', e.message);
                     }
+                    
+                    if (!utxos || utxos.length === 0) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'No UTXOs found at contract address' }));
+                        return;
+                    }
+                    
+                    // Load contract script
+                    let contractFile;
+                    if (contractType === 'deadman2') {
+                        contractFile = '/Users/4dsto/ktn12/silverscript-lang/tests/examples/deadman2.json';
+                    } else if (contractType === 'deadman') {
+                        contractFile = '/Users/4dsto/ktn12/deadman.json';
+                    } else {
+                        contractFile = '/Users/4dsto/ktn12/' + contractType + '.json';
+                    }
+                    
+                    if (!fs.existsSync(contractFile)) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: 'Contract file not found' }));
+                        return;
+                    }
+                    
+                    const compiled = JSON.parse(fs.readFileSync(contractFile, 'utf8'));
+                    const contractScript = compiled.script;
+                    
+                    // Return detailed instructions for manual claim
+                    const utxo = utxos[0];
+                    const utxoAmount = BigInt(utxo.utxoEntry.amount);
+                    const fee = BigInt(1000);
+                    const sendAmount = utxoAmount - fee;
+                    
+                    // Determine selector
+                    let selector = 0;
+                    if (entrypoint === 'release') selector = 1;
+                    else if (entrypoint === 'cancel') selector = 1;
                     
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ 
-                        message: 'Entrypoint call requires P2SH spending transaction',
+                        message: 'P2SH entrypoint calling requires proper transaction signing',
                         entrypoint: entrypoint,
                         contractAddress: contractAddress,
-                        balance: balance,
-                        utxoCount: Array.isArray(utxos) ? utxos.length : 0,
-                        instructions: 'To call ' + entrypoint + ', you need to build a P2SH spending transaction with the entrypoint call as the unlocking script. This requires the compiled contract script and proper transaction building.'
+                        selector: selector,
+                        utxoTxId: utxo.outpoint.transactionId,
+                        utxoIndex: utxo.outpoint.index,
+                        utxoAmount: Number(utxoAmount) / 1e8,
+                        fee: Number(fee) / 1e8,
+                        sendAmount: Number(sendAmount) / 1e8,
+                        instructions: 'Manual claim required: Build P2SH transaction with contract script as redeem script, sign with private key, and submit. The contract script (locking bytecode) must be included in the signature script.',
+                        contractScript: contractScript
                     }));
                 } catch(e) {
+                    console.log('Silver call error:', e.message);
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ error: e.message }));
                 }

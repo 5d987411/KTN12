@@ -1,18 +1,29 @@
 // Full dead‑man‑switch transaction builder for Kaspa Testnet 12
 // ------------------------------------------------------------
-// Prerequisites (run once):
-//   npm install @noble/hashes @noble/secp256k1
+// Usage:
+//   node deadman_claim_simple.js <contract_address> <private_key>
+//   Or set env: PRIVATE_KEY=... CONTRACT_ADDRESS=... node deadman_claim_simple.js
 // ------------------------------------------------------------
 
 // Use gRPC (more stable)
 const { RPC } = require('/Users/4dsto/kaspa-grpc-node/dist');
 const { secp256k1 } = require('@noble/secp256k1');
 
-// ==== Configuration ====
+// Get from command line or environment
+const args = process.argv.slice(2);
 const CONFIG = {
-  privateKeyHex: '190dafc03c70b13cfab2c9d7760936e5f2b359f3efcbfc2a21edb14419d8ebdc',
-  fallbackAddress: 'kaspatest:qpgwz2khk48z6037tecfmm96maykaqrsqtf5efej99tfk6c2phvkjl0vzzkjd',
-  amountNano: 99_000_000_000,
+  privateKeyHex: args[1] || process.env.PRIVATE_KEY || '',
+  fallbackAddress: args[2] || process.env.RECIPIENT_ADDRESS || '',
+  amountNano: parseInt(args[3]) || parseInt(process.env.AMOUNT_NANO) || 99_000_000_000,
+  contractAddress: args[0] || process.env.CONTRACT_ADDRESS || '',
+};
+
+if (!CONFIG.privateKeyHex || !CONFIG.contractAddress) {
+  console.log('Usage: node deadman_claim_simple.js <contract_address> <private_key> [recipient] [amount_nano]');
+  console.log('Or set environment variables:');
+  console.log('  PRIVATE_KEY=... CONTRACT_ADDRESS=... node deadman_claim_simple.js');
+  process.exit(1);
+}
   feeNano: 1_000,
   redeemScriptHashHex: 'b4af4898dd4bb54a959179ec86cdf608dc7995d08073c439e04005573217e092',
 };

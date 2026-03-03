@@ -64,9 +64,25 @@ cargo build --release --bin rothschild
 
 # 4. Configure environment
 cd ../..
+cp .env.example .env  # For private keys (gitignored)
+cp config.env.example config.env  # For settings (gitignored)
 nano config.env
 # Set RUSTY_KASPA_DIR to your path
 # Set MINING_ADDRESS (required for mining)
+```
+
+### Environment Variables
+
+Private keys should be set via environment variables (never commit these):
+
+```bash
+# .env file (gitignored - DO NOT COMMIT)
+PRIVATE_KEY=your_private_key_here
+MINING_ADDRESS=your_mining_address
+CONTRACT_ADDRESS=your_contract_address
+
+# Or pass via command line when running scripts
+PRIVATE_KEY=xxx node deadman_claim.js <contract_address>
 ```
 
 ---

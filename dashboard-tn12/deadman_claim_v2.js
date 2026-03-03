@@ -10,27 +10,29 @@
 /**
  * Deadman Claim Transaction v2
  * 
- * Uses NEWER Kaspa RpcClient API with txBuilder
+ * Usage:
+ *   node deadman_claim_v2.js <contract_address> <beneficiary_private_key>
  * 
- * API Usage:
- *   const { RpcClient } = require('kaspa');
- *   const rpc = new RpcClient({
- *       url: 'https://api-tn12.kaspa.org',
- *       networkId: 'testnet-12'
- *   });
- *   await rpc.connect();
- *   // ... build and sign transaction ...
- *   await rpc.submitTransaction({ transaction: signedTx });
- *   await rpc.disconnect();
+ * Or set PRIVATE_KEY env variable:
+ *   PRIVATE_KEY=... node deadman_claim_v2.js <contract_address>
  */
 
 const kaspa = require('kaspa');
 const fs = require('fs');
 const path = require('path');
 
-const CONTRACT_ADDRESS = 'kaspatest:ppanzravch4n7jwcc8e29cxy3n64waz4u7f28s8h0ge68l22xl5u6auqv9cuz';
-const BENEFICIARY_PRIVATE_KEY = '190dafc03c70b13cfab2c9d7760936e5f2b359f3efcbfc2a21edb14419d8ebdc';
-const BENEFICIARY_PUBKEY = '0250e12ad7b54e2d3e3e5e709decbadf496e807002d34ca73229569b6b0a0dd969';
+// Get from command line or environment
+const args = process.argv.slice(2);
+const CONTRACT_ADDRESS = args[0] || process.env.CONTRACT_ADDRESS || '';
+const BENEFICIARY_PRIVATE_KEY = args[1] || process.env.PRIVATE_KEY || '';
+
+if (!CONTRACT_ADDRESS || !BENEFICIARY_PRIVATE_KEY) {
+    console.log('Usage: node deadman_claim_v2.js <contract_address> <beneficiary_private_key>');
+    console.log('Or set PRIVATE_KEY env variable:');
+    console.log('  CONTRACT_ADDRESS=kaspatest:... PRIVATE_KEY=... node deadman_claim_v2.js');
+    process.exit(1);
+}
+
 const CONTRACT_FILE = path.join(__dirname, '../deadman_compiled.json');
 const RPC_URL = 'https://api-tn12.kaspa.org';
 

@@ -1,0 +1,16 @@
+pragma silverscript ^0.1.0;
+
+contract DeadmanSwitch(
+    pubkey owner,
+    pubkey beneficiary,
+    int timeout
+) {
+    entrypoint function claim(sig ownerSig) {
+        require(checkSig(ownerSig, owner));
+    }
+
+    entrypoint function release(sig beneficiarySig) {
+        require(checkSig(beneficiarySig, beneficiary));
+        require(tx.time >= timeout);
+    }
+}

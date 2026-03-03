@@ -1,7 +1,8 @@
 // Full dead‑man‑switch transaction builder for Kaspa Testnet 12
 // ------------------------------------------------------------
-// Prerequisites (run once):
-//   npm install @kcoin/kaspa-web3.js @noble/hashes @noble/secp256k1
+// Usage:
+//   node deadman_switch_transaction.js <private_key> <fallback_address> <amount_nano>
+//   Or set env: PRIVATE_KEY=... RECIPIENT=... AMOUNT_NANO=... node deadman_switch_transaction.js
 // ------------------------------------------------------------
 
 // Use gRPC instead of wRPC (more stable)
@@ -9,14 +10,14 @@ const { RPC } = require('/Users/4dsto/kaspa-grpc-node/dist');
 const { secp256k1 } = require('@noble/secp256k1');
 
 // ==== Configuration ====
-// Replace these placeholders with your actual values before running.
+const args = process.argv.slice(2);
 const CONFIG = {
   // Private key in hex (32‑byte). Keep it secret!
-  privateKeyHex: '0x190dafc03c70b13cfab2c9d7760936e5f2b359f3efcbfc2a21edb14419d8ebdc',
+  privateKeyHex: args[0] || process.env.PRIVATE_KEY || '',
   // Destination (fallback) address – where the funds go if the switch triggers.
-  fallbackAddress: 'kaspatest:qpgwz2khk48z6037tecfmm96maykaqrsqtf5efej99tfk6c2phvkjl0vzzkjd',
+  fallbackAddress: args[1] || process.env.RECIPIENT || '',
   // Amount to move to the fallback address (in nano‑KAS).
-  amountNano: 99_000_000_000, // 99 KAS = 99,000,000,000 nano‑KAS (leave some for fee)
+  amountNano: parseInt(args[2]) || parseInt(process.env.AMOUNT_NANO) || 99_000_000_000, // 99 KAS = 99,000,000,000 nano‑KAS
   // Optional transaction fee (nano‑KAS).
   feeNano: 1_000,
   // The redeem‑script hash of the dead‑man‑switch contract (hex, without 0x).

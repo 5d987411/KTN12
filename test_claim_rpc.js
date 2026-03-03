@@ -2,19 +2,29 @@
 /**
  * Build and submit P2SH transaction for Deadman Switch contract
  * Uses raw RPC calls via @kcoin/kaspa-web3.js
+ * 
+ * Usage:
+ *   node test_claim_rpc.js <contract_address> <private_key> [recipient]
+ *   Or set env variables
  */
 
 const { RpcClient } = require('@kcoin/kaspa-web3.js');
 globalThis.WebSocket = require('ws');
 const fs = require('fs');
 
-const RPC_URL = 'ws://localhost:18210';
-
+const args = process.argv.slice(2);
+const RPC_URL = process.env.RPC_URL || 'ws://localhost:18210';
 const CONTRACT_FILE = '/Users/4dsto/ktn12/deadman_compiled.json';
-const CONTRACT_ADDRESS = 'kaspatest:pz627jycm49m2j54j9u7epkd7cydc7v46zq883peupqq24ejzlsfy2uw8txp3';
+const CONTRACT_ADDRESS = args[0] || process.env.CONTRACT_ADDRESS || '';
+const BENEFICIARY_KEY = args[1] || process.env.PRIVATE_KEY || '';
+const RECIPIENT = args[2] || process.env.RECIPIENT || '';
 
-const BENEFICIARY_KEY = '190dafc03c70b13cfab2c9d7760936e5f2b359f3efcbfc2a21edb14419d8ebdc';
-const RECIPIENT = 'kaspatest:qpgwz2khk48z6037tecfmm96maykaqrsqtf5efej99tfk6c2phvkjl0vzzkjd';
+if (!CONTRACT_ADDRESS || !BENEFICIARY_KEY) {
+    console.log('Usage: node test_claim_rpc.js <contract_address> <private_key> [recipient]');
+    console.log('Or set environment variables:');
+    console.log('  CONTRACT_ADDRESS=kaspatest:... PRIVATE_KEY=... node test_claim_rpc.js');
+    process.exit(1);
+}
 
 async function main() {
     console.log('=== Deadman Switch - Claim Transaction ===\n');

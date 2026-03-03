@@ -33,6 +33,7 @@ kaspad.pid
 
 # Environment files with secrets
 .env
+.env.example
 *.env.local
 config.env
 !config.env.example

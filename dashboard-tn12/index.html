@@ -475,12 +475,13 @@
                         <div style="margin-bottom: 16px;">
                             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">2. CONTRACT TYPE</div>
                             <select id="silverContractSelect" onchange="updateSilverForm()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;width:100%;">
-                                <option value="deadman">Deadman Switch - Funds to beneficiary after timeout</option>
                                 <option value="p2pkh">P2PKH - Simple public key hash</option>
                                 <option value="multisig">Multisig - Multiple signers</option>
                                 <option value="escrow">Escrow - Third-party arbiter</option>
                                 <option value="hodl_vault">HODL Vault - Time-locked vault</option>
                                 <option value="mecenas">Mecenas - Recurring payments</option>
+                                <option value="deadman">Deadman Switch - Funds to beneficiary after timeout</option>
+                                <option value="deadman2" selected>Deadman Switch v2 - Owner/Beneficiary split</option>
                                 <option value="bar">Bar - Tokenized bar</option>
                             </select>
                         </div>
@@ -519,8 +520,8 @@
                                 <div style="display: flex; gap: 4px; margin-top: 4px;">
                                     <input type="text" id="silverManualAddress" placeholder="kaspatest:..." style="flex:1; font-size:10px; padding:4px;">
                                     <button class="btn" onclick="useManualSilverAddress()" style="font-size:9px; padding:4px 8px;">Use</button>
+                                    <button class="btn" onclick="copySilverAddress()" style="font-size:9px; padding:4px 8px;">Copy Address</button>
                                 </div>
-                                <button class="btn" onclick="copySilverAddress()" style="margin-top:4px; font-size:9px; padding:4px 8px;">Copy Address</button>
                                 <div style="display: flex; justify-content: space-between; margin-top: 10px; margin-bottom: 6px;">
                                     <span style="font-size: 10px; color: var(--text-muted);">BALANCE</span>
                                     <span id="silverContractBalance" style="color: var(--accent); font-size: 12px;">-</span>
@@ -2334,10 +2335,26 @@
                 ],
                 entrypoints: ['execute'],
                 desc: 'Simple covenant example'
+            },
+            'deadman2': {
+                name: 'Deadman Switch v2',
+                params: [
+                    {id: 'ownerPubkey', label: 'Owner Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'beneficiaryPubkey', label: 'Beneficiary Public Key (hex)', placeholder: '02... or 03...'},
+                    {id: 'timeoutNum', label: 'Timeout', type: 'number', default: '30', min: '1'},
+                    {id: 'timeoutUnit', label: 'Unit', type: 'select', options: [
+                        {value: '60', label: 'Minutes'},
+                        {value: '3600', label: 'Hours'},
+                        {value: '86400', label: 'Days'},
+                        {value: '31536000', label: 'Years'}
+                    ]}
+                ],
+                entrypoints: ['claim', 'release'],
+                desc: 'Owner can claim anytime, beneficiary can claim after timeout'
             }
         };
 
-        let currentSilverContract = 'deadman';
+        let currentSilverContract = 'deadman2';
         let compiledContract = null;
 
         function updateSilverForm() {
@@ -2378,7 +2395,7 @@
             const actionsContainer = document.getElementById('silverContractActions');
             let actionsHtml = '';
             contract.entrypoints.forEach(entrypoint => {
-                actionsHtml += '<button class="btn" onclick="callSilverEntrypoint(\'' + entrypoint + '\')" style="font-size: 10px;">' + entrypoint + '</button>';
+                actionsHtml += '<button class="btn" onclick="callSilverEntrypoint(\'' + entrypoint + '\')" style="font-size: 10px;">' + entrypoint + '</button><input type="hidden" id="silverContractType" value="' + currentSilverContract + '">';
             });
             actionsContainer.innerHTML = actionsHtml;
         }
@@ -2487,6 +2504,16 @@
                     args.push({kind: 'pubkey', data: [0]});
                     args.push({kind: 'bytes', data: Array(32).fill(0)});
                     args.push({kind: 'int', data: parseInt(document.getElementById('silver_pledge').value) || 0});
+                } else if (contractType === 'deadman2') {
+                    const timeoutNum = document.getElementById('silver_timeoutNum').value || '30';
+                    const timeoutUnit = document.getElementById('silver_timeoutUnit').value;
+                    const timeoutSeconds = parseInt(timeoutNum) * parseInt(timeoutUnit);
+                    
+                    silverLog('Timeout: ' + timeoutNum + ' ' + (timeoutUnit === '60' ? 'min' : timeoutUnit === '3600' ? 'hours' : timeoutUnit === '86400' ? 'days' : 'years') + ' = ' + timeoutSeconds + ' seconds');
+                    
+                    args.push({kind: 'pubkey', data: [0]}); // owner
+                    args.push({kind: 'pubkey', data: [0]}); // beneficiary
+                    args.push({kind: 'int', data: timeoutSeconds});
                 }
                 
                 const resp = await fetch('/api/silver/compile', {
@@ -2636,9 +2663,10 @@
         async function callSilverEntrypoint(entrypoint) {
             const ownerKey = document.getElementById('silverOwnerKey').value.trim();
             const contractAddr = document.getElementById('silverContractAddress').textContent;
+            const contractType = document.getElementById('silverContractType')?.value || 'deadman2';
             
             if (!ownerKey) {
-                silverLog('Error: Owner private key required', 'error');
+                silverLog('Error: Private key required', 'error');
                 return;
             }
             
@@ -2656,7 +2684,8 @@
                     body: JSON.stringify({
                         contractAddress: contractAddr,
                         entrypoint: entrypoint,
-                        privateKey: ownerKey
+                        privateKey: ownerKey,
+                        contractType: contractType
                     })
                 });
                 
@@ -2665,7 +2694,9 @@
                 if (data.error) {
                     silverLog('Error: ' + data.error, 'error');
                 } else if (data.txid) {
-                    silverLog(entrypoint + ' success! TXID: ' + data.txid, 'success');
+                    silverLog('✓ ' + entrypoint + ' success! TXID: ' + data.txid, 'success');
+                } else if (data.message) {
+                    silverLog(data.message, 'info');
                 } else {
                     silverLog('Response: ' + JSON.stringify(data));
                 }

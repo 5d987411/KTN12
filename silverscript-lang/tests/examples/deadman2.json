@@ -1,0 +1,227 @@
+{
+  "contract_name": "DeadmanSwitch",
+  "script": [
+    118,
+    0,
+    156,
+    99,
+    117,
+    0,
+    121,
+    32,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    172,
+    105,
+    117,
+    81,
+    103,
+    118,
+    81,
+    156,
+    99,
+    117,
+    0,
+    121,
+    32,
+    2,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    2,
+    172,
+    105,
+    3,
+    128,
+    81,
+    1,
+    176,
+    117,
+    81,
+    103,
+    117,
+    0,
+    105,
+    104,
+    104
+  ],
+  "ast": {
+    "name": "DeadmanSwitch",
+    "params": [
+      {
+        "type_name": "pubkey",
+        "name": "owner"
+      },
+      {
+        "type_name": "pubkey",
+        "name": "beneficiary"
+      },
+      {
+        "type_name": "int",
+        "name": "timeout"
+      }
+    ],
+    "constants": {},
+    "functions": [
+      {
+        "name": "claim",
+        "params": [
+          {
+            "type_name": "sig",
+            "name": "ownerSig"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "ownerSig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "owner"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          }
+        ]
+      },
+      {
+        "name": "release",
+        "params": [
+          {
+            "type_name": "sig",
+            "name": "beneficiarySig"
+          }
+        ],
+        "entrypoint": true,
+        "return_types": [],
+        "body": [
+          {
+            "kind": "require",
+            "data": {
+              "expr": {
+                "kind": "call",
+                "data": {
+                  "name": "checkSig",
+                  "args": [
+                    {
+                      "kind": "identifier",
+                      "data": "beneficiarySig"
+                    },
+                    {
+                      "kind": "identifier",
+                      "data": "beneficiary"
+                    }
+                  ]
+                }
+              },
+              "message": null
+            }
+          },
+          {
+            "kind": "time_op",
+            "data": {
+              "tx_var": "tx_time",
+              "expr": {
+                "kind": "identifier",
+                "data": "timeout"
+              },
+              "message": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "abi": [
+    {
+      "name": "claim",
+      "inputs": [
+        {
+          "name": "ownerSig",
+          "type_name": "sig"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "inputs": [
+        {
+          "name": "beneficiarySig",
+          "type_name": "sig"
+        }
+      ]
+    }
+  ],
+  "without_selector": false
+}
