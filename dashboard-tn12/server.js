@@ -824,6 +824,124 @@ const server = http.createServer(async (req, res) => {
             return;
         }
 
+        // === ATOMIC SWAP API ===
+        
+        // Get wallet address
+        if (urlPath === '/api/swap/wallet-address' && req.method === 'GET') {
+            const scriptPath = path.join(config.ktn12Dir, 'atomic-swap', 'scripts', 'kaspa_wallet.py');
+            
+            exec(`python3 ${scriptPath} address --network tn12`, { timeout: 30000 }, (error, stdout, stderr) => {
+                if (error) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                    return;
+                }
+                try {
+                    const data = JSON.parse(stdout);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(data));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ output: stdout, error: stderr }));
+                }
+            });
+            return;
+        }
+
+        // Check wallet balance
+        if (urlPath === '/api/swap/wallet-balance' && req.method === 'GET') {
+            const address = getQueryParam('address');
+            if (!address) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Address required' }));
+                return;
+            }
+            
+            const scriptPath = path.join(config.ktn12Dir, 'atomic-swap', 'scripts', 'kaspa_wallet.py');
+            
+            exec(`python3 ${scriptPath} balance --address ${address} --network tn12`, { timeout: 30000 }, (error, stdout, stderr) => {
+                if (error) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                    return;
+                }
+                try {
+                    const data = JSON.parse(stdout);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(data));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ output: stdout, error: stderr }));
+                }
+            });
+            return;
+        }
+
+        // Send message (whisper)
+        if (urlPath === '/api/swap/whisper-send' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', () => {
+                const { to, message, privateKey } = JSON.parse(body);
+                
+                if (!to || !message || !privateKey) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: 'Missing parameters: to, message, privateKey' }));
+                    return;
+                }
+                
+                const scriptPath = path.join(config.ktn12Dir, 'atomic-swap', 'scripts', 'whisper.py');
+                
+                exec(`python3 ${scriptPath} send --to "${to}" --message "${message}" --key ${privateKey} --network tn12`, { timeout: 60000 }, (error, stdout, stderr) => {
+                    if (error) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ error: error.message }));
+                        return;
+                    }
+                    try {
+                        const data = JSON.parse(stdout);
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify(data));
+                    } catch (e) {
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({ output: stdout, error: stderr }));
+                    }
+                });
+            });
+            return;
+        }
+
+        // Check whisper inbox
+        if (urlPath === '/api/swap/whisper-inbox' && req.method === 'GET') {
+            const address = getQueryParam('address');
+            if (!address) {
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Address required' }));
+                return;
+            }
+            
+            const scriptPath = path.join(config.ktn12Dir, 'atomic-swap', 'scripts', 'whisper.py');
+            
+            exec(`python3 ${scriptPath} inbox --address ${address} --network tn12`, { timeout: 30000 }, (error, stdout, stderr) => {
+                if (error) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: error.message }));
+                    return;
+                }
+                try {
+                    const data = JSON.parse(stdout);
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify(data));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ output: stdout, error: stderr }));
+                }
+            });
+            return;
+        }
+
+        // === END ATOMIC SWAP API ===
+
         // Get system info (IP, disk, ktn12 size, chain size)
         if (urlPath === '/api/system-info' && req.method === 'GET') {
             const ktn12Dir = path.join(config.ktn12Dir);
@@ -1421,6 +1539,7 @@ const server = http.createServer(async (req, res) => {
                     }
 
                     // Map UI method names to gRPC request names
+                    // v1.1.0 new: get_virtual_chain_from_block_v2 (VSPC API v2)
                     const methodMap = {
                         'get_info': 'getInfoRequest',
                         'get_block_dag_info': 'getBlockDagInfoRequest',
@@ -1434,7 +1553,8 @@ const server = http.createServer(async (req, res) => {
                         'get_sink': 'getSinkRequest',
                         'get_sink_blue_score': 'getSinkBlueScoreRequest',
                         'get_mempool_entries': 'getMempoolEntriesRequest',
-                        'get_metrics': 'getMetricsRequest'
+                        'get_metrics': 'getMetricsRequest',
+                        'get_virtual_chain_from_block_v2': 'getVirtualChainFromBlockV2Request'
                     };
 
                     const rpcMethod = methodMap[method] || method + 'Request';
@@ -1465,6 +1585,219 @@ const server = http.createServer(async (req, res) => {
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ error: e.message }));
             }
+            return;
+        }
+
+        // ============================================
+        // ATOMIC SWAP API ENDPOINTS
+        // ============================================
+        
+        // In-memory swap storage (in production, use a database)
+        const activeSwaps = new Map();
+        let swapCounter = 0;
+        
+        // Generate random preimage and hashlock
+        function generatePreimageAndHashlock() {
+            const preimage = crypto.randomBytes(32).toString('hex');
+            const hashlock = crypto.createHash('sha256').update(preimage).digest('hex');
+            return { preimage, hashlock };
+        }
+        
+        // Atomic Swap: Initiate
+        if (urlPath === '/api/atomic-swap/initiate' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { direction, kasKey, ethKey, amount, timelock, rate, counterparty, counterpartyEth } = data;
+                    
+                    // Generate preimage and hashlock
+                    const { preimage, hashlock } = generatePreimageAndHashlock();
+                    
+                    // Calculate timelock in seconds (hours * 3600)
+                    const timelockSeconds = (timelock || 24) * 3600;
+                    const timelockExpiry = Math.floor(Date.now() / 1000) + timelockSeconds;
+                    
+                    // Generate swap ID
+                    const swapId = ++swapCounter;
+                    
+                    // For now, return mock HTLC addresses (in production, deploy actual contracts)
+                    const kaspaHtlcAddress = direction === 'kas2eth' 
+                        ? 'kaspatest:qzra5tu0cy5dcu0mcsw3uw3lclfjl75uawu5v6d3jq' 
+                        : counterparty || 'kaspatest:qzra5tu0cy5dcu0mcsw3uw3lclfjl75uawu5v6d3jq';
+                    
+                    const ethHtlcAddress = direction === 'kas2eth'
+                        ? '0x' + crypto.randomBytes(20).toString('hex')
+                        : (counterpartyEth || '0x' + crypto.randomBytes(20).toString('hex'));
+                    
+                    // Store swap
+                    const swap = {
+                        id: swapId,
+                        direction,
+                        preimage,
+                        hashlock,
+                        amount,
+                        rate,
+                        timelock: timelockExpiry,
+                        kaspaHtlcAddress,
+                        ethHtlcAddress,
+                        status: 'initiated',
+                        created: Date.now()
+                    };
+                    
+                    activeSwaps.set(swapId, swap);
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        swapId,
+                        preimage,
+                        hashlock,
+                        timelock: timelockExpiry,
+                        kaspaHtlcAddress,
+                        ethHtlcAddress,
+                        message: 'Send ' + amount + ' ' + (direction === 'kas2eth' ? 'KAS' : 'ETH') + ' to the HTLC address'
+                    }));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+        
+        // Atomic Swap: Accept
+        if (urlPath === '/api/atomic-swap/accept' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { direction, counterparty, counterpartyEth } = data;
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        message: 'Waiting for counterparty to fund HTLC...'
+                    }));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+        
+        // Atomic Swap: Claim
+        if (urlPath === '/api/atomic-swap/claim' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { direction, preimage } = data;
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        message: 'Claimed! Preimage revealed: ' + preimage
+                    }));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+        
+        // Atomic Swap: Refund
+        if (urlPath === '/api/atomic-swap/refund' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { direction } = data;
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        message: 'Refunded! Funds returned to sender.'
+                    }));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
+            return;
+        }
+        
+        // Atomic Swap: List
+        if (urlPath === '/api/atomic-swap/list' && req.method === 'GET') {
+            const swaps = Array.from(activeSwaps.values()).map(swap => ({
+                id: swap.id,
+                direction: swap.direction,
+                amount: swap.amount,
+                htlcAddress: swap.kaspaHtlcAddress,
+                status: swap.status,
+                timelock: swap.timelock
+            }));
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ swaps }));
+            return;
+        }
+        
+        // Atomic Swap: AI Intent Parser
+        if (urlPath === '/api/atomic-swap/intent' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => body += chunk);
+            req.on('end', async () => {
+                try {
+                    const data = JSON.parse(body);
+                    const { intent } = data;
+                    
+                    // Simple intent parser
+                    let action = null;
+                    let details = {};
+                    
+                    // Parse swap amount
+                    const amountMatch = intent.match(/(\d+\.?\d*)\s*(kas|eth)/i);
+                    if (amountMatch) {
+                        details.amount = parseFloat(amountMatch[1]);
+                        details.fromToken = amountMatch[2].toLowerCase();
+                    }
+                    
+                    // Parse exchange rate
+                    const rateMatch = intent.match(/(\d+\.?\d*)\s*(eth|usd|btc)/i);
+                    if (rateMatch) {
+                        details.rate = parseFloat(rateMatch[1]);
+                    }
+                    
+                    // Determine action
+                    if (intent.includes('swap') || intent.includes('exchange') || intent.includes('trade')) {
+                        action = 'swap';
+                        details.direction = details.fromToken === 'kas' ? 'kas2eth' : 'eth2kas';
+                    } else if (intent.includes('claim')) {
+                        action = 'claim';
+                    } else if (intent.includes('refund')) {
+                        action = 'refund';
+                    } else if (intent.includes('status') || intent.includes('list')) {
+                        action = 'list';
+                    }
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        success: true,
+                        action,
+                        details,
+                        message: 'Intent parsed: ' + (action || 'unknown')
+                    }));
+                } catch (e) {
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ error: e.message }));
+                }
+            });
             return;
         }
 

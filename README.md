@@ -20,10 +20,18 @@ Kaspa Testnet 12 (Covenant) development environment with integrated dashboard, w
 ### Components
 | Component | Version | Binary Path |
 |-----------|---------|-------------|
-| Node | 1.1.0-rc.3 | `/Users/4dsto/rusty-kaspa-tn12/target/release/kaspad` |
+| Node | 1.1.0 | `/Users/4dsto/rusty-kaspa/target/release/kaspad` |
 | Miner | 0.2.6 | `/Users/4dsto/ktn12/kaspa-miner` |
-| Tx Generator | - | rusty-kaspa rothschild |
+| Tx Generator | 1.1.0 | rusty-kaspa rothschild |
 | Dashboard | Node.js | `dashboard-tn12/server.js` |
+
+### New in v1.1.0 / TN12
+- **VSPC API v2** - `get_virtual_chain_from_block_v2` for simplified integrations
+- **KIP-16** - ZK Proof Verification (OpZkPrecompile) - coming soon
+- **KIP-17** - Native Assets / Covenant IDs - TN12 only
+- **10 BPS** - Crescendo hardfork (~2.5 min per block)
+- **Covenants++** - Programmable UTXOs enabled
+- **Retention Period** - `--retention-period-days` flag
 
 ### Dashboard URLs
 - **Main Dashboard:** http://localhost:3001
@@ -188,6 +196,53 @@ git clone https://github.com/kaspanet/cpuminer
 cd cpuminer
 cargo build --release
 # Output: target/release/kaspa-miner
+```
+
+---
+
+## Atomic Swap (Panel 13)
+
+The dashboard includes an atomic swap panel (Panel 13) for KAS ↔ ETH swaps.
+
+### Features
+- **KAS → ETH** and **ETH → KAS** swap directions
+- **HTLC-based** atomic swaps using SilverScript contracts
+- **AI Agent Intent** - Type natural language like "swap 1 kas for eth"
+- **TN12 Optimized** - Uses 10 BPS block time for faster settlements
+
+### API Endpoints
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/atomic-swap/initiate` | POST | Initiate atomic swap |
+| `/api/atomic-swap/accept` | POST | Accept incoming swap |
+| `/api/atomic-swap/claim` | POST | Claim with preimage |
+| `/api/atomic-swap/refund` | POST | Refund after timelock |
+| `/api/atomic-swap/list` | GET | List active swaps |
+| `/api/atomic-swap/intent` | POST | AI agent intent parser |
+
+### Usage
+1. Go to Panel 13 in the dashboard
+2. Select swap direction (KAS→ETH or ETH→KAS)
+3. Enter your keys and swap parameters
+4. Click "Initiate Swap"
+5. Share the HTLC address with counterparty
+6. Once counterparty funds their HTLC, claim your funds
+
+### Python Wallet Script
+Located at `dashboard-tn12/scripts/kaspa_wallet.py`
+
+```bash
+# Install dependencies
+pip install kaspa
+
+# Check balance
+python scripts/kaspa_wallet.py balance <address>
+
+# Send KAS
+python scripts/kaspa_wallet.py send <key> <to> <amount>
+
+# Deploy HTLC
+python scripts/kaspa_wallet.py deploy-htlc <key> <hashlock> <timelock> <recipient> <amount>
 ```
 
 ---

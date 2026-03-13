@@ -63,9 +63,9 @@
         .main-section { display: grid; grid-template-columns: 200px 300px 1fr; gap: 16px; }
         
         .cmd-sidebar { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        .cat-header { background: var(--bg-input); padding: 10px 12px; font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+        .cat-header { background: var(--bg-input); padding: 10px 12px; font-size: 10px; color: #00BFFF; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
         .cmd-btns { padding: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-        .chip-btn { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-muted); padding: 6px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 11px; }
+        .chip-btn { background: var(--bg-input); border: 1px solid var(--border); color: #fff; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 11px; }
         .chip-btn:hover { border-color: var(--accent); color: var(--accent); }
         .chip-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
         
@@ -101,12 +101,12 @@
         <header>
             <div class="logo"><div class="logo-dot"></div><h1>KASPA TN12 Dashboard</h1></div>
             <div class="network-badge" id="headerStats">
-                Kaspad: <span style="color:#00ff88">tn12</span> |
+                Kaspad: <span style="color:#00ff88">v1.1.0</span> |
                 SERVICES: 
                 <span id="serviceKaspad" style="color:#888">Kaspad...</span> | 
                 <span id="serviceMiner" style="color:#888">Miner...</span> | 
                 <span id="serviceRothschild" style="color:#888">Rothschild...</span> |
-                NETWORK: <span id="networkName">TESTNET 12</span> | | 
+                NETWORK: <span id="networkName">TESTNET 12</span> <span style="color:#00ff88;font-size:9px;">(+Covenants)</span> | 
                 IP: <span id="sysIP">-</span> | 
                 HD: <span id="sysHD">-</span> | 
                 KTN12: <span id="ktn12Size">-</span> | 
@@ -168,9 +168,9 @@
         <div class="main-section">
             <div class="cmd-sidebar" id="cmdSidebar">
                 <div class="card-title" style="padding:0 0 12px 0">4 Commands</div>
-                <button class="chip-btn" onclick="checkKaspadConsole()" style="background: #000; color: #fff; margin-bottom: 12px;">check kaspad status</button>
-                <button class="chip-btn" onclick="restartKaspad()" style="background: #880000; color: #fff; margin-bottom: 12px;">restart kaspad</button>
-                <button class="chip-btn" onclick="checkMinerConsole()" style="background: #884400; color: #fff; margin-bottom: 12px;">check miner</button>
+                <button class="chip-btn" onclick="checkKaspadConsole()" style="background: #008800; color: #fff; margin-bottom: 12px;">check kaspad status</button>
+                <button class="chip-btn" onclick="checkMinerConsole()" style="background: #008800; color: #fff; margin-bottom: 12px;">check miner</button>
+                <button class="chip-btn" onclick="restartKaspad()" style="background: #cc0000; color: #fff; margin-bottom: 12px;">restart kaspad</button>
             </div>
             
             <div class="params-panel">
@@ -636,6 +636,7 @@
                             <option value="get_sink_blue_score">get_sink_blue_score - Sink score</option>
                             <option value="get_mempool_entries">get_mempool_entries - Mempool</option>
                             <option value="get_metrics">get_metrics - Node metrics</option>
+                            <option value="get_virtual_chain_from_block_v2">get_virtual_chain_from_block_v2 - v1.1.0+ VSPC</option>
                         </select>
                         
                         <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">ACTIONS</div>
@@ -666,12 +667,15 @@
                         
                         <!-- API Reference -->
                         <div style="margin-top: 16px; padding: 12px; background: #1a1a2e; border: 1px solid #333; border-radius: 4px;">
-                            <div style="font-size: 11px; color: #00ff88; margin-bottom: 8px;">📡 Ports (Testnet-12)</div>
+                            <div style="font-size: 11px; color: #00ff88; margin-bottom: 8px;">📡 Ports (TN12 / v1.1.0)</div>
                             <div style="font-size: 10px; color: var(--text-muted);">
                                 gRPC: 16210 | wRPC-Borsh: 17210 | wRPC-JSON: 18210
                             </div>
                             <div style="font-size: 9px; color: #ffaa00; margin-top: 8px;">
-                                ⚠️ Uses WebSocket now. If fails, ensure kaspad has --rpclisten-borsh enabled.
+                                ⚠️ Uses WebSocket. Enable --rpclisten-borsh
+                            </div>
+                            <div style="font-size: 9px; color: #00ff88; margin-top: 4px;">
+                                ✨ New: get_virtual_chain_from_block_v2 (VSPC v2)
                             </div>
                         </div>
                         
@@ -692,6 +696,111 @@
                 </div>
             </div>
         </div>
+
+        <!-- Panel 13: Atomic Swap -->
+        <div class="atomic-swap-panel" style="margin-top: 16px;">
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>13 Atomic Swap (KAS ↔ ETH)</span>
+                    <button class="btn" onclick="refreshAtomicSwapStatus()" style="padding: 4px 12px; font-size: 11px;">↻ Refresh</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 12px;">
+                    <!-- LEFT: Swap Controls -->
+                    <div>
+                        <!-- Step 1: Swap Direction -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">1. SWAP DIRECTION</div>
+                            <select id="swapDirection" onchange="updateSwapForm()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;font-size:12px;width:100%;">
+                                <option value="kas2eth">KAS → ETH</option>
+                                <option value="eth2kas">ETH → KAS</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Step 2: Your Keys -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">2. YOUR KEYS</div>
+                            <input type="text" id="swapKasKey" class="wallet-input" placeholder="Kaspa Private Key (hex)" value="b23f42d4a5f9c2963f4b73403f7efcb12b28983f808f0092b43da55ee53317e7">
+                            <input type="text" id="swapEthKey" class="wallet-input" placeholder="Ethereum Private Key (hex)" style="margin-top: 4px;">
+                        </div>
+                        
+                        <!-- Step 3: Swap Parameters -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">3. SWAP PARAMETERS</div>
+                            <input type="number" id="swapAmount" class="wallet-input" placeholder="Amount (KAS or ETH)" value="0.1" step="0.01" min="0.001">
+                            <input type="number" id="swapTimelock" class="wallet-input" placeholder="Timelock (hours)" value="24" min="1" style="margin-top: 4px;">
+                            <input type="text" id="swapRate" class="wallet-input" placeholder="Exchange Rate (e.g., 0.00001 ETH/KAS)" value="0.00002" style="margin-top: 4px;">
+                        </div>
+                        
+                        <!-- Step 4: Counterparty -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">4. COUNTERPARTY ADDRESS</div>
+                            <input type="text" id="swapCounterparty" class="wallet-input" placeholder="Counterparty Kaspa Address (for KAS→ETH)">
+                            <input type="text" id="swapCounterpartyEth" class="wallet-input" placeholder="Counterparty ETH Address" style="margin-top: 4px;">
+                        </div>
+                        
+                        <!-- Step 5: Actions -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">5. ACTIONS</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                <button class="btn btn-primary" onclick="initiateSwap()" style="flex:1;">Initiate Swap</button>
+                                <button class="btn" onclick="acceptSwap()" style="flex:1;">Accept Swap</button>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                                <button class="btn" onclick="claimSwap()" style="flex:1;">Claim</button>
+                                <button class="btn" onclick="refundSwap()" style="flex:1;">Refund</button>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Agent Intent -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">🤖 AI AGENT INTENT</div>
+                            <input type="text" id="swapIntent" class="wallet-input" placeholder="e.g., Swap 1 KAS for ETH at best rate">
+                            <button class="btn" onclick="executeSwapIntent()" style="width: 100%; margin-top: 4px;">Execute Intent</button>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGHT: Status & Output -->
+                    <div>
+                        <!-- Active Swaps -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">ACTIVE SWAPS</div>
+                            <div id="atomicSwapList" style="background: var(--bg-input); padding: 12px; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                                <div style="color: var(--text-muted); font-size: 11px;">No active swaps</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Swap Details -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">SWAP DETAILS</div>
+                            <div style="background: var(--bg-input); padding: 12px; border-radius: 4px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">KAS HTLC ADDRESS</span>
+                                    <span id="swapKasHTLC" style="font-size: 10px; color: var(--accent); word-break: break-all;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">ETH HTLC ADDRESS</span>
+                                    <span id="swapEthHTLC" style="font-size: 10px; color: var(--accent); word-break: break-all;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">PREIMAGE (HASHLOCK)</span>
+                                    <span id="swapPreimage" style="font-size: 10px; color: var(--accent); word-break: break-all;">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 10px; color: var(--text-muted);">STATUS</span>
+                                    <span id="swapStatus" style="font-size: 10px; color: var(--accent);">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Output Monitor -->
+                        <div style="padding: 10px; background: var(--bg-input); border-radius: 4px; font-size: 11px; max-height: 200px; overflow-y: auto;">
+                            <div id="atomicSwapOutput" style="color: var(--text-muted); white-space: pre-wrap; word-break: break-all;">Output will appear here...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <div class="toast" id="toast">Copied!</div>
@@ -707,7 +816,8 @@
             'MINING': ['miner-status', 'miner-start', 'rothschild-start', 'rothschild-stop'],
             'SILVERSCRIPT': ['silver-compile', 'silver-list'],
             'CONTRACTS': ['p2pkh', 'multisig', 'escrow', 'hodl', 'mecenas'],
-            'COMPILER': ['compile', 'deploy']
+            'COMPILER': ['compile', 'deploy'],
+            'ATOMIC_SWAP': ['swap-initiate', 'swap-accept', 'swap-claim', 'swap-refund', 'swap-status']
         };
         
         const COMMANDS = {
@@ -827,6 +937,35 @@
                 desc: 'Deploy Contract', 
                 params: [{name: 'contract', placeholder: 'Contract JSON'}, {name: 'private_key', placeholder: 'Private key'}],
                 action: (args) => deployContract(args[0], args[1])
+            },
+            'swap-initiate': { 
+                desc: 'Initiate Atomic Swap', 
+                params: [
+                    {name: 'direction', placeholder: 'kas2eth or eth2kas', default: 'kas2eth'},
+                    {name: 'amount', placeholder: 'Amount', default: '0.1'},
+                    {name: 'timelock', placeholder: 'Timelock (hours)', default: '24'}
+                ],
+                action: (args) => initiateSwapFromCommand(args)
+            },
+            'swap-accept': { 
+                desc: 'Accept Atomic Swap', 
+                params: [],
+                action: () => acceptSwap()
+            },
+            'swap-claim': { 
+                desc: 'Claim Atomic Swap', 
+                params: [{name: 'preimage', placeholder: 'Preimage (hex)'}],
+                action: (args) => claimSwapFromCommand(args[0])
+            },
+            'swap-refund': { 
+                desc: 'Refund Atomic Swap', 
+                params: [],
+                action: () => refundSwap()
+            },
+            'swap-status': { 
+                desc: 'List Active Swaps', 
+                params: [],
+                action: () => refreshAtomicSwapList()
             }
         };
         let currentCmd = null;
@@ -843,20 +982,22 @@
             log('Console ready. Type commands or use buttons.');
         }
         
-        // Kaspad Parameters
+        // Kaspad Parameters (v1.1.0 / TN12)
+        // New in v0.17.1+: --retention-period-days, v1.1.0: --perf-metrics, RocksDB presets
         const KASPAD_FLAGS = [
             { id: 'testnet', name: '--testnet', type: 'flag', default: true, checked: true },
-            { id: 'netsuffix', name: '--netsuffix', type: 'value', default: '12', placeholder: '12', note: 'net suffix', checked: true },
+            { id: 'netsuffix', name: '--netsuffix', type: 'value', default: '12', placeholder: '12', note: 'TN12 = covenants', checked: true },
             { id: 'utxoindex', name: '--utxoindex', type: 'flag', default: true, checked: true, note: 'REQUIRED for wallet' },
             { id: 'rpclisten', name: '--rpclisten', type: 'value', default: '127.0.0.1:16210', placeholder: 'ip:port', note: 'gRPC', checked: true },
-            { id: 'rpclisten-json', name: '--rpclisten-json', type: 'value', default: '127.0.0.1:18210', placeholder: 'ip:port', note: 'WS-JSON (broken)', checked: false },
-            { id: 'rpclisten-borsh', name: '--rpclisten-borsh', type: 'value', default: '127.0.0.1:17210', placeholder: 'ip:port', note: 'wRPC (works)', checked: true },
+            { id: 'rpclisten-json', name: '--rpclisten-json', type: 'value', default: '127.0.0.1:18210', placeholder: 'ip:port', note: 'WS-JSON', checked: false },
+            { id: 'rpclisten-borsh', name: '--rpclisten-borsh', type: 'value', default: '127.0.0.1:17210', placeholder: 'ip:port', note: 'wRPC (recommended)', checked: true },
             { id: 'unsaferpc', name: '--unsaferpc', type: 'flag', default: true, checked: true },
             { id: 'enable-unsynced-mining', name: '--enable-unsynced-mining', type: 'flag', default: true, checked: true, note: 'Mine while syncing' },
             { id: 'listen', name: '--listen', type: 'value', default: '0.0.0.0:16311', placeholder: 'ip:port', note: 'P2P', checked: true },
             { id: 'addpeer', name: '--addpeer', type: 'value', default: '23.118.8.168', placeholder: 'ip:port', note: 'peer IP', checked: false },
-            { id: 'archival', name: '--archival', type: 'flag', default: false },
-            { id: 'perf-metrics', name: '--perf-metrics', type: 'flag', default: false },
+            { id: 'archival', name: '--archival', type: 'flag', default: false, note: 'Archive node (full history)' },
+            { id: 'retention', name: '--retention-period-days', type: 'value', default: '1.5', placeholder: 'days', note: 'v0.17.1+ (default ~30h)', checked: false },
+            { id: 'perf-metrics', name: '--perf-metrics', type: 'flag', default: false, note: 'v1.1.0+ performance' },
             { id: 'reset-db', name: '--reset-db', type: 'flag', default: false },
             { id: 'async-threads', name: '--async-threads', type: 'value', default: '12', placeholder: '2-24', note: '2-24 (default: 12)', checked: true },
             { id: 'ram-scale', name: '--ram-scale', type: 'value', default: '2', placeholder: '0.5-4', note: '0.5-4', checked: true }
@@ -2941,6 +3082,275 @@
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         }
+
+        // ============================================
+        // ATOMIC SWAP PANEL FUNCTIONS
+        // ============================================
+        
+        const ATOMIC_SWAP_API = '/api/atomic-swap';
+        
+        function atomicSwapLog(msg, type = '') {
+            const output = document.getElementById('atomicSwapOutput');
+            if (!output) return;
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error-line' : type === 'success' ? 'success-line' : '';
+            output.innerHTML += `<div class="${className}">[${timestamp}] ${msg}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function updateSwapForm() {
+            const direction = document.getElementById('swapDirection').value;
+            atomicSwapLog('Swap direction: ' + (direction === 'kas2eth' ? 'KAS → ETH' : 'ETH → KAS'));
+        }
+        
+        async function initiateSwap() {
+            const direction = document.getElementById('swapDirection').value;
+            const kasKey = document.getElementById('swapKasKey').value.trim();
+            const ethKey = document.getElementById('swapEthKey').value.trim();
+            const amount = parseFloat(document.getElementById('swapAmount').value);
+            const timelock = parseInt(document.getElementById('swapTimelock').value);
+            const rate = parseFloat(document.getElementById('swapRate').value);
+            const counterparty = document.getElementById('swapCounterparty').value.trim();
+            const counterpartyEth = document.getElementById('swapCounterpartyEth').value.trim();
+            
+            if (!kasKey) {
+                atomicSwapLog('Error: Kaspa private key required', 'error');
+                return;
+            }
+            if (!amount || amount <= 0) {
+                atomicSwapLog('Error: Valid amount required', 'error');
+                return;
+            }
+            
+            atomicSwapLog('Initiating atomic swap...');
+            atomicSwapLog(`Direction: ${direction}, Amount: ${amount}, Timelock: ${timelock}h`);
+            
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/initiate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        direction,
+                        kasKey,
+                        ethKey,
+                        amount,
+                        timelock,
+                        rate,
+                        counterparty,
+                        counterpartyEth
+                    })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    atomicSwapLog('Error: ' + data.error, 'error');
+                } else {
+                    atomicSwapLog('Swap initiated!', 'success');
+                    atomicSwapLog('Preimage: ' + data.preimage, 'success');
+                    atomicSwapLog('Hashlock: ' + data.hashlock, 'success');
+                    atomicSwapLog('KAS HTLC: ' + data.kaspaHtlcAddress, 'success');
+                    atomicSwapLog('ETH HTLC: ' + data.ethHtlcAddress, 'success');
+                    
+                    document.getElementById('swapPreimage').textContent = data.preimage;
+                    document.getElementById('swapKasHTLC').textContent = data.kaspaHtlcAddress;
+                    document.getElementById('swapEthHTLC').textContent = data.ethHtlcAddress;
+                    document.getElementById('swapStatus').textContent = 'INITIATED';
+                    
+                    refreshAtomicSwapList();
+                }
+            } catch(e) {
+                atomicSwapLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function acceptSwap() {
+            const direction = document.getElementById('swapDirection').value;
+            const kasKey = document.getElementById('swapKasKey').value.trim();
+            const ethKey = document.getElementById('swapEthKey').value.trim();
+            const counterparty = document.getElementById('swapCounterparty').value.trim();
+            const counterpartyEth = document.getElementById('swapCounterpartyEth').value.trim();
+            
+            atomicSwapLog('Accepting swap...');
+            
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/accept', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        direction,
+                        kasKey,
+                        ethKey,
+                        counterparty,
+                        counterpartyEth
+                    })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    atomicSwapLog('Error: ' + data.error, 'error');
+                } else {
+                    atomicSwapLog('Swap accepted!', 'success');
+                    document.getElementById('swapStatus').textContent = 'ACCEPTED';
+                    refreshAtomicSwapList();
+                }
+            } catch(e) {
+                atomicSwapLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function claimSwap() {
+            const direction = document.getElementById('swapDirection').value;
+            const preimage = document.getElementById('swapPreimage').value.trim();
+            
+            if (!preimage) {
+                atomicSwapLog('Error: Preimage required', 'error');
+                return;
+            }
+            
+            atomicSwapLog('Claiming swap with preimage: ' + preimage);
+            
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/claim', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ direction, preimage })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    atomicSwapLog('Error: ' + data.error, 'error');
+                } else {
+                    atomicSwapLog('Swap claimed successfully!', 'success');
+                    document.getElementById('swapStatus').textContent = 'CLAIMED';
+                    refreshAtomicSwapList();
+                }
+            } catch(e) {
+                atomicSwapLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function refundSwap() {
+            const direction = document.getElementById('swapDirection').value;
+            
+            atomicSwapLog('Refunding swap...');
+            
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/refund', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ direction })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    atomicSwapLog('Error: ' + data.error, 'error');
+                } else {
+                    atomicSwapLog('Swap refunded successfully!', 'success');
+                    document.getElementById('swapStatus').textContent = 'REFUNDED';
+                    refreshAtomicSwapList();
+                }
+            } catch(e) {
+                atomicSwapLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        async function refreshAtomicSwapStatus() {
+            atomicSwapLog('Refreshing swap status...');
+            await refreshAtomicSwapList();
+        }
+        
+        // Command-line helper functions
+        async function initiateSwapFromCommand(args) {
+            const direction = args[0] || 'kas2eth';
+            const amount = parseFloat(args[1] || '0.1');
+            const timelock = parseInt(args[2] || '24');
+            
+            document.getElementById('swapDirection').value = direction;
+            document.getElementById('swapAmount').value = amount;
+            document.getElementById('swapTimelock').value = timelock;
+            
+            await initiateSwap();
+        }
+        
+        async function claimSwapFromCommand(preimage) {
+            if (preimage) {
+                document.getElementById('swapPreimage').value = preimage;
+            }
+            await claimSwap();
+        }
+        
+        async function refreshAtomicSwapList() {
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/list');
+                const data = await resp.json();
+                
+                const list = document.getElementById('atomicSwapList');
+                if (!list) return;
+                
+                if (!data.swaps || data.swaps.length === 0) {
+                    list.innerHTML = '<div style="color: var(--text-muted); font-size: 11px;">No active swaps</div>';
+                    return;
+                }
+                
+                list.innerHTML = data.swaps.map(swap => `
+                    <div style="padding: 8px; margin-bottom: 8px; background: var(--bg-card); border-radius: 4px; border: 1px solid var(--border);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 10px; color: var(--accent);">${swap.direction}</span>
+                            <span style="font-size: 10px; color: ${swap.status === 'completed' ? '#00ff88' : '#ffaa00'};">${swap.status}</span>
+                        </div>
+                        <div style="font-size: 9px; color: var(--text-muted);">
+                            Amount: ${swap.amount} | HTLC: ${swap.htlcAddress.substring(0, 20)}...
+                        </div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                atomicSwapLog('Error fetching swaps: ' + e.message, 'error');
+            }
+        }
+        
+        // AI Agent Intent Execution
+        async function executeSwapIntent() {
+            const intent = document.getElementById('swapIntent').value.trim();
+            
+            if (!intent) {
+                atomicSwapLog('Error: Enter an intent', 'error');
+                return;
+            }
+            
+            atomicSwapLog('🤖 Processing intent: ' + intent);
+            
+            try {
+                const resp = await fetch(ATOMIC_SWAP_API + '/intent', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ intent })
+                });
+                const data = await resp.json();
+                
+                if (data.error) {
+                    atomicSwapLog('Error: ' + data.error, 'error');
+                } else if (data.action) {
+                    atomicSwapLog('🤖 AI Agent action: ' + data.action, 'success');
+                    atomicSwapLog('Details: ' + JSON.stringify(data.details), '');
+                    
+                    // Auto-fill form with parsed intent
+                    if (data.details.amount) {
+                        document.getElementById('swapAmount').value = data.details.amount;
+                    }
+                    if (data.details.rate) {
+                        document.getElementById('swapRate').value = data.details.rate;
+                    }
+                } else {
+                    atomicSwapLog('Could not understand intent', 'error');
+                }
+            } catch(e) {
+                atomicSwapLog('Error: ' + e.message, 'error');
+            }
+        }
+        
+        // Initialize atomic swap panel
+        updateSwapForm();
+        refreshAtomicSwapList();
 
         init();
     </script>
