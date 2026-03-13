@@ -1774,16 +1774,29 @@ const server = http.createServer(async (req, res) => {
                         details.rate = parseFloat(rateMatch[1]);
                     }
                     
-                    // Determine action
-                    if (intent.includes('swap') || intent.includes('exchange') || intent.includes('trade')) {
-                        action = 'swap';
-                        details.direction = details.fromToken === 'kas' ? 'kas2eth' : 'eth2kas';
-                    } else if (intent.includes('claim')) {
+                    // Determine action - check more specific terms first
+                    if (intent.includes('claim')) {
                         action = 'claim';
                     } else if (intent.includes('refund')) {
                         action = 'refund';
                     } else if (intent.includes('status') || intent.includes('list')) {
                         action = 'list';
+                    } else if (intent.includes('swap') || intent.includes('exchange') || intent.includes('trade')) {
+                        action = 'swap';
+                        // Detect direction: "swap X to Y" = X→Y, "swap X for Y" = X→Y
+                        const toMatch = intent.match(/\s(to|for)\s+(\w+)/i);
+                        if (toMatch && toMatch[2]) {
+                            const toToken = toMatch[2].toLowerCase();
+                            if (toToken.startsWith('eth')) {
+                                details.direction = 'kas2eth';
+                            } else if (toToken.startsWith('kas')) {
+                                details.direction = 'eth2kas';
+                            }
+                        } else if (details.fromToken) {
+                            details.direction = details.fromToken === 'kas' ? 'kas2eth' : 'eth2kas';
+                        } else {
+                            details.direction = 'kas2eth';
+                        }
                     }
                     
                     res.writeHead(200, { 'Content-Type': 'application/json' });
