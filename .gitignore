@@ -37,3 +37,13 @@ kaspad.pid
 *.env.local
 config.env
 !config.env.example
+
+# Binary files
+kaspad
+kaspad.tn12
+kaspa-miner
+kaspa-miner-v0.2.6-osx-amd64
+rothschild
+
+# NPM
+package-lock.json
